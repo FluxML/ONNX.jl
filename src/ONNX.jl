@@ -1,5 +1,7 @@
 module ONNX
 
-# package code goes here
+include("convert.jl")
+include("new_types.jl")
+include("onnx_pb.jl")
 
 end # module
