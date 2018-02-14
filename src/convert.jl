@@ -2,6 +2,14 @@ using ProtoBuf
 include("onnx_pb.jl")
 
 """
+    Read the model.pb file into TensorProto object.
+"""
+function read(name::AbstractString)
+    f = open(name)
+    return readproto(f, ModelProto())
+end
+
+"""
     Convert a data type to the corresponding dictionary.
 """
 function convert_model(model::Any)
@@ -25,5 +33,9 @@ end
     retrieve it.
 """
 function get_array(model::TensorProto)
-    return model.raw_data
+    res = Array{Float32, 1}()
+    for element in model.raw_data
+        push!(res, element)
+    end
+    return res
 end
