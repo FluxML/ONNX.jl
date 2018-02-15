@@ -1,6 +1,3 @@
-using ProtoBuf
-include("onnx_pb.jl")
-
 """
     Read the model.pb file into TensorProto object.
 """
