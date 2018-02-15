@@ -67,7 +67,8 @@ function graph(g::Proto.GraphProto)
   return vertex(DataFlow.Lambda(n, v)) |> DataFlow.λopen |> DataFlow.λclose
 end
 
-code(g::Proto.GraphProto) = graph(g) |> syntax |> MacroTools.prettify
+code(g::Proto.GraphProto) = graph(g) |> syntax |>
+  MacroTools.flatten |> MacroTools.alias_gensyms
 
 # function breakcalls(ex)
 #   MacroTools.prewalk(ex) do ex
