@@ -21,13 +21,9 @@ end
 
 """
 Get the array from a TensorProto object.
-Since :raw_data is the only attribute storing valid array data, we'll
-retrieve it.
 """
-function get_array(model::Proto.TensorProto)
-    res = Array{Float32, 1}()
-    for element in model.raw_data
-        push!(res, element)
-    end
-    return res
+function get_array(x::Proto.TensorProto)
+  @assert x.data_type == 1 # Float32
+  x = reshape(reinterpret(Float32, x.raw_data), x.dims...)
+  return permutedims(x, reverse(1:ndims(x)))
 end
