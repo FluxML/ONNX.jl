@@ -13,7 +13,7 @@ attributes(as) = Dict(attribute(a) for a in as)
 vcall(a...) = vertex(Call(), constant.(a)...)
 
 # Placeholder for array values
-weights(g) = Dict(x.name => x.name for x in g.initializer)
+weights(g) = Dict(x.name => get_array(x) for x in g.initializer)
 
 function inputs(g::Proto.GraphProto)
   ws = weights(g)
