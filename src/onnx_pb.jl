@@ -1,3 +1,5 @@
+module Proto
+
 # syntax: proto2
 using Compat
 using ProtoBuf
@@ -223,3 +225,5 @@ isequal(v1::ModelProto, v2::ModelProto) = ProtoBuf.protoisequal(v1, v2)
 ==(v1::ModelProto, v2::ModelProto) = ProtoBuf.protoeq(v1, v2)
 
 export Version, AttributeProto_AttributeType, AttributeProto, ValueInfoProto, NodeProto, ModelProto, StringStringEntryProto, GraphProto, TensorProto_DataType, TensorProto_Segment, TensorProto, TensorShapeProto_Dimension, TensorShapeProto, TypeProto_Tensor, TypeProto, OperatorSetIdProto, AttributeProto_AttributeType, AttributeProto
+
+end

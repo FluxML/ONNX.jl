@@ -2,8 +2,9 @@
     Read the model.pb file into TensorProto object.
 """
 function read(name::AbstractString)
-    f = open(name)
-    return readproto(f, ModelProto())
+    open(name) do f
+        readproto(f, Proto.ModelProto())
+    end
 end
 
 """
@@ -18,7 +19,7 @@ end
     Retrieve only the useful information from a AttributeProto
     object  into a Dict format.
 """
-function convert_model(model::AttributeProto)
+function convert_model(model::Proto.AttributeProto)
     attributes = [:name, :_type, :f, :i, :ints]
     dict = Dict(f=>get_field(model, f) for f in attributes)
     return dict
@@ -29,7 +30,7 @@ end
     Since :raw_data is the only attribute storing valid array data, we\'ll
     retrieve it.
 """
-function get_array(model::TensorProto)
+function get_array(model::Proto.TensorProto)
     res = Array{Float32, 1}()
     for element in model.raw_data
         push!(res, element)
