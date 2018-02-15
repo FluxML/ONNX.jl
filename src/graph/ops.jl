@@ -1,17 +1,34 @@
+# TODO: we need kwarg support for many of these
+
 # Generic
 
 ops[:Concat] = function (params, xs...)
   vcall(:cat, params[:axis], xs...)
 end
 
+ops[:Gemm] = function (params, A, B, C)
+  @assert !haskey(params, :alpha) && !haskey(params, :beta)
+  A = get(params, :transA, 0) == 1 ? vcall(:transpose, A) : A
+  B = get(params, :transB, 0) == 1 ? vcall(:transpose, B) : B
+  vcall(broadcast, :+, vcall(*, B, A), C)
+end
+
 # Image
 
+function pads(ps)
+  padbegin = ps[1:end÷2]
+  padend   = ps[end÷2+1:end]
+  padbegin == padend || error("Only symmetric padding currently supported, got $padbegin and $padend")
+  return (padbegin...,)
+end
+
 ops[:Conv] = function (params, x, w, b)
-  vcall(vcall(:Conv, w, b, (params[:pads]...,), (params[:strides]...,)), x)
+  length(params[:kernel_shape]) == 2 || error("Only Conv2D currently supported")
+  vcall(vcall(:Conv2D, w, b, pads(params[:pads]), (params[:strides]...,)), x)
 end
 
 ops[:MaxPool] = function (params, x)
-  vcall(:maxpool2d, x, (params[:kernel_shape]...,), (params[:pads]...,), (params[:strides]...,))
+  vcall(:maxpool, x, (params[:kernel_shape]...,), pads(params[:pads]), (params[:strides]...,))
 end
 
 ops[:GlobalAveragePool] = function (params, x)
