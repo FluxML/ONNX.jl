@@ -46,8 +46,17 @@ end
 
 # Activation
 
+iscallp(f, v) = DataFlow.iscall(v) && f(v[1])
+islayer(v, name) = iscallp(l -> iscallp(x -> x == constant(name), l), v)
+
 ops[:Relu] = function (params, x)
-  vcall(broadcast, :relu, x)
+  if islayer(x, :Conv2D) || islayer(x, :Dense)
+    layer = x[1]
+    layer = vcall(layer[1:3]..., :relu, layer[4:end]...)
+    vcall(layer, x[2])
+  else
+    vcall(broadcast, :relu, x)
+  end
 end
 
 ops[:Softmax] = function (params, x)
