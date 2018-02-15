@@ -24,17 +24,50 @@ function inputs(g::Proto.GraphProto)
        for x in g.input), i
 end
 
-function graph(g::Proto.GraphProto)
+function _graph(g)
   vs, n = inputs(g)
   for node in g.node
     vs[node.output[1]] = ops[Symbol(node.op_type)](attributes(node.attribute), map(n -> vs[n], node.input)...)
   end
-  return vertex(DataFlow.Lambda(n, vs[g.output[1].name])) |> DataFlow.λopen |> DataFlow.λclose
+  return vs[g.output[1].name], n
+end
+
+# Graph Cleanups
+
+ischainable(v) = DataFlow.iscall(v) && all(x -> DataFlow.isconstant(x), v[3:end])
+chaindepth(v) = ischainable(v) ? chaindepth(v[2]) + 1 : 0
+
+function _tochain(v, ch)
+  ischainable(v) || return v
+  if length(v[:]) ≤ 2
+    push!(ch, v[1])
+  else
+    push!(ch, vertex(DataFlow.Lambda(1, vcall(v[1], inputnode(1), v[3:end]...))))
+  end
+  return _tochain(v[2], ch)
+end
+
+function tochain(v)
+  ch = []
+  v = _tochain(v, ch)
+  vcall(vcall(:Chain, reverse(ch)...), v)
+end
+
+function chainify(v)
+  MacroTools.prewalk(v) do v
+    chaindepth(v) > 3 ? tochain(v) : v
+  end
+end
+
+# Interface
+
+function graph(g::Proto.GraphProto)
+  v, n = _graph(g)
+  v = chainify(v)
+  return vertex(DataFlow.Lambda(n, v)) |> DataFlow.λopen |> DataFlow.λclose
 end
 
 code(g::Proto.GraphProto) = graph(g) |> syntax |> MacroTools.prettify
-
-# iscall(x) = isexpr(x, :call) || (isexpr(x, :.) && isexpr(x.args[2], :tuple))
 
 # function breakcalls(ex)
 #   MacroTools.prewalk(ex) do ex
@@ -51,16 +84,4 @@ code(g::Proto.GraphProto) = graph(g) |> syntax |> MacroTools.prettify
 #     ex = isexpr(ex, :call) ? :($f($(args...))) : :($f.($(args...)))
 #     :($(vars...); $ex)
 #   end
-# end
-
-# function liftbegin(ex)
-#   ls = []
-#   for x in ex.args
-#     x = MacroTools.prewalk(x) do x
-#       isexpr(x, :block) || return x
-#       x.args = filter(x -> isexpr(x, :(=)) && (push!(ls, x); false), x.args)
-#     end
-#     push!(ls, x)
-#   end
-#   :($(ls...);)
 # end
