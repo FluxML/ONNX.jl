@@ -8,9 +8,12 @@ end
 
 ops[:Gemm] = function (params, A, B, C)
   @assert !haskey(params, :alpha) && !haskey(params, :beta)
+  layer = DataFlow.isconstant(B)
   A = get(params, :transA, 0) == 1 ? vcall(:transpose, A) : A
   B = get(params, :transB, 0) == 1 ? vcall(:transpose, B) : B
-  vcall(broadcast, :+, vcall(*, B, A), C)
+  layer ?
+    vcall(vcall(:Dense, B, C), A) :
+    vcall(broadcast, :+, vcall(*, B, A), C)
 end
 
 # Image

@@ -19,7 +19,7 @@ function inputs(g::Proto.GraphProto)
   ws = weights(g)
   i = 0
   Dict(x.name => haskey(ws, x.name) ?
-        :(weights[$(x.name)]) :
+        constant(:(weights[$(x.name)])) :
         inputnode(i += 1)
        for x in g.input), i
 end
