@@ -13,7 +13,7 @@ mutable struct Node
     name::AbstractString
     op_type::AbstractString
     domain::AbstractString
-    attribute::Dict{Any, Array{Any, 1}}     #AttributeProto to Dict
+    attribute::Dict{Symbol, Any}            #AttributeProto to Dict
     doc_string::AbstractString
 end
 
