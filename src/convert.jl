@@ -20,10 +20,93 @@ function convert_model(model::Proto.AttributeProto)
 end
 
 """
+Convert an Array of ValueInfoProto to Array of Dicts.
+"""
+function convert_model(model::Array{ONNX.Proto.ValueInfoProto,1})
+    a = Array{Any, 1}()
+    for ele in model
+        push!(a, convert_model(ele))
+    end
+    return a
+end
+
+"""
+Convert an Array of OperatorSetIdProto to Array of Dicts.
+"""
+function convert_model(model::Array{ONNX.Proto.OperatorSetIdProto,1})
+    a = Array{Any, 1}()
+    for ele in model
+        push!(a, convert_model(ele))
+    end
+    return a
+end
+
+"""
+Convert an Array of StringStringEntryProto to Array of Dicts.
+"""
+function convert_model(model::Array{ONNX.Proto.StringStringEntryProto,1})
+    a = Array{Any, 1}()
+    for ele in model
+        push!(a, convert_model(ele))
+    end
+    return a
+end
+
+"""
 Get the array from a TensorProto object.
 """
 function get_array(x::Proto.TensorProto)
   @assert x.data_type == 1 # Float32
   x = reshape(reinterpret(Float32, x.raw_data), x.dims...)
   return permutedims(x, reverse(1:ndims(x)))
+end
+
+"""
+Convert a ModelProto object to a Model type.
+"""
+function convert(model::Proto.ModelProto)
+    m = Types.Model(model.ir_version,
+                convert_model(model.opset_import),
+                model.producer_name,
+                model.producer_version,
+                model.domain, model.model_version, 
+                model.doc_string, convert(model.graph),
+                convert_model(model.metadata_props))
+    return m
+end
+
+"""
+Convert a GraphProto object to Graph type.
+"""
+function convert(model::Proto.GraphProto)
+    temp = model.initializer
+    d = Dict()
+    for ele in temp
+        d[ele.name] = get_array(ele)
+    end
+    a = Array{Any, 1}()
+    for ele in model.node
+        push!(a, convert(ele))
+    end
+    m = Types.Graph(a,                       
+            model.name, 
+            d, model.doc_string, 
+            convert_model(model.input),
+            convert_model(model.output), 
+            convert_model(model.value_info))
+    return m
+end
+
+"""
+Convert a Proto.NodeProto to Node type.
+"""
+function convert(model::Proto.NodeProto)
+    m = Types.Node(model.input, 
+            model.output, 
+            model.name, 
+            model.op_type, 
+            model.domain,
+            convert_model(model.attribute), 
+            model.doc_string)
+    return m
 end
