@@ -7,6 +7,6 @@
 [![codecov.io](http://codecov.io/github/MikeInnes/ONNX.jl/coverage.svg?branch=master)](http://codecov.io/github/MikeInnes/ONNX.jl?branch=master)
 
 
-ONNX.jl : Read [ONNX](https://onnx.ai/) graphs and load pretrained ONNX models [ONNX](https://onnx.ai/) in Julia.
+ONNX.jl : Read [ONNX](https://onnx.ai/) graphs and load pretrained [ONNX](https://onnx.ai/) models in Julia.
 
 [W.I.P]
