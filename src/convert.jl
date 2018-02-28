@@ -1,3 +1,5 @@
+using BSON
+
 rawproto(io::IO) = readproto(io, Proto.ModelProto())
 rawproto(path::String) = open(rawproto, path)
 
@@ -109,4 +111,25 @@ function convert(model::Proto.NodeProto)
             convert_model(model.attribute), 
             model.doc_string)
     return m
+end
+
+"""
+Serialize the weights to a binary format and stores in the
+weights.bson file.
+"""
+function write_weights(model)
+    f = readproto(open(model), ONNX.Proto.ModelProto())
+    f = f.graph.initializer
+    weights = Dict{Symbol, Any}()
+    for ele in f
+        weights[Symbol(ele.name)] = ONNX.get_array(ele)
+    end
+    bson("weights.bson", weights)
+end
+
+"""
+Retrieve the dictionary form the binary file.
+""" 
+function read_weights()
+    return BSON.load("weights.bson")
 end
