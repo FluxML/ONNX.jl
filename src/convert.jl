@@ -113,6 +113,17 @@ function convert(model::Proto.NodeProto)
     return m
 end
 
+function parent(path)
+    temp = split(path, "/")
+    res = ""
+    for element in temp
+        if (element != temp[end])
+            res = res * element * "/"
+        end
+    end
+    return res
+end
+
 """
 Serialize the weights to a binary format and stores in the
 weights.bson file.
@@ -123,6 +134,9 @@ function write_weights(model)
     weights = Dict{Symbol, Any}()
     for ele in f
         weights[Symbol(ele.name)] = ONNX.get_array(ele)
+    end
+    if '/' in model
+        cd(parent(model))
     end
     bson("weights.bson", weights)
 end
