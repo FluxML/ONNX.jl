@@ -1,4 +1,5 @@
 using BSON
+using Flux
 
 rawproto(io::IO) = readproto(io, Proto.ModelProto())
 rawproto(path::String) = open(rawproto, path)
@@ -146,4 +147,27 @@ Retrieve the dictionary form the binary file.
 """ 
 function read_weights()
     return BSON.load("weights.bson")
+end
+
+function write_julia_file(model)
+    f = readproto(open(model), ONNX.Proto.ModelProto())
+    data = ONNX.code(f.graph)
+    touch("model.jl")
+    open("model.jl","w") do file
+        write(file, string(data))
+    end
+end
+
+function load_model(model)
+    write_weights(model)
+    write_julia_file(model)
+    bf = BSON.load("weights.bson")
+    jf = open("model.jl")
+    jf = readstring(jf)
+    weights = Dict{String, Any}()
+    for ele in keys(bf)
+        weights[string(ele)] = bf[ele]
+    end
+    model = eval(parse(jf))
+    return model
 end
