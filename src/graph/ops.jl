@@ -27,7 +27,7 @@ end
 
 ops[:Conv] = function (params, x, w, b)
   length(params[:kernel_shape]) == 2 || error("Only Conv2D currently supported")
-  vcall(vcall(:Conv2D, w, b, pads(params[:pads]), (params[:strides]...,)), x)
+  vcall(vcall(:Conv, w, b, pads(params[:pads]), (params[:strides]...,)), x)
 end
 
 ops[:MaxPool] = function (params, x)
@@ -52,7 +52,7 @@ iscallp(f, v) = DataFlow.iscall(v) && f(v[1])
 islayer(v, name) = iscallp(l -> iscallp(x -> x == constant(name), l), v)
 
 ops[:Relu] = function (params, x)
-  if islayer(x, :Conv2D) || islayer(x, :Dense)
+  if islayer(x, :Conv) || islayer(x, :Dense)
     layer = x[1]
     layer = vcall(layer[1:3]..., :relu, layer[4:end]...)
     vcall(layer, x[2])
