@@ -1,5 +1,4 @@
 using BSON
-using Flux
 
 rawproto(io::IO) = readproto(io, Proto.ModelProto())
 rawproto(path::String) = open(rawproto, path)
@@ -146,7 +145,7 @@ end
 Retrieve the dictionary form the binary file (String to Any).
 format.
 """ 
-function read_weights(name)
+function load_weights(name)
     a = BSON.load(name)
     weights = Dict{String, Any}()
     for ele in keys(a)
