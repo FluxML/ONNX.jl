@@ -167,18 +167,10 @@ function write_julia_file(model)
 end
 
 """
-Read the structure from the model.jl file.
-"""
-function read_parsed(file)
-    return parse(readstring(open(file)))
-end
-
-"""
-Create the two files and load the model.
+Create the two files from the model.pb file.
 """
 function load_model(model)
     write_weights(model)
     write_julia_file(model)
-    weights = load_weights("weights.bson")
-    return read_parsed("model.jl")
+    return nothing
 end
