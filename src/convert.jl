@@ -179,6 +179,6 @@ Create the two files and load the model.
 function load_model(model)
     write_weights(model)
     write_julia_file(model)
-    weights = read_weights("weights.bson")
+    weights = load_weights("weights.bson")
     return read_parsed("model.jl")
 end
