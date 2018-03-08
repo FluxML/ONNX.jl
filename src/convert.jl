@@ -143,12 +143,21 @@ function write_weights(model)
 end
 
 """
-Retrieve the dictionary form the binary file.
+Retrieve the dictionary form the binary file (String to Any).
+format.
 """ 
-function read_weights()
-    return BSON.load("weights.bson")
+function read_weights(name)
+    a = BSON.load(name)
+    weights = Dict{String, Any}()
+    for ele in keys(a)
+        weights[string(ele)] = a[ele]
+    end
+    return weights
 end
 
+"""
+Create the model.jl file and write the model to it.
+"""
 function write_julia_file(model)
     f = readproto(open(model), ONNX.Proto.ModelProto())
     data = ONNX.code(f.graph)
@@ -158,16 +167,19 @@ function write_julia_file(model)
     end
 end
 
+"""
+Read the structure from the model.jl file.
+"""
+function read_parsed(file)
+    return parse(readstring(open(file)))
+end
+
+"""
+Create the two files and load the model.
+"""
 function load_model(model)
     write_weights(model)
     write_julia_file(model)
-    bf = BSON.load("weights.bson")
-    jf = open("model.jl")
-    jf = readstring(jf)
-    weights = Dict{String, Any}()
-    for ele in keys(bf)
-        weights[string(ele)] = bf[ele]
-    end
-    model = eval(parse(jf))
-    return model
+    weights = read_weights("weights.bson")
+    return read_parsed("model.jl")
 end
