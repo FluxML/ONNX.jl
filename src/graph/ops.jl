@@ -54,7 +54,7 @@ islayer(v, name) = iscallp(l -> iscallp(x -> x == constant(name), l), v)
 ops[:Relu] = function (params, x)
   if islayer(x, :Conv) || islayer(x, :Dense)
     layer = x[1]
-    layer = vcall(layer[1:3]..., :relu, layer[4:end]...)
+    layer = vcall(layer[1], :relu, layer[2:3]...,  layer[end], layer[4])
     vcall(layer, x[2])
   else
     vcall(broadcast, :relu, x)
