@@ -23,10 +23,10 @@ julia> model = include("model.jl")                  # Loads the model from the m
 
 And `model` is the corresponding model in Flux!
 
-This packages is currently under development, don't tell us we didn't warn you!
+This package is currently under development, don't tell us we didn't warn you!
 
 ## Contributing and Help
 
-Since this package is currently development, feel free to open an [issue](https://github.com/FluxML/ONNX.jl/issues) if you find any error/bug. 
+Since this package is currently under development, feel free to open an [issue](https://github.com/FluxML/ONNX.jl/issues) if you find any error/bug. 
 
 For more discussion, you can get in touch with us on [Julia Slack](https://slackinvite.julialang.org/). We're pretty active on the #machine-learning channel.
