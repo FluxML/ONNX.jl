@@ -1,7 +1,11 @@
 using BSON
-
+using Flux
 rawproto(io::IO) = readproto(io, Proto.ModelProto())
 rawproto(path::String) = open(rawproto, path)
+
+function maxpool(a::AbstractArray, b, c, d)
+    return Flux.maxpool(a, b, pad=c, stride=d)
+end
 
 """
 Convert a data type to the corresponding dictionary.
@@ -174,3 +178,5 @@ function load_model(model)
     write_julia_file(model)
     return nothing
 end
+
+export maxpool
