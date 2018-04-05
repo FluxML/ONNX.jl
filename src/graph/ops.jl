@@ -1,6 +1,7 @@
 # TODO: we need kwarg support for many of these
 
 # Generic
+get_tuple(x) = (x...,)
 
 ops[:Concat] = function (params, xs...)
   vcall(:cat, params[:axis], xs...)
@@ -33,7 +34,7 @@ end
 ops[:MaxPool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
-  vcall(:maxpool2d, x, (params[:kernel_shape]...,), pads(params[:pads]), strides...)
+  vcall(:maxpool2d, x, (params[:kernel_shape]...,), pads(params[:pads]), get_tuple(strides...))
 end
 
 ops[:GlobalAveragePool] = function (params, x)
