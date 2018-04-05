@@ -75,7 +75,7 @@ function convert(model::Proto.ModelProto)
                 convert_model(model.opset_import),
                 model.producer_name,
                 model.producer_version,
-                model.domain, model.model_version, 
+                model.domain, model.model_version,
                 model.doc_string, convert(model.graph),
                 convert_model(model.metadata_props))
     return m
@@ -94,11 +94,11 @@ function convert(model::Proto.GraphProto)
     for ele in model.node
         push!(a, convert(ele))
     end
-    m = Types.Graph(a,                       
-            model.name, 
-            d, model.doc_string, 
+    m = Types.Graph(a,
+            model.name,
+            d, model.doc_string,
             convert_model(model.input),
-            convert_model(model.output), 
+            convert_model(model.output),
             convert_model(model.value_info))
     return m
 end
@@ -107,12 +107,12 @@ end
 Convert a Proto.NodeProto to Node type.
 """
 function convert(model::Proto.NodeProto)
-    m = Types.Node(model.input, 
-            model.output, 
-            model.name, 
-            model.op_type, 
+    m = Types.Node(model.input,
+            model.output,
+            model.name,
+            model.op_type,
             model.domain,
-            convert_model(model.attribute), 
+            convert_model(model.attribute),
             model.doc_string)
     return m
 end
@@ -129,27 +129,55 @@ function parent(path)
 end
 
 """
-Serialize the weights to a binary format and stores in the
-weights.bson file.
+Read the ONNX model
 """
-function write_weights(model)
-    f = readproto(open(model), ONNX.Proto.ModelProto())
-    f = f.graph.initializer
+function read_onnx(model_onnx)::ONNX.Proto.ModelProto
+    readproto(open(model_onnx), ONNX.Proto.ModelProto())
+end
+
+"""
+extract weights from the model
+"""
+function extract_weights(onnx_proto)
+    f = onnx_proto.graph.initializer
     weights = Dict{Symbol, Any}()
     for ele in f
         weights[Symbol(ele.name)] = ONNX.get_array(ele)
     end
-    if '/' in model
-        cd(parent(model))
+    return weights
+end
+
+"""
+convert weights dict to Dict{String, Any}
+"""
+#TODO: this seems a bit kludgy, we should probably figure out
+# how to get the keys to weights be strings when it's created
+function convert_weights(w)
+    weights = Dict{String,Any}()
+    for elem in keys(w)
+        weights[string(elem)] = w[elem]
+    end
+    return weights
+end
+
+"""
+Serialize the weights to a binary format and stores in the
+weights.bson file.
+"""
+function write_weights(model_fn, onnx_proto)
+    weights = extract_weights(onnx_proto)
+    if '/' in model_fn
+        cd(parent(model_fn))
     end
     bson("weights.bson", weights)
+    return weights
 end
 
 """
 Retrieve the dictionary form the binary file (String to Any).
 format.
-""" 
-function load_weights(name)
+"""
+function load_weights_from_bson(name)
     a = BSON.load(name)
     weights = Dict{String, Any}()
     for ele in keys(a)
@@ -161,22 +189,24 @@ end
 """
 Create the model.jl file and write the model to it.
 """
-function write_julia_file(model)
-    f = readproto(open(model), ONNX.Proto.ModelProto())
-    data = ONNX.code(f.graph)
+function write_julia_file(model, onnx_proto)
+    data = ONNX.code(onnx_proto.graph)
     touch("model.jl")
     open("model.jl","w") do file
         write(file, string(data))
     end
+    return data
 end
 
 """
-Create the two files from the model.pb file.
+Create the two files from the model.onnx file, return weights and model.
 """
 function load_model(model)
-    write_weights(model)
-    write_julia_file(model)
-    return nothing
+    onnx_proto = read_onnx(model)
+    weights    = write_weights(model, onnx_proto)
+    weights    = convert_weights(weights)
+    model_expr = write_julia_file(model, onnx_proto)
+    return weights, model_expr
 end
 
 export maxpool
