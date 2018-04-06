@@ -34,7 +34,7 @@ end
 ops[:MaxPool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
-  vcall(:maxpool, x, (params[:kernel_shape]...,), pads(params[:pads]), get_tuple(strides...))
+  vcall(:maxpool_onnx, x, (params[:kernel_shape]...,), pads(params[:pads]), get_tuple(strides...))
 end
 
 ops[:GlobalAveragePool] = function (params, x)

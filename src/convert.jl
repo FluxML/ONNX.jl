@@ -3,7 +3,7 @@ using Flux
 rawproto(io::IO) = readproto(io, Proto.ModelProto())
 rawproto(path::String) = open(rawproto, path)
 
-function maxpool(a::AbstractArray, b, c, d)
+function maxpool_onnx(a::AbstractArray, b, c, d)
     return Flux.maxpool(a, b, pad=c, stride=d)
 end
 
@@ -179,4 +179,4 @@ function load_model(model)
     return nothing
 end
 
-export maxpool
+export maxpool_onnx
