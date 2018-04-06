@@ -4,7 +4,7 @@
 get_tuple(x) = (x...,)
 
 ops[:Concat] = function (params, xs...)
-  vcall(:cat, params[:axis], xs...)
+  vcall(:cat, params[:axis] + 2, xs...)
 end
 
 ops[:Gemm] = function (params, A, B, C)
