@@ -3,9 +3,6 @@ using Flux
 rawproto(io::IO) = readproto(io, Proto.ModelProto())
 rawproto(path::String) = open(rawproto, path)
 
-function maxpool_onnx(a::AbstractArray, b, c, d)
-    return Flux.maxpool(a, b, pad=c, stride=d)
-end
 
 """
 Convert a data type to the corresponding dictionary.
@@ -165,8 +162,9 @@ function write_julia_file(model)
     f = readproto(open(model), ONNX.Proto.ModelProto())
     data = ONNX.code(f.graph)
     touch("model.jl")
+    str = "maxpool(a,b,c,d) = Flux.maxpool(a, b, pad=c, stride=d) \n"
     open("model.jl","w") do file
-        write(file, string(data))
+        write(file, str*string(data))
     end
 end
 
@@ -178,5 +176,3 @@ function load_model(model)
     write_julia_file(model)
     return nothing
 end
-
-export maxpool_onnx
