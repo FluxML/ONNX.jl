@@ -20,9 +20,8 @@ julia> weights, model_expr = ONNX.load_model("model.onnx")                # If y
 julia> model = eval(model_expr)                     # eval the model expression into the current module
 
 ```
-Or alternatively, use include to the load the model from the model.jl file:
-julia> model = include("model.jl")                  # Loads the model from the model.jl file
-```
+Or alternatively, use `include` to the load the model from the model.jl file:
+`julia> model = include("model.jl")`
 
 
 And `model` is the corresponding model in Flux!
