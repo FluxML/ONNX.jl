@@ -15,14 +15,11 @@ You need to have the `model.onnx` ( or in some cases `model.pb` ) file,  which w
 
 ```
 julia> using Flux, ONNX                             # Import the required packages.
-julia> weights, model_expr = ONNX.load_model("model.onnx")                # If you are in some other directory, specify the entire path.
+julia> ONNX.load_model("model.onnx")                # If you are in some other directory, specify the entire path.
                                                     # This creates two files: model.jl and weights.bson.
-julia> model = eval(model_expr)                     # eval the model expression into the current module
-
+julia> weights = ONNX.load_weights("weights.bson")  # Read the weights from the binary serialized file.
+julia> model = include("model.jl")                  # Loads the model from the model.jl file.
 ```
-Or alternatively, use `include` to the load the model from the model.jl file:
-`julia> model = include("model.jl")`
-
 
 And `model` is the corresponding model in Flux!
 
