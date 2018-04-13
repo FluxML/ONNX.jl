@@ -38,7 +38,7 @@ ops[:MaxPool] = function (params, x)
 end
 
 ops[:GlobalAveragePool] = function (params, x)
-  vcall(:mean, x, (1,2))
+  vcall(:vec, vcall(:mean, x, (1,2,3)))
 end
 
 # Regularise
