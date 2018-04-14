@@ -161,9 +161,10 @@ function write_julia_file(model)
     f = readproto(open(model), ONNX.Proto.ModelProto())
     data = ONNX.code(f.graph)
     touch("model.jl")
+    str1 = "softmax(a::AbstractArray) = reshape(Flux.softmax(reshape(a, size(a)[3])), 1, 1, size(a)[3], 1) \n"
     str = "maxpool(a,b,c,d) = Flux.maxpool(a, b, pad=c, stride=d) \n"
     open("model.jl","w") do file
-        write(file, str*string(data))
+        write(file, str1*str*string(data))
     end
 end
 
