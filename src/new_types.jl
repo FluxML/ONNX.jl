@@ -9,31 +9,36 @@
 
 module Types
 
+mutable struct ValueInfo
+    name::AbstractString
+    doc_string::AbstractString
+end
+
 mutable struct Node
     input::Vector{AbstractString}
     output::Vector{AbstractString}
     name::AbstractString
-    op_type::AbstractString
+    op_type::AbstractString             # Done!
     domain::AbstractString
-    attribute::Dict{Symbol, Any}            #AttributeProto to Dict
+    attribute::Dict{Any, Any}         # AttributeProto to Dict
     doc_string::AbstractString
 end
 
 mutable struct Graph
-    node::Vector{Node}         
+    node::Array{Any, 1}         
     name::AbstractString
-    initializer::Dict{Any, Any}             #Storing the array data instead of the tensorproto vector.
+    initializer::Dict{Any ,Any}             #Storing the array data instead of the tensorproto vector.
     doc_string::AbstractString              #in Dict format.
-    input::Array{Any, 1}                     #
-    output::Array{Any, 1}                    # ValueInfoProto to Dict type.
-    value_info::Array{Any, 1}                #
+    input::Array{ValueInfo ,1}              # ValueInfoProto -> ValueInfo
+    output::Array{ValueInfo, 1}                    # 
+    value_info::Array{ValueInfo, 1}                # Done!
 end
 
 mutable struct Model
     ir_version::Int64
     opset_import::Array{Any, 1}              #OperatorSetIdProto to Dict
     producer_name::AbstractString
-    producer_version::AbstractString
+    producer_version::AbstractString            # Done!
     domain::AbstractString
     model_version::Int64
     doc_string::AbstractString
@@ -41,5 +46,5 @@ mutable struct Model
     metadata_props::Array{Any, 1}            #StringStringEntryProto to Dict
 end
 
-export Model, Graph, Node
+export Model, Graph, Node, ValueInfo
 end

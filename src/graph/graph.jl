@@ -3,19 +3,12 @@ using DataFlow: Call, constant, inputnode, syntax
 const ops = Dict{Symbol,Any}()
 include("ops.jl")
 
-function attribute(x::Proto.AttributeProto)
-  field = [:f, :i, :s, :t, :g, :floats, :ints, :strings, :tensors, :graphs][x._type]
-  Symbol(x.name) => getfield(x, field)
-end
-
-attributes(as) = Dict(attribute(a) for a in as)
-
 vcall(a...) = vertex(Call(), constant.(a)...)
 
 # Placeholder for array values
-weights(g) = Dict(x.name => get_array(x) for x in g.initializer)
+weights(g::Types.Graph) = g.initializer
 
-function inputs(g::Proto.GraphProto)
+function inputs(g::Types.Graph)
   ws = weights(g)
   i = 0
   Dict(x.name => haskey(ws, x.name) ?
@@ -24,10 +17,10 @@ function inputs(g::Proto.GraphProto)
        for x in g.input), i
 end
 
-function _graph(g)
+function _graph(g::Types.Graph)
   vs, n = inputs(g)
   for node in g.node
-    vs[node.output[1]] = ops[Symbol(node.op_type)](attributes(node.attribute), map(n -> vs[n], node.input)...)
+    vs[node.output[1]] = ops[Symbol(node.op_type)](node.attribute, map(n -> vs[n], node.input)...)
   end
   return vs[g.output[1].name], n
 end
@@ -60,15 +53,14 @@ function chainify(v)
 end
 
 # Interface
-
-function graph(g::Proto.GraphProto)
+function graph(g::Types.Graph)
   v, n = _graph(g)
   v = chainify(v)
   return vertex(DataFlow.Lambda(n, v)) |> DataFlow.λopen |> DataFlow.λclose
 end
 
-code(g::Proto.GraphProto) = graph(g) |> syntax |>
-  MacroTools.flatten |> MacroTools.alias_gensyms
+code(g::Types.Graph) = graph(g) |> syntax |>
+  MacroTools.flatten |> MacroTools.gensym_ids
 
 # function breakcalls(ex)
 #   MacroTools.prewalk(ex) do ex

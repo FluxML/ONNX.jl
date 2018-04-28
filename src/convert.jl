@@ -4,52 +4,44 @@ rawproto(io::IO) = readproto(io, Proto.ModelProto())
 rawproto(path::String) = open(rawproto, path)
 
 """
-Convert a data type to the corresponding dictionary.
-"""
-function convert_model(model::Any)
-    dict = Dict(f=>get_field(model, f) for f in fieldnames(model))
-    return dict
-end
-
-"""
 Retrieve only the useful information from a AttributeProto
 object into a Dict format.
 """
-function convert_model(model::Proto.AttributeProto)
-    attributes = [:name, :_type, :f, :i, :ints]
-    dict = Dict(f=>get_field(model, f) for f in attributes)
-    return dict
+function convert_model(x::Proto.AttributeProto)
+  field = [:f, :i, :s, :t, :g, :floats, :ints, :strings, :tensors, :graphs][x._type]
+  Symbol(x.name) => getfield(x, field)
+end
+
+convert_array(as) = Dict(convert_model(a) for a in as)
+
+"""
+Convert a ValueInfoProto to  ValueInfo.
+"""
+function convert_model(model::Proto.ValueInfoProto)
+    a = Types.ValueInfo(model.name, model.doc_string)
+    return a 
 end
 
 """
-Convert an Array of ValueInfoProto to Array of Dicts.
+Convert an OperatorSetIdProto to Dict.
 """
-function convert_model(model::Array{ONNX.Proto.ValueInfoProto,1})
-    a = Array{Any, 1}()
-    for ele in model
-        push!(a, convert_model(ele))
+function convert_model(model::ONNX.Proto.OperatorSetIdProto)
+    a = Dict{Symbol, Any}()
+    fields = [:domain, :version]
+    for ele in fields
+        a[ele] = getfield(model, ele)
     end
     return a
 end
 
 """
-Convert an Array of OperatorSetIdProto to Array of Dicts.
+Convert a StringStringEntryProto to Dict.
 """
-function convert_model(model::Array{ONNX.Proto.OperatorSetIdProto,1})
-    a = Array{Any, 1}()
-    for ele in model
-        push!(a, convert_model(ele))
-    end
-    return a
-end
-
-"""
-Convert an Array of StringStringEntryProto to Array of Dicts.
-"""
-function convert_model(model::Array{ONNX.Proto.StringStringEntryProto,1})
-    a = Array{Any, 1}()
-    for ele in model
-        push!(a, convert_model(ele))
+function convert_model(model::ONNX.Proto.StringStringEntryProto)
+    a = Dict{Symbol, Any}()
+    fields = [:key, :value]
+    for ele in fields
+        a[ele] = getfield(model, ele)
     end
     return a
 end
@@ -67,13 +59,24 @@ end
 Convert a ModelProto object to a Model type.
 """
 function convert(model::Proto.ModelProto)
+    # conversion for opset_import
+    arr1 = Array{Any, 1}()
+    for ele in model.opset_import
+        push!(arr1, convert_model(ele))
+    end
+
+    # conversion for stringstringentry proto
+    arr2 = Array{Any, 1}()
+    for ele in model.metadata_props
+        push!(arr2, convert_model(ele))
+    end
+
     m = Types.Model(model.ir_version,
-                convert_model(model.opset_import),
-                model.producer_name,
+                arr1, model.producer_name,
                 model.producer_version,
                 model.domain, model.model_version, 
                 model.doc_string, convert(model.graph),
-                convert_model(model.metadata_props))
+                arr2)
     return m
 end
 
@@ -81,21 +84,38 @@ end
 Convert a GraphProto object to Graph type.
 """
 function convert(model::Proto.GraphProto)
-    temp = model.initializer
-    d = Dict()
-    for ele in temp
-        d[ele.name] = get_array(ele)
-    end
-    a = Array{Any, 1}()
+    # conversion for vector of nodeproto
+    arr1 = Array{Any, 1}()
     for ele in model.node
-        push!(a, convert(ele))
+        push!(arr1, convert(ele))
     end
-    m = Types.Graph(a,                       
+
+    # conversion for vector of tensorproto
+    arr2 = Dict{Any, Any}()
+    for ele in model.initializer
+        arr2[ele.name] = get_array(ele)
+    end
+
+    #conversion for vector of valueinfoproto
+    arr3 = Array{Types.ValueInfo ,1}()
+    for ele in model.input
+        push!(arr3, convert_model(ele))
+    end
+
+    arr4 = Array{Types.ValueInfo ,1}()
+    for ele in model.output
+        push!(arr4, convert_model(ele))
+    end
+
+    arr5 = Array{Types.ValueInfo ,1}()
+    for ele in model.value_info
+        push!(arr5, convert_model(ele))
+    end
+
+    m = Types.Graph(arr1,                       
             model.name, 
-            d, model.doc_string, 
-            convert_model(model.input),
-            convert_model(model.output), 
-            convert_model(model.value_info))
+            arr2, model.doc_string, 
+            arr3, arr4, arr5)
     return m
 end
 
@@ -103,12 +123,15 @@ end
 Convert a Proto.NodeProto to Node type.
 """
 function convert(model::Proto.NodeProto)
+    # Conversion of attribute
+    arr1 = convert_array(model.attribute)
+
     m = Types.Node(model.input, 
             model.output, 
             model.name, 
             model.op_type, 
             model.domain,
-            convert_model(model.attribute), 
+            arr1, 
             model.doc_string)
     return m
 end
@@ -157,9 +180,9 @@ end
 """
 Create the model.jl file and write the model to it.
 """
-function write_julia_file(model)
-    f = readproto(open(model), ONNX.Proto.ModelProto())
-    data = ONNX.code(f.graph)
+function write_julia_file(model_file)
+    f = readproto(open(model_file), ONNX.Proto.ModelProto())
+    data = ONNX.code(convert(f).graph)
     touch("model.jl")
     str1 = "softmax(a::AbstractArray) = reshape(Flux.softmax(reshape(a, size(a)[3])), 1, 1, size(a)[3], 1) \n"
     str = "maxpool(a,b,c,d) = Flux.maxpool(a, b, pad=c, stride=d) \n"
