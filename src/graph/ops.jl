@@ -31,6 +31,12 @@ ops[:Conv] = function (params, x, w, b)
   vcall(vcall(:Conv, w, b, pads(params[:pads]), (params[:strides]...,)), x)
 end
 
+ops[:Conv] = function(params, x, w)
+  length(params[:kernel_shape]) == 2 || error("Only Conv2D currently supported")
+  b = zeros(size(get_array(w.inputs[end].value.value)[end]))
+  vcall(vcall(:Conv, w, b, pads(params[:pads]), (params[:strides]...,)), x)
+end
+
 ops[:MaxPool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
@@ -65,3 +71,12 @@ end
 ops[:Softmax] = function (params, x)
   vcall(:softmax, x)
 end
+
+ops[:Constant] = function (params)
+  vcall(:identity, params[:value])
+end
+
+ops[:Reshape] = function(params, tensor)
+  vcall(:reshape, tensor, (params[:shape]...))
+end
+
