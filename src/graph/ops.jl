@@ -2,13 +2,14 @@
 
 # Generic
 get_tuple(x) = (x...,)
+get_tuple() = nothing
 
 ops[:Concat] = function (params, xs...)
   vcall(:cat, params[:axis] + 2, xs...)
 end
 
 ops[:Gemm] = function (params, A, B, C)
-  @assert !haskey(params, :alpha) && !haskey(params, :beta)
+  @assert haskey(params, :alpha) && haskey(params, :beta)
   layer = DataFlow.isconstant(B)
   A = get(params, :transA, 0) == 1 ? vcall(transpose, A) : A
   B = get(params, :transB, 0) == 1 ? vcall(transpose, B) : B
@@ -26,16 +27,19 @@ function pads(ps)
   return (padbegin...,)
 end
 
-ops[:Conv] = function (params, x, w, b)
+ops[:Conv] = function (params, x, w, b...)
   length(params[:kernel_shape]) == 2 || error("Only Conv2D currently supported")
-  vcall(vcall(:Conv, w, b, pads(params[:pads]), (params[:strides]...,)), x)
+  if isempty(b)
+    return vcall(vcall(:Conv, w, [0], pads(params[:pads]), (params[:strides]...,)), x)
+  end
+  vcall(vcall(:Conv, w, b[1], pads(params[:pads]), (params[:strides]...,)), x)
 end
 
-ops[:Conv] = function(params, x, w)
-  length(params[:kernel_shape]) == 2 || error("Only Conv2D currently supported")
-  b = zeros(size(get_array(w.inputs[end].value.value)[end]))
-  vcall(vcall(:Conv, w, b, pads(params[:pads]), (params[:strides]...,)), x)
-end
+# To-Do : Fix bias layer here
+#ops[:Conv] = function (params, x, w)
+#  length(params[:kernel_shape]) == 2 || error("Only Conv2D currently supported")
+#  vcall(vcall(:Conv, w, [0], pads(params[:pads]), (params[:strides]...,)), x)
+#end
 
 ops[:MaxPool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
@@ -80,3 +84,7 @@ ops[:Reshape] = function(params, tensor)
   vcall(:reshape, tensor, (params[:shape]...))
 end
 
+#To-Do : add reshape condition here
+ops[:Add] = function(params, A, B)
+  vcall(:+, A, B)
+end
