@@ -35,12 +35,6 @@ ops[:Conv] = function (params, x, w, b...)
   vcall(vcall(:Conv, w, b[1], pads(params[:pads]), (params[:strides]...,)), x)
 end
 
-# To-Do : Fix bias layer here
-#ops[:Conv] = function (params, x, w)
-#  length(params[:kernel_shape]) == 2 || error("Only Conv2D currently supported")
-#  vcall(vcall(:Conv, w, [0], pads(params[:pads]), (params[:strides]...,)), x)
-#end
-
 ops[:MaxPool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
