@@ -153,15 +153,16 @@ weights.bson file.
 """
 function write_weights(model)
     f = rawproto(model)
-    f = f.graph.initializer
-    weights = Dict{Symbol, Any}()
-    for ele in f
-        weights[Symbol(ele.name)] = ONNX.get_array(ele)
+    g = convert(f.graph)
+    temp = weights(g)
+    weights_dict = Dict{Symbol, Any}()
+    for ele in keys(temp)
+        weights_dict[Symbol(ele)] = temp[ele]
     end
     if '/' in model
         cd(parent(model))
     end
-    bson("weights.bson", weights)
+    bson("weights.bson", weights_dict)
 end
 
 """

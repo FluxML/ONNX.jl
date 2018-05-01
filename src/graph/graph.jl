@@ -3,10 +3,35 @@ using DataFlow: Call, constant, inputnode, syntax
 const ops = Dict{Symbol,Any}()
 include("ops.jl")
 
+# This is to fetch weights when they are stored in
+# the constant tensor and not in intializer.
+function get_weights(g::Types.Graph)
+  temp = Dict{Any, Any}()
+  for node in g.node
+    if node.op_type == "Constant"
+      temp[node.name] = reshape(node.attribute[:value].float_data,
+                                (node.attribute[:value].dims...))
+    end
+  end
+  return temp
+end
+
 vcall(a...) = vertex(Call(), constant.(a)...)
 
 # Placeholder for array values
-weights(g::Types.Graph) = g.initializer
+function weights(g::Types.Graph)
+  count = 0
+  for node in g.node
+    if (node.op_type == "Constant")
+      count = count + 1
+      break
+    end  
+  end
+  if (count > 0)
+    return get_weights(g)
+  end
+  return g.initializer
+end
 
 function inputs(g::Types.Graph)
   ws = weights(g)
@@ -20,7 +45,11 @@ end
 function _graph(g::Types.Graph)
   vs, n = inputs(g)
   for node in g.node
-    vs[node.output[1]] = ops[Symbol(node.op_type)](node.attribute, map(n -> vs[n], node.input)...)
+    if node.op_type != "Constant"
+      vs[node.output[1]] = ops[Symbol(node.op_type)](node.attribute, map(n -> vs[n], node.input)...)
+    else
+      vs[node.output[1]] = constant("weights(g)[node.output[1]]")
+    end
   end
   return vs[g.output[1].name], n
 end

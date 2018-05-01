@@ -29,6 +29,12 @@ end
 
 ops[:Conv] = function (params, x, w, b...)
   length(params[:kernel_shape]) == 2 || error("Only Conv2D currently supported")
+  if !haskey(params, Symbol("pads"))
+    params[:pads] = (0,0)
+  end
+  if !haskey(params, Symbol("strides"))
+    params[:strides] = (1,1)
+  end
   if isempty(b)
     return vcall(vcall(:Conv, w, [0], pads(params[:pads]), (params[:strides]...,)), x)
   end
@@ -71,7 +77,7 @@ ops[:Softmax] = function (params, x)
 end
 
 ops[:Constant] = function (params)
-  vcall(:identity, params[:value])
+  vcall(:identity, vcall(:get_array2, params[:value]))
 end
 
 ops[:Reshape] = function(params, tensor)
@@ -81,4 +87,8 @@ end
 #To-Do : add reshape condition here
 ops[:Add] = function(params, A, B)
   vcall(:+, A, B)
+end
+
+ops[:MatMul] = function(params, A, B)
+  vcall(:*, A, B)
 end
