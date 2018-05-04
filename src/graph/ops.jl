@@ -38,9 +38,11 @@ ops[:Conv] = function (params, x, w, b...)
     params[:strides] = (1,1)
   end
   if (haskey(params, Symbol("auto_pad")))
-    params[:pads] =  Base.convert(Array{Int64,1}, (params[:kernel_shape] .- 1) ./ 2)
+    if (String(params[:auto_pad]) == "SAME_UPPER" || String(params[:auto_pad] == "SAME_LOWER"))
+      params[:pads] =  Base.convert(Array{Int64,1}, (params[:kernel_shape] .- 1) # Only for strides = [1,1]
+    end                                                                           # To Do: Add support for other stride values.
   end
-  if isempty(b)
+  f isempty(b)
     return vcall(vcall(:Conv, :relu, w, convert_type([0]), (params[:strides]...,), (params[:pads]...)), x)
   end
   vcall(vcall(:Conv, w, b[1], (params[:strides]...,), pads(params[:pads])), x)
@@ -91,7 +93,7 @@ end
 
 #To-Do : add broadcast here (Urgent)
 ops[:Add] = function(params, A, B)
-  vcall( :+, A, B)  
+  vcall( :Add, A, B)                  # To-DO : Define Add function  
 end
 
 ops[:MatMul] = function(params, A, B)
