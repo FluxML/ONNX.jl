@@ -1,8 +1,10 @@
+using Base
 # TODO: we need kwarg support for many of these
 
 # Generic
 get_tuple(x) = (x...,)
 get_tuple() = nothing
+convert_type(x) = Base.convert(Array{Float32, 1}, x)
 
 ops[:Concat] = function (params, xs...)
   vcall(:cat, params[:axis] + 2, xs...)
@@ -24,7 +26,7 @@ function pads(ps)
   padbegin = ps[1:end÷2]
   padend   = ps[end÷2+1:end]
   padbegin == padend || error("Only symmetric padding currently supported, got $padbegin and $padend")
-  return (padbegin...,)
+  return (padbegin...)
 end
 
 ops[:Conv] = function (params, x, w, b...)
@@ -35,16 +37,19 @@ ops[:Conv] = function (params, x, w, b...)
   if !haskey(params, Symbol("strides"))
     params[:strides] = (1,1)
   end
-  if isempty(b)
-    return vcall(vcall(:Conv, w, [0], pads(params[:pads]), (params[:strides]...,)), x)
+  if (haskey(params, Symbol("auto_pad")))
+    params[:pads] =  Base.convert(Array{Int64,1}, (params[:kernel_shape] .- 1) ./ 2)
   end
-  vcall(vcall(:Conv, w, b[1], pads(params[:pads]), (params[:strides]...,)), x)
+  if isempty(b)
+    return vcall(vcall(:Conv, :relu, w, convert_type([0]), (params[:strides]...,), (params[:pads]...)), x)
+  end
+  vcall(vcall(:Conv, w, b[1], (params[:strides]...,), pads(params[:pads])), x)
 end
 
 ops[:MaxPool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
-  vcall(:maxpool, x, (params[:kernel_shape]...,), pads(params[:pads]), get_tuple(strides...))
+  vcall(:maxpool, x, (params[:kernel_shape]...,), pads(params[:pads]), (params[:strides]...))
 end
 
 ops[:GlobalAveragePool] = function (params, x)
@@ -77,16 +82,16 @@ ops[:Softmax] = function (params, x)
 end
 
 ops[:Constant] = function (params)
-  vcall(:identity, vcall(:get_array2, params[:value]))
+  constant(Symbol("weights[\"$(params.name)\"]"))
 end
 
 ops[:Reshape] = function(params, tensor)
   vcall(:reshape, tensor, (params[:shape]...))
 end
 
-#To-Do : add reshape condition here
+#To-Do : add broadcast here (Urgent)
 ops[:Add] = function(params, A, B)
-  vcall(:+, A, B)
+  vcall( :+, A, B)  
 end
 
 ops[:MatMul] = function(params, A, B)

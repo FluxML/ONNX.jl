@@ -10,7 +10,7 @@ function get_weights(g::Types.Graph)
   for node in g.node
     if node.op_type == "Constant"
       temp[node.name] = reshape(node.attribute[:value].float_data,
-                                (node.attribute[:value].dims...))
+                                (reverse(node.attribute[:value].dims)...))
     end
   end
   return temp
@@ -48,7 +48,7 @@ function _graph(g::Types.Graph)
     if node.op_type != "Constant"
       vs[node.output[1]] = ops[Symbol(node.op_type)](node.attribute, map(n -> vs[n], node.input)...)
     else
-      vs[node.output[1]] = constant("weights(g)[node.output[1]]")
+      vs[node.output[1]] = ops[Symbol(node.op_type)](node, map(n -> vs[n], node.input)...)
     end
   end
   return vs[g.output[1].name], n
