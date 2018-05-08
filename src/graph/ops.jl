@@ -39,10 +39,10 @@ ops[:Conv] = function (params, x, w, b...)
   end
   if (haskey(params, Symbol("auto_pad")))
     if (String(params[:auto_pad]) == "SAME_UPPER" || String(params[:auto_pad] == "SAME_LOWER"))
-      params[:pads] =  Base.convert(Array{Int64,1}, (params[:kernel_shape] .- 1) # Only for strides = [1,1]
+      params[:pads] =  Base.convert(Array{Int64,1}, (params[:kernel_shape] .- 1)./2) # Only for strides = [1,1]
     end                                                                           # To Do: Add support for other stride values.
   end
-  f isempty(b)
+  if isempty(b)
     return vcall(vcall(:Conv, :relu, w, convert_type([0]), (params[:strides]...,), (params[:pads]...)), x)
   end
   vcall(vcall(:Conv, w, b[1], (params[:strides]...,), pads(params[:pads])), x)
@@ -92,8 +92,14 @@ ops[:Reshape] = function(params, tensor)
 end
 
 #To-Do : add broadcast here (Urgent)
+#         Add axis condition here
 ops[:Add] = function(params, A, B)
-  vcall( :Add, A, B)                  # To-DO : Define Add function  
+  if (params[:broadcast] == 1)
+    vcall( :Add,params[:axis], A, B)                  # To-DO : Define Add function  
+  else
+    # Broadcast not defined: Perform normal addition.
+    vcall(:Add, A, B)
+  end
 end
 
 ops[:MatMul] = function(params, A, B)

@@ -154,8 +154,8 @@ weights.bson file.
 function write_weights(model)
     f = rawproto(model)
     g = convert(f.graph)
-    temp = weights(g)
-    weights_dict = Dict{Symbol, Any}()
+    temp = weights(g)                           # If weights are stored in Constant, we'll store them 
+    weights_dict = Dict{Symbol, Any}()          # in reverse order. 
     for ele in keys(temp)
         weights_dict[Symbol(ele)] = temp[ele]
     end
@@ -185,10 +185,12 @@ function write_julia_file(model_file)
     f = readproto(open(model_file), ONNX.Proto.ModelProto())
     data = ONNX.code(convert(f).graph)
     touch("model.jl")
+    str2 = "Add(A,B) = A + reshape(B, reverse(size(B))) \n"
+    str3 = "Add(axis, A ,B) = A .+ reshape(B, (1,1,size(B)[1],1)) \n"
     str1 = "softmax(a::AbstractArray) = reshape(Flux.softmax(reshape(a, size(a)[3])), 1, 1, size(a)[3], 1) \n"
     str = "maxpool(a,b,c,d) = Flux.maxpool(a, b, pad=c, stride=d) \n"
     open("model.jl","w") do file
-        write(file, str1*str*string(data))
+        write(file, str2*str3*str1*str*string(data))
     end
 end
 
