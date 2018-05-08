@@ -51,13 +51,15 @@ end
 ops[:MaxPool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
-  vcall(:maxpool, x, (params[:kernel_shape]...,), pads(params[:pads]), (params[:strides]...))
+  vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pads=$(pads(params[:pads]))"),Symbol("strides=$((params[:strides]...))"))
 end
 
 ops[:GlobalAveragePool] = function (params, x)
   vcall(:mean, x, (1,2))
 end
 
+#ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
+#  vcall(:BatchNorm, )
 # Regularise
 
 ops[:Dropout] = function (params, x)
