@@ -43,7 +43,7 @@ ops[:Conv] = function (params, x, w, b...)
     end                                                                           # To Do: Add support for other stride values.
   end
   if isempty(b)
-    return vcall(vcall(:Conv, :relu, w, convert_type([0]), (params[:strides]...,), (params[:pads]...)), x)
+    return vcall(vcall(:Conv, w, convert_type([0]), :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$((params[:pads]...))")), x)
   end
   vcall(vcall(:Conv, w, b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))")), x)
 end
@@ -100,7 +100,7 @@ ops[:Add] = function(params, A, B)
     vcall( :Add,params[:axis], A, B)                  # To-DO : Define Add function  
   else
     # Broadcast not defined: Perform normal addition.
-    vcall(:Add, A, B)
+    vcall(:+, A, vcall(:permutedims, B, [2,1]))
   end
 end
 
