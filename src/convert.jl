@@ -187,9 +187,9 @@ function write_julia_file(model_file)
     touch("model.jl")
     str2 = "Add(A,B) = A + reshape(B, reverse(size(B))) \n"
     str3 = "Add(axis, A ,B) = A .+ reshape(B, (1,1,size(B)[1],1)) \n"
-    str1 = "softmax(a::AbstractArray) = reshape(Flux.softmax(reshape(a, size(a)[3])), 1, 1, size(a)[3], 1) \n"
+    str1 = "softmax(a::AbstractArray) = Flux.softmax(reshape(a, size(a)[3])) \n"
     open("model.jl","w") do file
-        write(file, str2*str3*str1*str*string(data))
+        write(file, str2*str3*str1*string(data))
     end
 end
 

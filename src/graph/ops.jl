@@ -45,13 +45,13 @@ ops[:Conv] = function (params, x, w, b...)
   if isempty(b)
     return vcall(vcall(:Conv, :relu, w, convert_type([0]), (params[:strides]...,), (params[:pads]...)), x)
   end
-  vcall(vcall(:Conv, w, b[1], (params[:strides]...,), pads(params[:pads])), x)
+  vcall(vcall(:Conv, w, b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))")), x)
 end
 
 ops[:MaxPool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
-  vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pads=$(pads(params[:pads]))"),Symbol("strides=$((params[:strides]...))"))
+  vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))"))
 end
 
 ops[:GlobalAveragePool] = function (params, x)
@@ -74,7 +74,7 @@ islayer(v, name) = iscallp(l -> iscallp(x -> x == constant(name), l), v)
 ops[:Relu] = function (params, x)
   if islayer(x, :Conv) || islayer(x, :Dense)
     layer = x[1]
-    layer = vcall(layer[1], :relu, layer[2:3]...,  layer[end], layer[4])
+    layer = vcall(layer[1], layer[2:3]..., :relu, layer[end], layer[4])
     vcall(layer, x[2])
   else
     vcall(broadcast, :relu, x)
