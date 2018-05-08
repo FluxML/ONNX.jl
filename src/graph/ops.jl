@@ -93,6 +93,9 @@ ops[:Reshape] = function(params, tensor)
   vcall(:reshape, tensor, (params[:shape]...))
 end
 
+ops[:LRN] = function(params, x)
+  vcall(:identity, x)             # Needed: Flux support for LRN
+end
 #To-Do : add broadcast here (Urgent)
 #         Add axis condition here
 ops[:Add] = function(params, A, B)
@@ -100,7 +103,15 @@ ops[:Add] = function(params, A, B)
     vcall( :Add,params[:axis], A, B)                  # To-DO : Define Add function  
   else
     # Broadcast not defined: Perform normal addition.
-    vcall(:+, A, vcall(:permutedims, B, [2,1]))
+    vcall(:+, A, vcall(:permutedims, B, vcall(:reverse, vcall(:range, 1, vcall(:ndims, B)))))
+  end
+end
+
+ops[:Mul] = function (params, A, B)
+  if (params[:broadcast] == 1)
+    vcall( :Mul, params[:axis], A, B)
+  else
+    vcall(:.*, A, vcall(:permutedims, B ,[2,1]))    # In case of no broadcast, Perform normal Mul operation.
   end
 end
 
