@@ -46,7 +46,11 @@ function _graph(g::Types.Graph)
   vs, n = inputs(g)
   for node in g.node
     if node.op_type != "Constant"
-      vs[node.output[1]] = ops[Symbol(node.op_type)](node.attribute, map(n -> vs[n], node.input)...)
+      if (length(node.input) > 1) && node.input[2] == "convolution.W"
+        vs[node.output[1]] = ops[Symbol(node.op_type)](node.attribute, map(n -> vs[n], node.input[1])...)
+      else 
+        vs[node.output[1]] = ops[Symbol(node.op_type)](node.attribute, map(n -> vs[n], node.input)...)
+      end
     else
       vs[node.output[1]] = ops[Symbol(node.op_type)](node, map(n -> vs[n], node.input)...)
     end

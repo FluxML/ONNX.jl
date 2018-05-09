@@ -25,7 +25,12 @@ end
 function pads(ps)
   padbegin = ps[1:end÷2]
   padend   = ps[end÷2+1:end]
-  padbegin == padend || error("Only symmetric padding currently supported, got $padbegin and $padend")
+  if (padbegin != padend)
+    println("WARNING: RESHAPING PADS DUE TO ASYMMETRIC PADDING")
+    ele = sum(ps) / 4
+    padbegin = (ele, ele)
+    return padbegin
+  end
   return (padbegin...)
 end
 
@@ -58,8 +63,10 @@ ops[:GlobalAveragePool] = function (params, x)
   vcall(:mean, x, (1,2))
 end
 
-#ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
-#  vcall(:BatchNorm, )
+ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
+  vcall(vcall(:BatchNorm, Symbol("ϵ=$(params[:epsilon])"),Symbol("momentum=$(params[:momentum])")), x)
+end
+
 # Regularise
 
 ops[:Dropout] = function (params, x)
@@ -81,6 +88,13 @@ ops[:Relu] = function (params, x)
   end
 end
 
+ops[:LeakyRelu] = function(params, x)
+  if !haskey(params, :alpha)
+    params[:alpha] = 0.01
+  end
+  vcall(:leakyrelu, x, params[:alpha])
+end
+
 ops[:Softmax] = function (params, x)
   vcall(:softmax, x)
 end
@@ -96,6 +110,7 @@ end
 ops[:LRN] = function(params, x)
   vcall(:identity, x)             # Needed: Flux support for LRN
 end
+
 #To-Do : add broadcast here (Urgent)
 #         Add axis condition here
 ops[:Add] = function(params, A, B)
@@ -117,4 +132,13 @@ end
 
 ops[:MatMul] = function(params, A, B)
   vcall(:*, A, B)
+end
+
+# Preprocessing
+
+ops[:ImageScaler] = function(params, A)
+  if !haskey(params, :scale)
+    params[:scale] = 1
+  end
+  vcall(:.*, A, params[:scale])
 end
