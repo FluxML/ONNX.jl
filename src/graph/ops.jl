@@ -84,6 +84,10 @@ end
 iscallp(f, v) = DataFlow.iscall(v) && f(v[1])
 islayer(v, name) = iscallp(l -> iscallp(x -> x == constant(name), l), v)
 
+ops[:Identity] = function(params, x)
+  vcall(:identity, x)
+end
+
 ops[:Relu] = function (params, x)
   if islayer(x, :Conv) || islayer(x, :Dense)
     layer = x[1]
@@ -107,6 +111,22 @@ end
 
 ops[:Softmax] = function (params, x)
   vcall(:softmax, x)
+end
+
+ops[:Floor] = function (params, x)
+  vcall(:broadcast, vcall(:floor, x))
+end
+
+ops[:Exp] = function(params, x)
+  vcall(:exp, x)
+end
+
+ops[:Log] = function(params, x)
+  vcall(:log, x)
+end
+
+ops[:Neg] = function(params, x)
+  vcall(:*, x, -1)
 end
 
 ops[:Constant] = function (params)
@@ -146,6 +166,10 @@ end
 
 ops[:size] = function(params, A)
   vcall(:prod, vcall(:size, A))
+end
+
+ops[:Sqrt] = function(params, A)
+  vcall(:broadcast, vcall(:sqrt, A))
 end
 
 # Preprocessing
