@@ -51,7 +51,12 @@ Get the array from a TensorProto object.
 """
 function get_array(x::Proto.TensorProto)
     if (x.data_type == 1)
-        x = reshape(reinterpret(Float32, x.float_data), x.dims...)
+        if !isempty(x.float_data)
+            x = reshape(reinterpret(Float32, x.float_data), x.dims...)
+        else
+            x = reshape(reinterpret(Float32, x.raw_data), x.dims...)
+        end
+        return permutedims(x, reverse(1:ndims(x)))
     end
     if x.data_type == 7
         x = reshape(reinterpret(Float32, x.raw_data), x.dims...)
@@ -190,7 +195,7 @@ function write_julia_file(model_file)
     data = ONNX.code(convert(f).graph)
     touch("model.jl")
     str3 = "Add(axis, A ,B) = A .+ reshape(B, (1,1,size(B)[1],1)) \n"
-    str1 = "softmax(a::AbstractArray) = Flux.softmax(reshape(a, size(a)[3])) \n"
+    str1 = "softmax(a::AbstractArray) = ndims(a)>3 ? Flux.softmax(reshape(a, size(a)[3])) : Flux.softmax(a) \n"
     open("model.jl","w") do file
         write(file, str3*str1*string(data))
     end

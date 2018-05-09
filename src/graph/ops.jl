@@ -11,12 +11,12 @@ ops[:Concat] = function (params, xs...)
 end
 
 ops[:Gemm] = function (params, A, B, C)
-  @assert haskey(params, :alpha) && haskey(params, :beta)
+  @assert !haskey(params, :alpha) && !haskey(params, :beta)
   layer = DataFlow.isconstant(B)
-  A = get(params, :transA, 0) == 1 ? vcall(transpose, A) : A
-  B = get(params, :transB, 0) == 1 ? vcall(transpose, B) : B
+  A = get(params, :transA, 0) == 1 ? vcall(:transpose, A) : A
+  B = get(params, :transB, 0) == 1 ? vcall(:transpose, B) : B
   layer ?
-    vcall(vcall(:Dense, B, C), A) :
+    vcall(vcall(:Dense, B, C), vcall(:vec, A)) :
     vcall(:broadcast, :+, vcall(*, B, A), C)
 end
 
