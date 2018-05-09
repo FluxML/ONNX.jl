@@ -9,8 +9,10 @@ function get_weights(g::Types.Graph)
   temp = Dict{Any, Any}()
   for node in g.node
     if node.op_type == "Constant"
-      temp[node.name] = reshape(node.attribute[:value].float_data,
-                                (reverse(node.attribute[:value].dims)...))
+      tensor = node.attribute[:value].float_data
+      tensor = reshape(node.attribute[:value].float_data,
+                                (node.attribute[:value].dims)...)
+      temp[node.name] = permutedims(tensor, reverse(1:ndims(tensor)))   # Store reverse of the tensor
     end
   end
   return temp
@@ -19,6 +21,8 @@ end
 vcall(a...) = vertex(Call(), constant.(a)...)
 
 # Placeholder for array values
+weights(f::Types.Model) = weights(f.graph)
+  
 function weights(g::Types.Graph)
   count = 0
   for node in g.node

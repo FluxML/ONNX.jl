@@ -50,13 +50,13 @@ end
 Get the array from a TensorProto object.
 """
 function get_array(x::Proto.TensorProto)
-  @assert x.data_type == 1 # Float32
-  if isempty(x.raw_data)
-    x = reshape(reinterpret(Float32, x.float_data), x.dims...)
-  else
-    x = reshape(reinterpret(Float32, x.raw_data), x.dims...)
-  end
-  return permutedims(x, reverse(1:ndims(x)))
+    if (x.data_type == 1)
+        x = reshape(reinterpret(Float32, x.float_data), x.dims...)
+    end
+    if x.data_type == 7
+        x = reshape(reinterpret(Float32, x.raw_data), x.dims...)
+    end
+    return permutedims(x, reverse(1:ndims(x)))
 end
 
 """

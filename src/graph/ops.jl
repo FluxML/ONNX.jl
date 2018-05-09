@@ -17,7 +17,7 @@ ops[:Gemm] = function (params, A, B, C)
   B = get(params, :transB, 0) == 1 ? vcall(transpose, B) : B
   layer ?
     vcall(vcall(:Dense, B, C), A) :
-    vcall(broadcast, :+, vcall(*, B, A), C)
+    vcall(:broadcast, :+, vcall(*, B, A), C)
 end
 
 # Image
@@ -101,6 +101,10 @@ ops[:LeakyRelu] = function(params, x)
   vcall(:leakyrelu, x, params[:alpha])
 end
 
+ops[:Sigmoid] = function (params, x)
+  vcall(:sigmoid, x)
+end
+
 ops[:Softmax] = function (params, x)
   vcall(:softmax, x)
 end
@@ -120,7 +124,7 @@ end
 #To-Do : add broadcast here (Urgent)
 #         Add axis condition here
 ops[:Add] = function(params, A, B)
-  if (params[:broadcast] == 1)
+  if haskey(params, :broadcast) && params[:broadcast] == 1
     vcall( :Add,params[:axis], A, B)                  # To-DO : Define Add function  
   else
     # Broadcast not defined: Perform normal addition.
@@ -138,6 +142,10 @@ end
 
 ops[:MatMul] = function(params, A, B)
   vcall(:*, A, B)
+end
+
+ops[:size] = function(params, A)
+  vcall(:prod, vcall(:size, A))
 end
 
 # Preprocessing
