@@ -27,7 +27,7 @@ function pads(ps)
   padend   = ps[end÷2+1:end]
   if (padbegin != padend)
     println("WARNING: RESHAPING PADS DUE TO ASYMMETRIC PADDING")
-    ele = sum(ps) / 4
+    ele = Int64(sum(ps) / 4)
     padbegin = (ele, ele)
     return padbegin
   end
@@ -61,6 +61,12 @@ end
 
 ops[:GlobalAveragePool] = function (params, x)
   vcall(:mean, x, (1,2))
+end
+
+ops[:AveragePool] = function (params, x)
+  length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
+  strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
+  vcall(:meanpool, x ,(params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))"))
 end
 
 ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
