@@ -8,8 +8,14 @@ Retrieve only the useful information from a AttributeProto
 object into a Dict format.
 """
 function convert_model(x::Proto.AttributeProto)
-  field = [:f, :i, :s, :t, :g, :floats, :ints, :strings, :tensors, :graphs][x._type]
-  Symbol(x.name) => getfield(x, field)
+    if (x._type != 0)
+        field = [:f, :i, :s, :t, :g, :floats, :ints, :strings, :tensors, :graphs][x._type]
+        return Symbol(x.name) => getfield(x, field)
+    else
+      #  field = [:f, :i, :s, :t, :g, :floats, :ints, :strings, :tensors, :graphs][x._type + 4]
+        return Symbol(x.name) => getfield(x, :t)
+    end
+    
 end
 
 convert_array(as) = Dict(convert_model(a) for a in as)
@@ -195,9 +201,8 @@ function write_julia_file(model_file)
     data = ONNX.code(convert(f).graph)
     touch("model.jl")
     str3 = "Add(axis, A ,B) = A .+ reshape(B, (1,1,size(B)[1],1)) \n"
-    str1 = "softmax(a::AbstractArray) = ndims(a)>3 ? Flux.softmax(reshape(a, size(a)[3])) : Flux.softmax(a) \n"
     open("model.jl","w") do file
-        write(file, str3*str1*string(data))
+        write(file, str3*string(data))
     end
 end
 

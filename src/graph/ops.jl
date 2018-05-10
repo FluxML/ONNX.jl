@@ -1,4 +1,4 @@
-using Base
+  using Base
 # TODO: we need kwarg support for many of these
 
 # Generic
@@ -37,7 +37,7 @@ end
 ops[:Conv] = function (params, x, w, b...)
   length(params[:kernel_shape]) == 2 || error("Only Conv2D currently supported")
   if !haskey(params, Symbol("pads"))
-    params[:pads] = (0,0)
+    params[:pads] = [0,0,0,0]
   end
   if !haskey(params, Symbol("strides"))
     params[:strides] = (1,1)
@@ -48,7 +48,7 @@ ops[:Conv] = function (params, x, w, b...)
     end                                                                           # To Do: Add support for other stride values.
   end
   if isempty(b)
-    return vcall(vcall(:Conv, w, convert_type([0]), :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$((params[:pads]...))")), x)
+    return vcall(vcall(:Conv, w, convert_type([0]), :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))")), x)
   end
   vcall(vcall(:Conv, w, b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))")), x)
 end
@@ -66,11 +66,17 @@ end
 ops[:AveragePool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
+  if !haskey(params, :pads)
+    params[:pads] = [0,0,0,0]
+  end
   vcall(:meanpool, x ,(params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))"))
 end
 
 ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
-  vcall(vcall(:BatchNorm, Symbol("ϵ=$(params[:epsilon])"),Symbol("momentum=$(params[:momentum])")), x)
+  if !haskey(params ,Symbol("momentum"))
+    params[:momentum] = 0.9
+  end
+  vcall(vcall(:BatchNorm, vcall(:getindex, vcall(:size, x), 3), Symbol("ϵ=$(params[:epsilon])"),Symbol("momentum=$(params[:momentum])")), x)
 end
 
 # Regularise
@@ -110,7 +116,7 @@ ops[:Sigmoid] = function (params, x)
 end
 
 ops[:Softmax] = function (params, x)
-  vcall(:softmax, x)
+  vcall(:softmax, vcall(:vec, x))
 end
 
 ops[:Floor] = function (params, x)
@@ -127,6 +133,10 @@ end
 
 ops[:Neg] = function(params, x)
   vcall(:*, x, -1)
+end
+
+ops[:Sum] = function (params, x, y)
+  vcall(:+, x,y)
 end
 
 ops[:Constant] = function (params)
@@ -153,10 +163,10 @@ ops[:Add] = function(params, A, B)
 end
 
 ops[:Mul] = function (params, A, B)
-  if (params[:broadcast] == 1)
+  if (haskey(params, :boradcast) && params[:broadcast] == 1)
     vcall( :Mul, params[:axis], A, B)
   else
-    vcall(:.*, A, vcall(:permutedims, B ,[2,1]))    # In case of no broadcast, Perform normal Mul operation.
+    vcall(:.*, A, vcall(:permutedims, B ,vcall(:reverse, vcall(:range, 1, vcall(:ndims, B)))))   # In case of no broadcast, Perform normal Mul operation.
   end
 end
 
