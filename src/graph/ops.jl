@@ -126,19 +126,19 @@ ops[:Softmax] = function (params, x)
 end
 
 ops[:Floor] = function (params, x)
-  vcall(:broadcast, vcall(:floor, x))
+  vcall(:broadcast, :floor, x)
 end
 
 ops[:Exp] = function(params, x)
-  vcall(:exp, x)
+  vcall(:broadcast, :exp, x)
 end
 
 ops[:Log] = function(params, x)
-  vcall(:log, x)
+  vcall(:broadcast, :log, x)
 end
 
 ops[:Neg] = function(params, x)
-  vcall(:*, x, -1)
+  vcall(:*, -1,  x)
 end
 
 ops[:Sum] = function (params, x, y)
@@ -150,7 +150,7 @@ ops[:Constant] = function (params)
 end
 
 ops[:Ceil] = function (params ,x)
-  vcall(:braodcast, vcall(:ceil, x))
+  vcall(:broadcast, :ceil, x)
 end
 
 ops[:Reshape] = function(params, tensor)

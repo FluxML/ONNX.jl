@@ -38,8 +38,7 @@ function get_dict(a::ONNX.Proto.ModelProto)
     return g.node[1].attribute
 end
 
-function test(filename)
-    @test ONNX.ops[Symbol(get_optype(read_model(filename)))](get_dict(read_model(filename)), 
-                    constant(read_input(filename)[1]), 
-                        constant(permutedims(read_data(filename)[2], reverse(1:ndims(read_data(filename)[2]))))) |> syntax |> eval== read_output(filename)
+function main_test(filename,op_expected, ip...)
+    @test ONNX.ops[Symbol(get_optype(read_model(filename)))](get_dict(read_model(filename)),
+                                 ip...) |> syntax |> eval == op_expected
 end
