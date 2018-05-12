@@ -35,7 +35,6 @@ function pads(ps)
 end
 
 ops[:Conv] = function (params, x, w, b...)
-  length(params[:kernel_shape]) == 2 || error("Only Conv2D currently supported")
   if !haskey(params, Symbol("pads"))
     params[:pads] = [0,0,0,0]
   end
@@ -54,7 +53,6 @@ ops[:Conv] = function (params, x, w, b...)
 end
 
 ops[:MaxPool] = function (params, x)
-  length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
   length(params[:pads]) == 4 ?
   vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))")) :
@@ -94,6 +92,12 @@ islayer(v, name) = iscallp(l -> iscallp(x -> x == constant(name), l), v)
 
 ops[:Identity] = function(params, x)
   vcall(:identity, x)
+end
+
+ops[:Flatten] = function(params, x)
+  prod1 = vcall(:*, vcall(:size, x)[1:params[:axis]])
+  prod2 = vcall(:*, vcall(:size, x)[params[:axis +1]:end])
+  vcall(:reshape, x, prod1, prod2)
 end
 
 ops[:Relu] = function (params, x)
@@ -145,6 +149,10 @@ ops[:Constant] = function (params)
   constant(Symbol("weights[\"$(params.name)\"]"))
 end
 
+ops[:Ceil] = function (params ,x)
+  vcall(:braodcast, vcall(:ceil, x))
+end
+
 ops[:Reshape] = function(params, tensor)
   vcall(:reshape, tensor, (params[:shape]...))
 end
@@ -162,6 +170,14 @@ ops[:Add] = function(params, A, B)
     # Broadcast not defined: Perform normal addition.
     vcall(:+, A, vcall(:permutedims, B, vcall(:reverse, vcall(:range, 1, vcall(:ndims, B)))))
   end
+end
+
+ops[:Sub] = function(params, A , B)
+  vcall(:Sub, A, B)
+end
+
+ops[:Div] = function(params, A , B)
+  vcall(:Div, A, B)
 end
 
 ops[:Mul] = function (params, A, B)

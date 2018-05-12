@@ -12,6 +12,7 @@ function convert_model(x::Proto.AttributeProto)
         field = [:f, :i, :s, :t, :g, :floats, :ints, :strings, :tensors, :graphs][x._type]
         return Symbol(x.name) => getfield(x, field)
     end
+    return Symbol(x.name) =>  "Dummy"    
 end
 
 convert_array(as) = Dict(convert_model(a) for a in as)
