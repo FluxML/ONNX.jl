@@ -181,7 +181,7 @@ ops[:Div] = function(params, A , B)
 end
 
 ops[:Mul] = function (params, A, B)
-  if (haskey(params, :boradcast) && params[:broadcast] == 1)
+  if (haskey(params, :broadcast) && params[:broadcast] == 1)
     vcall( :Mul, params[:axis], A, B)
   else
     vcall(:.*, A, vcall(:permutedims, B ,vcall(:reverse, vcall(:range, 1, vcall(:ndims, B)))))   # In case of no broadcast, Perform normal Mul operation.
@@ -197,7 +197,7 @@ ops[:size] = function(params, A)
 end
 
 ops[:Sqrt] = function(params, A)
-  vcall(:broadcast, vcall(:sqrt, A))
+  vcall(:broadcast, :sqrt, A)
 end
 
 # Preprocessing
