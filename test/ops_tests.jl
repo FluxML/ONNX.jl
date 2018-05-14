@@ -1,7 +1,6 @@
 using ONNX, Flux, ProtoBuf
 using DataFlow: Call, vertex, syntax, constant
 using Base.Test
-
 # test taken from : https://github.com/onnx/onnx/tree/master/onnx/backend/test/data 
 
 function read_input(folder_name)
@@ -41,6 +40,30 @@ end
 function main_test(filename,op_expected, ip...)
     if Symbol(get_optype(read_model(filename))) == :Constant
         @test get_dict(read_model(filename))[:value] |> ONNX.get_array == op_expected
+        
+        elseif Symbol(get_optype(read_model(filename))) == :Conv
+        
+            temp = ONNX.ops[Symbol(get_optype(read_model(filename)))](get_dict(read_model(filename)),
+                                                                                     Symbol("ip[1]"), Symbol("ip[2]")) |> syntax
+            
+            touch("temp_conv.jl")
+            open("temp_conv.jl","w") do file
+                write(file, string(temp))
+            end
+            model = include("temp_conv.jl")
+            rm("temp_conv.jl")
+            @test model == op_expected
+        elseif Symbol(get_optype(read_model(filename))) == :MaxPool
+            temp = ONNX.ops[Symbol(get_optype(read_model(filename)))](get_dict(read_model(filename)),
+                                                                                     Symbol("ip[1]")) |> syntax
+            touch("temp_maxpool.jl")
+            open("temp_maxpool.jl","w") do file
+                write(file, string(temp))
+            end
+            
+            model = include("temp_maxpool.jl")
+            rm("temp_maxpool.jl")
+            @test model == op_expected
     else
     @test ONNX.ops[Symbol(get_optype(read_model(filename)))](get_dict(read_model(filename)),
                                  ip...) |> syntax |> eval ≈ op_expected atol=0.001

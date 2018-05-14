@@ -8,29 +8,36 @@ include("ops_tests.jl")
 ## Arithmetic Operator Tests: Add, Sub, Mul, Div
 
 #test add:
-main_test("test_add", read_output("test_add"), read_input("test_add")[1], read_input("test_add")[2])
+main_test("test_add", read_output("test_add"), read_input("test_add")[1],
+                                                 read_input("test_add")[2])
 
 #test add bcast
 main_test("test_add_bcast", read_output("test_add_bcast"), 
                     read_input("test_add_bcast")[1],read_input("test_add_bcast")[2])    
 
 #test mul
-main_test("test_mul", read_output("test_mul"), read_input("test_mul")[1], read_input("test_mul")[2])
+main_test("test_mul", read_output("test_mul"), read_input("test_mul")[1],
+                                                         read_input("test_mul")[2])
 
 #test mul bcast
-main_test("test_mul_bcast", read_output("test_mul_bcast"), read_input("test_mul_bcast")[1], read_input("test_mul_bcast")[2])
+main_test("test_mul_bcast", read_output("test_mul_bcast"), 
+                        read_input("test_mul_bcast")[1], read_input("test_mul_bcast")[2])
 
 #test sub
-main_test("test_sub", read_output("test_sub"), read_input("test_sub")[1], read_input("test_sub")[2])
+main_test("test_sub", read_output("test_sub"), 
+                        read_input("test_sub")[1], read_input("test_sub")[2])
 
 #test sub bcast
-main_test("test_sub_bcast", read_output("test_sub_bcast"), read_input("test_sub_bcast")[1], read_input("test_sub_bcast")[2])
+main_test("test_sub_bcast", read_output("test_sub_bcast"), 
+                        read_input("test_sub_bcast")[1], read_input("test_sub_bcast")[2])
 
 #test div
-main_test("test_div", read_output("test_div"), read_input("test_div")[1], read_input("test_div")[2])
+main_test("test_div", read_output("test_div"), 
+                                read_input("test_div")[1], read_input("test_div")[2])
 
 #test div bcast
-main_test("test_div_bcast", read_output("test_div_bcast"), read_input("test_div_bcast")[1], read_input("test_div_bcast")[2])
+main_test("test_div_bcast", read_output("test_div_bcast"), 
+                                read_input("test_div_bcast")[1], read_input("test_div_bcast")[2])
 
 ## Constant Test
 #test constant:
@@ -44,11 +51,13 @@ main_test("test_matmul_2d", read_output("test_matmul_2d"),
 
 #test reshape one dim:
 main_test("test_reshape_one_dim", read_output("test_reshape_extended_dims"),
-             read_input("test_reshape_extended_dims")[1],read_input("test_reshape_extended_dims")[2])
+             read_input("test_reshape_extended_dims")[1],
+                read_input("test_reshape_extended_dims")[2])
 
 #test reshape extended dim:
 main_test("test_reshape_extended_dims", read_output("test_reshape_extended_dims"),
-                 read_input("test_reshape_extended_dims")[1], read_input("test_reshape_extended_dims")[2])
+                 read_input("test_reshape_extended_dims")[1], 
+                        read_input("test_reshape_extended_dims")[2])
 
 #test reshape reordered dim:
 main_test("test_reshape_reordered_dims", read_output("test_reshape_reordered_dims"), 
@@ -57,7 +66,8 @@ main_test("test_reshape_reordered_dims", read_output("test_reshape_reordered_dim
 
 #test reshape reduced dim
 main_test("test_reshape_reduced_dims", read_output("test_reshape_reduced_dims"), 
-                    read_input("test_reshape_reduced_dims")[1], read_input("test_reshape_reduced_dims")[2])
+                    read_input("test_reshape_reduced_dims")[1], 
+                        read_input("test_reshape_reduced_dims")[2])
 
 ## Activation Tests
 
@@ -85,17 +95,43 @@ main_test("test_log", read_output("test_log"), read_input("test_log")[1])
 main_test("test_pow", read_output("test_pow"), read_input("test_pow")[1],read_input("test_pow")[2])
 
 #test pow bcast
-main_test("test_pow_bcast", read_output("test_pow_bcast"), read_input("test_pow_bcast")[1],read_input("test_pow_bcast")[2])
+main_test("test_pow_bcast", read_output("test_pow_bcast"), 
+                read_input("test_pow_bcast")[1],
+                        read_input("test_pow_bcast")[2])
 
 ## Test for logical operators
 
 #Test and2d
-main_test("test_and2d", read_output("test_and2d"), read_input("test_and2d")[1],read_input("test_and2d")[2])
+main_test("test_and2d", read_output("test_and2d"), 
+                        read_input("test_and2d")[1],
+                                read_input("test_and2d")[2])
 
 #Test and3d
-main_test("test_and3d", read_output("test_and3d"), read_input("test_and3d")[1],read_input("test_and3d")[2])
+main_test("test_and3d", read_output("test_and3d"),
+                read_input("test_and3d")[1],read_input("test_and3d")[2])
 
 #Test and4d
 main_test("test_and4d", read_output("test_and4d"), read_input("test_and4d")[1],read_input("test_and4d")[2])
 
+## Operation Tests:
 
+# Conv with strides and no pads
+ip = read_input("test_conv_with_strides_no_padding")
+main_test("test_conv_with_strides_no_padding", read_output("test_conv_with_strides_no_padding"), 
+                read_input("test_conv_with_strides_no_padding")[1],
+                        read_input("test_conv_with_strides_no_padding")[2])
+
+# Conv with strides and pads
+ip = read_input("test_conv_with_strides_padding")
+main_test("test_conv_with_strides_padding", read_output("test_conv_with_strides_padding"), 
+                read_input("test_conv_with_strides_padding")[1],
+                        read_input("test_conv_with_strides_padding")[2])
+
+# Maxpool 2D pads:
+ip = read_input("test_maxpool_2d_pads")
+main_test("test_maxpool_2d_pads", read_output("test_maxpool_2d_pads"), read_input("test_maxpool_2d_pads")[1])
+
+# Maxpool 2D default
+ip = read_input("test_maxpool_2d_default")
+main_test("test_maxpool_2d_default", read_output("test_maxpool_2d_default"),
+                                         read_input("test_maxpool_2d_default")[1])
