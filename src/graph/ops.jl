@@ -53,6 +53,12 @@ ops[:Conv] = function (params, x, w, b...)
 end
 
 ops[:MaxPool] = function (params, x)
+  if !(haskey(params, :strides))
+    params[:strides] = [1,1]
+  end
+  if !(haskey(params, :pads))
+    params[:pads] = [0,0,0,0]
+  end
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
   length(params[:pads]) == 4 ?
   vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))")) :
@@ -153,8 +159,8 @@ ops[:Ceil] = function (params ,x)
   vcall(:broadcast, :ceil, x)
 end
 
-ops[:Reshape] = function(params, tensor)
-  vcall(:reshape, tensor, (params[:shape]...))
+ops[:Reshape] = function(params, tensor1, shape)
+  vcall(:reshape, tensor1, vcall(:Tuple, vcall(:reverse, shape)))
 end
 
 ops[:LRN] = function(params, x)
@@ -165,10 +171,13 @@ end
 #         Add axis condition here
 ops[:Add] = function(params, A, B)
   if haskey(params, :broadcast) && params[:broadcast] == 1
+    if !haskey(params , :axis)
+      return vcall(:.+, A, B)
+    end
     vcall( :Add,params[:axis], A, B)                  # To-DO : Define Add function  
   else
     # Broadcast not defined: Perform normal addition.
-    vcall(:+, A, vcall(:permutedims, B, vcall(:reverse, vcall(:range, 1, vcall(:ndims, B)))))
+    vcall(:+, A, B)
   end
 end
 
@@ -189,7 +198,9 @@ ops[:Mul] = function (params, A, B)
 end
 
 ops[:MatMul] = function(params, A, B)
-  vcall(:*, A, B)
+  tempa = vcall(:permutedims, A, vcall(:reverse, vcall(:range, 1, vcall(:ndims, A))))
+  tempb = vcall(:permutedims, B, vcall(:reverse, vcall(:range, 1, vcall(:ndims, B))))
+  vcall(:permutedims, vcall(:*, tempa, tempb), vcall(:reverse, vcall(:range, 1, vcall(:ndims, vcall(:*, tempa, tempb)))))
 end
 
 ops[:size] = function(params, A)

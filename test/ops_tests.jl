@@ -39,6 +39,10 @@ function get_dict(a::ONNX.Proto.ModelProto)
 end
 
 function main_test(filename,op_expected, ip...)
+    if Symbol(get_optype(read_model(filename))) == :Constant
+        @test get_dict(read_model(filename))[:value] |> ONNX.get_array == op_expected
+    else
     @test ONNX.ops[Symbol(get_optype(read_model(filename)))](get_dict(read_model(filename)),
-                                 ip...) |> syntax |> eval == op_expected
+                                 ip...) |> syntax |> eval ≈ op_expected atol=0.001
+    end
 end

@@ -54,16 +54,16 @@ Get the array from a TensorProto object.
 function get_array(x::Proto.TensorProto)
     if (x.data_type == 1)
         if !isempty(x.float_data)
-            x = reshape(reinterpret(Float32, x.float_data), x.dims...)
+            x = reshape(reinterpret(Float32, x.float_data), reverse(x.dims)...)
         else
-            x = reshape(reinterpret(Float32, x.raw_data), x.dims...)
+            x = reshape(reinterpret(Float32, x.raw_data), reverse(x.dims)...)
         end
-        return permutedims(x, reverse(1:ndims(x)))
+        return x
     end
     if x.data_type == 7
-        x = reshape(reinterpret(Float32, x.raw_data), x.dims...)
+        x = reshape(reinterpret(Int64, x.raw_data), reverse(x.dims)...)
     end
-    return permutedims(x, reverse(1:ndims(x)))
+    return x
 end
 
 """
