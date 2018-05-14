@@ -188,7 +188,7 @@ ops[:Sub] = function(params, A , B)
     end
     return vcall( :Sub,params[:axis], A, B)                  # To-DO : Define Sub function  
   else
-    # Broadcast not defined: Perform normal addition.
+    # Broadcast not defined: Perform normal sub.
     return vcall(:-, A, B)
   end
 end
@@ -200,7 +200,7 @@ ops[:Div] = function(params, A , B)
     end
     return vcall( :Div, params[:axis], A, B)              # To-Do define Div function
   else
-    return vcall(:./, A, B)   # In case of no broadcast, Perform normal Mul operation.
+    return vcall(:./  , A, B)   # In case of no broadcast, Perform normal div operation.
   end
 end
 
@@ -212,6 +212,17 @@ ops[:Mul] = function (params, A, B)
     return vcall( :Mul, params[:axis], A, B)              # To-Do define Mul function
   else
     return vcall(:.*, A, B)   # In case of no broadcast, Perform normal Mul operation.
+  end
+end
+
+ops[:Pow] = function (params, A, B)
+  if (haskey(params, :broadcast) && params[:broadcast] == 1)
+    if !haskey(params, :axis)
+      return vcall(:.^, A, B)
+    end
+    return vcall( :Pow, params[:axis], A, B)              # To-Do define Pow function
+  else
+    return vcall(:.^, A, B)   # In case of no broadcast, Perform normal Power operation.
   end
 end
 
@@ -229,6 +240,33 @@ ops[:Sqrt] = function(params, A)
   vcall(:broadcast, :sqrt, A)
 end
 
+ops[:Reciprocal] = function(params, A)
+  vcall(:./ , 1, A)
+end
+
+ops[:And] = function(params, A, B)
+  if (haskey(params, :broadcast) && params[:broadcast] == 1)
+    if !haskey(params, :axis)
+      return vcall(:.*, vcall(:broadcast, :Bool, A), vcall(:broadcast, :Bool, B))
+    end
+    return vcall( :And, params[:axis], A, B)              # To-Do define And function
+  else
+    return vcall(:.*, vcall(:broadcast, :Bool, A), vcall(:broadcast, :Bool, B))   # In case of no broadcast, 
+                                                                                    #Perform normal And operation.
+  end
+end
+
+ops[:Or] = function(params, A, B)
+  if (haskey(params, :broadcast) && params[:broadcast] == 1)
+    if !haskey(params, :axis)
+      return vcall(:.+, vcall(:broadcast, :Bool, A), vcall(:broadcast, :Bool, B))
+    end
+    return vcall( :Or, params[:axis], A, B)              # To-Do define Or function
+  else
+    return vcall(:.+, vcall(:broadcast, :Bool, A), vcall(:broadcast, :Bool, B))   # In case of no broadcast, 
+                                                                                    #Perform normal Or operation.
+  end
+end
 # Preprocessing
 
 ops[:ImageScaler] = function(params, A)
