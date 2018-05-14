@@ -107,13 +107,13 @@ ops[:Flatten] = function(params, x)
 end
 
 ops[:Relu] = function (params, x)
-  if islayer(x, :Conv) || islayer(x, :Dense)
-    layer = x[1]
-    layer = vcall(layer[1], layer[2:3]..., :relu, layer[end], layer[4])
-    vcall(layer, x[2])
-  else
+ # if islayer(x, :Conv) || islayer(x, :Dense)
+ #   layer = x[1]
+ #   layer = vcall(layer[1], layer[2:3]..., :relu, layer[end], layer[4])
+ #   vcall(layer, x[2])
+ # else
     vcall(broadcast, :relu, x)
-  end
+  #end
 end
 
 ops[:LeakyRelu] = function(params, x)
@@ -174,26 +174,44 @@ ops[:Add] = function(params, A, B)
     if !haskey(params , :axis)
       return vcall(:.+, A, B)
     end
-    vcall( :Add,params[:axis], A, B)                  # To-DO : Define Add function  
+    return vcall( :Add,params[:axis], A, B)                  # To-DO : Define Add function  
   else
     # Broadcast not defined: Perform normal addition.
-    vcall(:+, A, B)
+    return vcall(:+, A, B)
   end
 end
 
 ops[:Sub] = function(params, A , B)
-  vcall(:Sub, A, B)
+  if haskey(params, :broadcast) && params[:broadcast] == 1
+    if !haskey(params , :axis)
+      return vcall(:.-, A, B)
+    end
+    return vcall( :Sub,params[:axis], A, B)                  # To-DO : Define Sub function  
+  else
+    # Broadcast not defined: Perform normal addition.
+    return vcall(:-, A, B)
+  end
 end
 
 ops[:Div] = function(params, A , B)
-  vcall(:Div, A, B)
+  if (haskey(params, :broadcast) && params[:broadcast] == 1)
+    if !haskey(params, :axis)
+      return vcall(:./, A, B)
+    end
+    return vcall( :Div, params[:axis], A, B)              # To-Do define Div function
+  else
+    return vcall(:./, A, B)   # In case of no broadcast, Perform normal Mul operation.
+  end
 end
 
 ops[:Mul] = function (params, A, B)
   if (haskey(params, :broadcast) && params[:broadcast] == 1)
-    vcall( :Mul, params[:axis], A, B)
+    if !haskey(params, :axis)
+      return vcall(:.*, A, B)
+    end
+    return vcall( :Mul, params[:axis], A, B)              # To-Do define Mul function
   else
-    vcall(:.*, A, vcall(:permutedims, B ,vcall(:reverse, vcall(:range, 1, vcall(:ndims, B)))))   # In case of no broadcast, Perform normal Mul operation.
+    return vcall(:.*, A, B)   # In case of no broadcast, Perform normal Mul operation.
   end
 end
 
