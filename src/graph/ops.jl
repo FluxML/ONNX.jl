@@ -43,8 +43,9 @@ ops[:Conv] = function (params, x, w, b...)
   end
   if (haskey(params, Symbol("auto_pad")))
     if (String(params[:auto_pad]) == "SAME_UPPER" || String(params[:auto_pad] == "SAME_LOWER"))
-      params[:pads] =  Base.convert(Array{Int64,1}, (params[:kernel_shape] .- 1)./2) # Only for strides = [1,1]
-    end                                                                           # To Do: Add support for other stride values.
+      temp = Base.convert(Array{Int64,1}, (params[:kernel_shape] .- 1)./2) # Only for strides = [1,1]
+      params[:pads] = vcat(temp, temp)                                    # To Do: Add support for other stride values.
+    end                                                                           
   end
   if isempty(b)
     return vcall(vcall(:Conv, w, convert_type([0]), :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))")), x)
@@ -231,9 +232,9 @@ ops[:Pow] = function (params, A, B)
 end
 
 ops[:MatMul] = function(params, A, B)
-  tempa = vcall(:permutedims, A, vcall(:reverse, vcall(:range, 1, vcall(:ndims, A))))
-  tempb = vcall(:permutedims, B, vcall(:reverse, vcall(:range, 1, vcall(:ndims, B))))
-  vcall(:permutedims, vcall(:*, tempa, tempb), vcall(:reverse, vcall(:range, 1, vcall(:ndims, vcall(:*, tempa, tempb)))))
+  #tempa = vcall(:permutedims, A, vcall(:reverse, vcall(:range, 1, vcall(:ndims, A))))
+  #tempb = vcall(:permutedims, B, vcall(:reverse, vcall(:range, 1, vcall(:ndims, B))))
+  vcall(:*, B, A)
 end
 
 ops[:size] = function(params, A)
