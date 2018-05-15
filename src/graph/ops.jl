@@ -163,6 +163,10 @@ ops[:Reshape] = function(params, tensor1, shape)
   vcall(:reshape, tensor1, vcall(:Tuple, vcall(:reverse, shape)))
 end
 
+ops[:Reshape] = function(params, tensor1)
+  vcall(:reshape, tensor1, (params[:shape]...))
+end
+
 ops[:LRN] = function(params, x)
   vcall(:identity, x)             # Needed: Flux support for LRN
 end

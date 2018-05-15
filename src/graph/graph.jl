@@ -9,11 +9,10 @@ function get_weights(g::Types.Graph)
   temp = Dict{Any, Any}()
   for node in g.node
     if node.op_type == "Constant"
-      if haskey(node.attribute, :float_data)
+      if haskey(node.attribute, :value)
         tensor = node.attribute[:value].float_data
-        tensor = reshape(node.attribute[:value].float_data,
-                                  (node.attribute[:value].dims)...)
-        temp[node.name] = permutedims(tensor, reverse(1:ndims(tensor)))   # Store reverse of the tensor
+        tensor = reshape(tensor, reverse(Tuple(node.attribute[:value].dims)))
+        temp[node.name] = tensor
       end
     end
   end
