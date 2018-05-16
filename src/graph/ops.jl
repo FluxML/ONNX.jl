@@ -148,8 +148,12 @@ ops[:Neg] = function(params, x)
   vcall(:*, -1,  x)
 end
 
-ops[:Sum] = function (params, x, y)
-  vcall(:+, x,y)
+ops[:Sum] = function (params, x, y...)
+  if (isempty(y))
+    return vcall(:identity, x)
+  else
+    return vcall(:+, x, vcall(:sum, y))
+  end
 end
 
 ops[:Constant] = function (params)
@@ -162,10 +166,6 @@ end
 
 ops[:Reshape] = function(params, tensor1, shape)
   vcall(:reshape, tensor1, vcall(:Tuple, vcall(:reverse, shape)))
-end
-
-ops[:Reshape] = function(params, tensor1)
-  vcall(:reshape, tensor1, (params[:shape]...))
 end
 
 ops[:LRN] = function(params, x)

@@ -61,3 +61,12 @@ main_test("test_pow_bcast", read_output("test_pow_bcast"),
 
 #test relu
 main_test("test_relu", read_output("test_relu"), read_input("test_relu")[1])
+
+#Test sum one input
+main_test("test_sum_one_input", read_output("test_sum_one_input"), 
+                                        read_input("test_sum_one_input")[1])
+                                        
+#Test sum two inputs
+main_test("test_sum_two_inputs", read_output("test_sum_two_inputs"), 
+                read_input("test_sum_two_inputs")[1],read_input("test_sum_two_inputs")[2])
+
