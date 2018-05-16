@@ -50,10 +50,10 @@ end
 function _graph(g::Types.Graph)
   vs, n = inputs(g)
   for node in g.node
-    if node.op_type != "Constant"
-      vs[node.output[1]] = ops[Symbol(node.op_type)](node.attribute, map(n -> vs[n], node.input)...)
-    else
+    if node.op_type == "Constant"
       vs[node.output[1]] = ops[Symbol(node.op_type)](node, map(n -> vs[n], node.input)...)
+    else
+      vs[node.output[1]] = ops[Symbol(node.op_type)](node.attribute, map(n -> vs[n], node.input)...)
     end
   end
   return vs[g.output[1].name], n
