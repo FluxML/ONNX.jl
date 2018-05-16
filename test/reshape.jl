@@ -20,3 +20,23 @@ main_test("test_reshape_reordered_dims", read_output("test_reshape_reordered_dim
 main_test("test_reshape_reduced_dims", read_output("test_reshape_reduced_dims"), 
                     read_input("test_reshape_reduced_dims")[1], 
                         read_input("test_reshape_reduced_dims")[2])
+
+## Transpose test:
+
+main_test("test_transpose_all_permutations_0", read_output("test_transpose_all_permutations_0"), 
+                        read_input("test_transpose_all_permutations_0")[1])
+
+main_test("test_transpose_all_permutations_1", read_output("test_transpose_all_permutations_1"), 
+                        read_input("test_transpose_all_permutations_1")[1])
+
+main_test("test_transpose_all_permutations_2", read_output("test_transpose_all_permutations_2"), 
+                        read_input("test_transpose_all_permutations_2")[1])
+                    
+main_test("test_transpose_all_permutations_3", read_output("test_transpose_all_permutations_3"), 
+                        read_input("test_transpose_all_permutations_3")[1])
+
+main_test("test_transpose_all_permutations_4", read_output("test_transpose_all_permutations_4"), 
+                        read_input("test_transpose_all_permutations_4")[1])
+
+main_test("test_transpose_all_permutations_5", read_output("test_transpose_all_permutations_5"), 
+                        read_input("test_transpose_all_permutations_5")[1])

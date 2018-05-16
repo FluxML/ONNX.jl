@@ -11,7 +11,7 @@ ops[:Concat] = function (params, xs...)
 end
 
 ops[:Gemm] = function (params, A, B, C)
-  @assert haskey(params, :alpha) && haskey(params, :beta)
+  #@assert !haskey(params, :alpha) && !haskey(params, :beta)
   layer = DataFlow.isconstant(B)
   A = get(params, :transA, 0) == 1 ? vcall(:transpose, A) : A
   B = get(params, :transB, 0) == 1 ? vcall(:transpose, B) : B
@@ -83,6 +83,9 @@ ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
   if !haskey(params ,Symbol("momentum"))
     params[:momentum] = 0.9
   end
+  if !haskey(params, Symbol("epsilon"))
+    params[:epsilon] = 1e-5
+  end
   vcall(vcall(:BatchNorm, vcall(:getindex, vcall(:size, x), 3), Symbol("ϵ=$(params[:epsilon])"),Symbol("momentum=$(params[:momentum])")), x)
 end
 
@@ -150,7 +153,7 @@ end
 
 ops[:Sum] = function (params, x, y...)
   if (isempty(y))
-    return vcall(:identity, x)
+    return vcall(:.+, x, 0)
   else
     return vcall(:+, x, vcall(:sum, y))
   end
@@ -166,6 +169,13 @@ end
 
 ops[:Reshape] = function(params, tensor1, shape)
   vcall(:reshape, tensor1, vcall(:Tuple, vcall(:reverse, shape)))
+end
+
+ops[:Transpose] = function(params ,tensor)
+  temp_tens = vcall(:permutedims, tensor, vcall(:reverse, vcall(:range, 1, vcall(:ndims, tensor))))
+  order = vcall(:.+, params[:perm], 1)
+  l = vcall(:permutedims, temp_tens, order)
+  return vcall(:permutedims, l, vcall(:reverse, vcall(:range, 1, vcall(:ndims, l))))
 end
 
 ops[:LRN] = function(params, x)
