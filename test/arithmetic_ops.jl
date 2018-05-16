@@ -65,8 +65,33 @@ main_test("test_relu", read_output("test_relu"), read_input("test_relu")[1])
 #Test sum one input
 main_test("test_sum_one_input", read_output("test_sum_one_input"), 
                                         read_input("test_sum_one_input")[1])
-                                        
+
 #Test sum two inputs
 main_test("test_sum_two_inputs", read_output("test_sum_two_inputs"), 
                 read_input("test_sum_two_inputs")[1],read_input("test_sum_two_inputs")[2])
 
+
+## Trigonometric ops
+
+#Test sin
+main_test("test_sin", read_output("test_sin"), read_input("test_sin")[1])
+main_test("test_sin_example", read_output("test_sin_example"), read_input("test_sin_example")[1])
+#Test cos
+main_test("test_cos", read_output("test_cos"), read_input("test_cos")[1])
+main_test("test_cos_example", read_output("test_cos_example"), read_input("test_cos_example")[1])
+
+#Test tan
+main_test("test_tan", read_output("test_tan"), read_input("test_tan")[1])
+main_test("test_tan_example", read_output("test_tan_example"), read_input("test_tan_example")[1])
+
+#test asin
+main_test("test_asin", read_output("test_asin"), read_input("test_asin")[1])
+main_test("test_asin_example", read_output("test_asin_example"), read_input("test_asin_example")[1])
+
+#test acos
+main_test("test_acos", read_output("test_acos"), read_input("test_acos")[1])
+main_test("test_acos_example", read_output("test_acos_example"), read_input("test_acos_example")[1])
+
+#test atan
+main_test("test_atan", read_output("test_atan"), read_input("test_atan")[1])
+main_test("test_atan_example", read_output("test_atan_example"), read_input("test_atan_example")[1])

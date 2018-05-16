@@ -280,3 +280,29 @@ ops[:ImageScaler] = function(params, A)
   end
   vcall(:.*, A, params[:scale])
 end
+
+#Trigonometric ops
+
+ops[:Cos] = function(params, A)
+  vcall(:broadcast, :cos, A)
+end
+
+ops[:Sin] = function(params, A)
+  vcall(:broadcast, :sin, A)
+end
+
+ops[:Tan] = function(params, A)
+  vcall(:broadcast, :tan, A)
+end
+
+ops[:Acos] = function(params, A)
+  vcall(:broadcast, :acos, A)
+end
+
+ops[:Asin] = function(params, A)
+  vcall(:broadcast, :asin, A)
+end
+
+ops[:Atan] = function(params, A)
+  vcall(:broadcast, :atan, A)
+end
