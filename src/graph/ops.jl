@@ -48,7 +48,8 @@ ops[:Conv] = function (params, x, w, b...)
     end                                                                           
   end
   if isempty(b)
-    return vcall(vcall(:Conv, w, convert_type([0]), :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))")), x)
+    return vcall(vcall(:Conv, w, Float64[0], :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))")), x)
+                                 # temp change (Until type fix)
   end
   vcall(vcall(:Conv, w, b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))")), x)
 end
@@ -152,11 +153,7 @@ ops[:Neg] = function(params, x)
 end
 
 ops[:Sum] = function (params, x, y...)
-  if (isempty(y))
-    return vcall(:.+, x, 0)
-  else
-    return vcall(:+, x, vcall(:sum, y))
-  end
+  vcall(:+, x, y[1])
 end
 
 ops[:Constant] = function (params)
