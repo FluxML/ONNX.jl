@@ -2,6 +2,11 @@ using ONNX, Flux, ProtoBuf
 using DataFlow: Call, vertex, syntax, constant
 using Base.Test
 # test taken from : https://github.com/onnx/onnx/tree/master/onnx/backend/test/data 
+# clone onnx here if onnx dir does not exist
+
+ONNX_PATH =  haskey(ENV, "ONNX_PATH") ? ENV["ONNX_PATH"] : "./onnx"
+ONNX_TEST_PATH = "$ONNX_PATH/onnx/backend/test/data/node"
+
 
 function read_input(folder_name)
     ar = Array{Any, 1}()
