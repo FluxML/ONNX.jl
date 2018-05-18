@@ -168,7 +168,7 @@ ops[:Ceil] = function (params ,x)
 end
 
 ops[:Reshape] = function(params, tensor1, shape)
-  vcall(:reshape, tensor1, vcall(:Tuple, vcall(:reverse, shape)))
+  vcall(:reshape, tensor1, vcall(:broadcast, Int64, vcall(:Tuple, vcall(:reverse, shape))))
 end
 
 ops[:Transpose] = function(params ,tensor)
