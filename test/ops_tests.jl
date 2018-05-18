@@ -1,10 +1,17 @@
 using ONNX, Flux, ProtoBuf
 using DataFlow: Call, vertex, syntax, constant
-using Base.Test
+using Base.Test, Base.run
 # test taken from : https://github.com/onnx/onnx/tree/master/onnx/backend/test/data 
 # clone onnx here if onnx dir does not exist
 
-ONNX_PATH =  haskey(ENV, "ONNX_PATH") ? ENV["ONNX_PATH"] : "./onnx"
+if !("onnx" in readdir())
+    # clone the package here
+    println("Downloading test data....")
+    Base.run(`git clone https://github.com/onnx/onnx.git`)
+end
+
+ONNX_PATH = "./onnx"
+
 ONNX_TEST_PATH = "$ONNX_PATH/onnx/backend/test/data/node"
 
 
