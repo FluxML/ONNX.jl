@@ -25,6 +25,17 @@ And `model` is the corresponding model in Flux!
 
 This package is currently under development, don't tell us we didn't warn you!
 
+## Running the tests
+
+It's always better to run the tests before moving on to importing a model. The operator tests ensure that all ops are working. Follow the given steps to run these tests:
+
+* Change your working directory to the `test` directory (`cd ~/.julia/v0.6/ONNX.jl/test` from the terminal)
+
+* Inside the test repository, run the `runtests.jl` script. (`julia runtests.jl`).
+
+* Running these tests may take some time, as it may initially download the test files if you don't already have them.
+
+
 ## Contributing and Help
 
 Since this package is currently under development, feel free to open an [issue](https://github.com/FluxML/ONNX.jl/issues) if you find any error/bug. 
