@@ -76,6 +76,17 @@ function main_test(filename,op_expected, ip...)
             model = include("temp_maxpool.jl")
             rm("temp_maxpool.jl")
             @test model == op_expected
+        elseif Symbol(get_optype(read_model(filename))) == :AveragePool
+            temp = ONNX.ops[Symbol(get_optype(read_model(filename)))](get_dict(read_model(filename)),
+                                                                                     Symbol("ip[1]")) |> syntax
+            touch("temp_averagepool.jl")
+            open("temp_averagepool.jl","w") do file
+                write(file, string(temp))
+            end
+            
+            model = include("temp_averagepool.jl")
+            rm("temp_averagepool.jl")
+            @test model ≈ op_expected atol=0.001
     else
     @test ONNX.ops[Symbol(get_optype(read_model(filename)))](get_dict(read_model(filename)),
                                  ip...) |> syntax |> eval ≈ op_expected atol=0.001

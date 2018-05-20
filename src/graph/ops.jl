@@ -73,11 +73,25 @@ end
 
 ops[:AveragePool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
+  if !haskey(params, :strides)
+    params[:strides] = [1,1]
+  end
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
   if !haskey(params, :pads)
     params[:pads] = [0,0,0,0]
   end
-  vcall(:meanpool, x ,(params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))"))
+  if params[:pads] == [0,0,0,0]
+    return vcall(:meanpool, x ,(params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads]))"),
+                                                    Symbol("stride=$((params[:strides]...))"))
+  else
+    params[:strides_temp] = [1,1]
+    params[:kernel_shape_temp] = [1,1]
+    params[:pads_temp] = [0,0,0,0]
+    temp = vcall(:meanpool, x ,(params[:kernel_shape_temp]...), Symbol("pad=$(pads(params[:pads]))"),
+                                                    Symbol("stride=$((params[:strides_temp]...))"))
+    return vcall(:meanpool, temp, (params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads_temp]))"),
+                                                    Symbol("stride=$((params[:strides]...))"))
+  end                                               
 end
 
 ops[:BatchNormalization] = function (params, x, scale, b, mean, var)

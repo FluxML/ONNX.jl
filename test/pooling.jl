@@ -12,3 +12,13 @@ ip = read_input("$ONNX_TEST_PATH/test_maxpool_2d_default")
 main_test("$ONNX_TEST_PATH/test_maxpool_2d_default", 
           read_output("$ONNX_TEST_PATH/test_maxpool_2d_default"),
           read_input("$ONNX_TEST_PATH/test_maxpool_2d_default")[1])
+
+# AveragePool 2D Default
+ip = read_input("test_averagepool_2d_default")
+main_test("test_averagepool_2d_default", read_output("test_averagepool_2d_default"),
+                     read_input("test_averagepool_2d_default")[1])
+
+# AveragePool 2D Strides
+ip = read_input("test_averagepool_2d_strides")
+main_test("test_averagepool_2d_strides", read_output("test_averagepool_2d_strides"),
+                                     read_input("test_averagepool_2d_strides")[1])

@@ -7,7 +7,7 @@ include("ops_tests.jl")
 
 include("constant.jl")
 include("logical_ops.jl")
-include("maxpool.jl")
+include("pooling.jl")
 include("conv.jl")
 include("reshape.jl")
 include("arithmetic_ops.jl")
