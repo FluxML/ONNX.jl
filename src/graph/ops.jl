@@ -167,8 +167,11 @@ ops[:Ceil] = function (params ,x)
   vcall(:broadcast, :ceil, x)
 end
 
-ops[:Reshape] = function(params, tensor1, shape)
-  vcall(:reshape, tensor1, vcall(:broadcast, Int64, vcall(:Tuple, vcall(:reverse, shape))))
+ops[:Reshape] = function(params, tensor1, shape...)
+  if haskey(params, :shape)
+    return vcall(:reshape, tensor1, vcall(:broadcast, Int64, vcall(:Tuple, params[:shape])))
+  end
+  vcall(:reshape, tensor1, vcall(:broadcast, Int64, vcall(:Tuple, vcall(:reverse, shape[1]))))
 end
 
 ops[:Transpose] = function(params ,tensor)
@@ -179,7 +182,8 @@ ops[:Transpose] = function(params ,tensor)
 end
 
 ops[:LRN] = function(params, x)
-  vcall(:identity, x)             # Needed: Flux support for LRN
+  vcall(:.+, x, 0)             # Needed: Flux support for LRN
+                               # currently, just bypassing the output
 end
 
 #To-Do : add broadcast here (Urgent)

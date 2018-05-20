@@ -33,7 +33,7 @@ It's always better to run the tests before moving on to importing a model. The o
 
 * Inside the test repository, run the `runtests.jl` script. (`julia runtests.jl`).
 
-* Running these tests may take some time, as it may initially download the test files if you don't already have them.
+* Running these tests may take some time, as it may initially download the test files if you don't already have them.(You need to have git preinstalled in order to download the tests)
 
 
 ## Contributing and Help
