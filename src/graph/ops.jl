@@ -120,9 +120,12 @@ ops[:Identity] = function(params, x)
 end
 
 ops[:Flatten] = function(params, x)
-  prod1 = vcall(:*, vcall(:size, x)[1:params[:axis]])
-  prod2 = vcall(:*, vcall(:size, x)[params[:axis +1]:end])
-  vcall(:reshape, x, prod1, prod2)
+  if (params[:axis] == 0)
+    return vcall(:reshape, x, vcall(:length, x), 1)
+  end
+  start = vcall(:prod, vcall(:size, x)[1:end-params[:axis]])
+  end_ = vcall(:prod, vcall(:size, x)[end-params[:axis]+1:end])
+  return vcall(:reshape, x, start, end_)
 end
 
 ops[:Relu] = function (params, x)
