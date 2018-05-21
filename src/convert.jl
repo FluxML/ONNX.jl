@@ -72,6 +72,14 @@ function get_array(x::Proto.TensorProto)
          x = reshape(reinterpret(Int32, x.raw_data), reverse(x.dims)...)
         return x
     end
+    if x.data_type == 11
+        x = reshape(reinterpret(Float64, x.raw_data), reverse(x.dims)...)
+        return x
+    end
+    if x.data_type == 10
+        x = reshape(reinterpret(Float16, x.raw_data), reverse(x.dims)...)
+        return x
+    end
 end
 
 """

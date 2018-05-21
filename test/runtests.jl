@@ -5,6 +5,7 @@ include("ops_tests.jl")
 
 @testset "ONNX" begin
 
+include("conversions.jl")
 include("constant.jl")
 include("logical_ops.jl")
 include("pooling.jl")

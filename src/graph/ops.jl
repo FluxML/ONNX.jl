@@ -123,7 +123,7 @@ ops[:Flatten] = function(params, x)
   if (params[:axis] == 0)
     return vcall(:reshape, x, vcall(:length, x), 1)
   end
-  start = vcall(:prod, vcall(:size, x)[1:end-params[:axis]])
+  start = vcall(:size, x) |> syntax |> eval
   end_ = vcall(:prod, vcall(:size, x)[end-params[:axis]+1:end])
   return vcall(:reshape, x, start, end_)
 end
@@ -174,6 +174,16 @@ ops[:Sum] = function (params, x, y...)
     return vcall(:.+, x, 0)
   end
   vcall(:+, x, y[1])
+end
+
+ops[:Cast] = function(params, x)
+  if (params[:to] == 1)
+    return vcall(:broadcast, :Float32, x)
+  elseif params[:to] == 10
+    return vcall(:broadcast, :Float16, x)
+  elseif params[:to] == 11
+    return vcall(:broadcast, :Float64, x)
+  end
 end
 
 ops[:Constant] = function (params)
