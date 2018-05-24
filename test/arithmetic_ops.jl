@@ -146,3 +146,7 @@ main_test("$ONNX_TEST_PATH/test_atan",
 main_test("$ONNX_TEST_PATH/test_atan_example", 
           read_output("$ONNX_TEST_PATH/test_atan_example"), 
           read_input("$ONNX_TEST_PATH/test_atan_example")[1])
+
+# Flatten
+main_test("test_flatten_axis0", read_output("test_flatten_axis0"),
+             read_input("test_flatten_axis0")[1])

@@ -48,7 +48,7 @@ ops[:Conv] = function (params, x, w, b...)
     end                                                                           
   end
   if isempty(b)
-    return vcall(vcall(:Conv, w, convert_type([0]), :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))")), x)
+    return vcall(vcall(:Conv, w, Float64[0], :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))")), x)
                                  # temp change (Until type fix)
   end
   vcall(vcall(:Conv, w, b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))")), x)
@@ -73,11 +73,25 @@ end
 
 ops[:AveragePool] = function (params, x)
   length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
+  if !haskey(params, :strides)
+    params[:strides] = [1,1]
+  end
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
   if !haskey(params, :pads)
     params[:pads] = [0,0,0,0]
   end
-  vcall(:meanpool, x ,(params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))"))
+  if params[:pads] == [0,0,0,0]
+    return vcall(:meanpool, x ,(params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads]))"),
+                                                    Symbol("stride=$((params[:strides]...))"))
+  else
+    params[:strides_temp] = [1,1]
+    params[:kernel_shape_temp] = [1,1]
+    params[:pads_temp] = [0,0,0,0]
+    temp = vcall(:meanpool, x ,(params[:kernel_shape_temp]...), Symbol("pad=$(pads(params[:pads]))"),
+                                                    Symbol("stride=$((params[:strides_temp]...))"))
+    return vcall(:meanpool, temp, (params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads_temp]))"),
+                                                    Symbol("stride=$((params[:strides]...))"))
+  end                                               
 end
 
 ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
@@ -106,9 +120,12 @@ ops[:Identity] = function(params, x)
 end
 
 ops[:Flatten] = function(params, x)
-  prod1 = vcall(:*, vcall(:size, x)[1:params[:axis]])
-  prod2 = vcall(:*, vcall(:size, x)[params[:axis +1]:end])
-  vcall(:reshape, x, prod1, prod2)
+  if (params[:axis] == 0)
+    return vcall(:reshape, x, vcall(:length, x), 1)
+  end
+  start = vcall(:size, x) |> syntax |> eval
+  end_ = vcall(:prod, vcall(:size, x)[end-params[:axis]+1:end])
+  return vcall(:reshape, x, start, end_)
 end
 
 ops[:Relu] = function (params, x)
@@ -159,6 +176,16 @@ ops[:Sum] = function (params, x, y...)
   vcall(:+, x, y[1])
 end
 
+ops[:Cast] = function(params, x)
+  if (params[:to] == 1)
+    return vcall(:broadcast, :Float32, x)
+  elseif params[:to] == 10
+    return vcall(:broadcast, :Float16, x)
+  elseif params[:to] == 11
+    return vcall(:broadcast, :Float64, x)
+  end
+end
+
 ops[:Constant] = function (params)
   constant(Symbol("weights[\"$(params.name)\"]"))
 end
@@ -167,8 +194,11 @@ ops[:Ceil] = function (params ,x)
   vcall(:broadcast, :ceil, x)
 end
 
-ops[:Reshape] = function(params, tensor1, shape)
-  vcall(:reshape, tensor1, vcall(:Tuple, vcall(:reverse, shape)))
+ops[:Reshape] = function(params, tensor1, shape...)
+  if haskey(params, :shape)
+    return vcall(:reshape, tensor1, vcall(:broadcast, Int64, vcall(:Tuple, params[:shape])))
+  end
+  vcall(:reshape, tensor1, vcall(:broadcast, Int64, vcall(:Tuple, vcall(:reverse, shape[1]))))
 end
 
 ops[:Transpose] = function(params ,tensor)
@@ -179,7 +209,8 @@ ops[:Transpose] = function(params ,tensor)
 end
 
 ops[:LRN] = function(params, x)
-  vcall(:identity, x)             # Needed: Flux support for LRN
+  vcall(:.+, x, 0)             # Needed: Flux support for LRN
+                               # currently, just bypassing the output
 end
 
 #To-Do : add broadcast here (Urgent)
