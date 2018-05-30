@@ -123,9 +123,6 @@ ops[:Flatten] = function(params, x)
   if (params[:axis] == 0)
     return vcall(:reshape, x, vcall(:length, x), 1)
   end
-  start = vcall(:size, x) |> syntax |> eval
-  end_ = vcall(:prod, vcall(:size, x)[end-params[:axis]+1:end])
-  return vcall(:reshape, x, start, end_)
 end
 
 ops[:Relu] = function (params, x)
