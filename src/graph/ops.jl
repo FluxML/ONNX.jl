@@ -104,6 +104,33 @@ ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
   vcall(vcall(:BatchNorm, vcall(:getindex, vcall(:size, x), 3), Symbol("ϵ=$(params[:epsilon])"),Symbol("momentum=$(params[:momentum])")), x)
 end
 
+function slice(a, s, e)
+  return a[s:e]
+end
+
+ops[:LSTM] = function(params, ip...)
+  if length(ip) == 3
+    len = params[:hidden_size]  
+    arg1 = vcall(reshape, ip[2], (4*len,2))
+    arg2 = vcall(reshape, ip[3], (4*len,3))
+    ip_ = vcall(reshape, ip[1], vcall(slice ,vcall(:size, ip[1]), 1, 2))
+    
+    a = vcall(Flux.LSTMCell, arg1, arg2, zeros(len*4), zeros(len), zeros(len))
+    b = vcall(:LSTM ,a)
+    return vcall(b, ip_)
+  elseif length(ip) == 4
+    len = params[:hidden_size]
+    arg1 = vcall(reshape, ip[2], (4*len,3))
+    arg2 = vcall(reshape, ip[3], (4*len,4))
+    arg3 = ip[4][1:4*len]
+    b1 = vcall(reinterpret, Float32, vcall(zeros, 2))
+    a = vcall(Flux.LSTMCell, arg1, arg2, arg3, b1, b1)
+    b = vcall(:LSTM ,a)
+    ip_ = vcall(reshape, ip[1], (3,3))
+    return vcall(b, ip_)
+  end
+end
+
 # Regularise
 
 ops[:Dropout] = function (params, x)
