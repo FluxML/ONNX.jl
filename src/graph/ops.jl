@@ -1,4 +1,4 @@
-  using Base
+using Base
 # TODO: we need kwarg support for many of these
 
 # Generic
@@ -126,7 +126,7 @@ ops[:LSTM] = function(params, ip...)
     b1 = vcall(reinterpret, Float32, vcall(zeros, 2))
     a = vcall(Flux.LSTMCell, arg1, arg2, arg3, b1, b1)
     b = vcall(:LSTM ,a)
-    ip_ = vcall(reshape, ip[1], (3,3))
+    ip_ = vcall(reshape, ip[1], vcall(slice ,vcall(:size, ip[1]), 1, 2))
     return vcall(b, ip_)
   end
 end
