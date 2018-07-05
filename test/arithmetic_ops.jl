@@ -72,9 +72,9 @@ main_test("$ONNX_TEST_PATH/test_pow", read_output("$ONNX_TEST_PATH/test_pow"),
                                       read_input("$ONNX_TEST_PATH/test_pow")[2])
 
 #test pow bcast
-main_test("$ONNX_TEST_PATH/test_pow_bcast", read_output("$ONNX_TEST_PATH/test_pow_bcast"), 
-                                            read_input("$ONNX_TEST_PATH/test_pow_bcast")[1],
-                                            read_input("$ONNX_TEST_PATH/test_pow_bcast")[2])
+main_test("$ONNX_TEST_PATH/test_pow_bcast_array", read_output("$ONNX_TEST_PATH/test_pow_bcast_array"), 
+                                            read_input("$ONNX_TEST_PATH/test_pow_bcast_array")[1],
+                                            read_input("$ONNX_TEST_PATH/test_pow_bcast_array")[2])
 
 #test relu
 main_test("$ONNX_TEST_PATH/test_relu", read_output("$ONNX_TEST_PATH/test_relu"), 
@@ -148,5 +148,5 @@ main_test("$ONNX_TEST_PATH/test_atan_example",
           read_input("$ONNX_TEST_PATH/test_atan_example")[1])
 
 # Flatten
-main_test("test_flatten_axis0", read_output("test_flatten_axis0"),
-             read_input("test_flatten_axis0")[1])
+main_test("$ONNX_TEST_PATH/test_flatten_axis0", read_output("$ONNX_TEST_PATH/test_flatten_axis0"),
+             read_input("$ONNX_TEST_PATH/test_flatten_axis0")[1])

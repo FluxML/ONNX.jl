@@ -47,11 +47,14 @@ ops[:Conv] = function (params, x, w, b...)
       params[:pads] = vcat(temp, temp)                                    # To Do: Add support for other stride values.
     end                                                                           
   end
+  params[:dilation] = [1,1]
   if isempty(b)
-    return vcall(vcall(:Conv, w, Float64[0], :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))")), x)
+    return vcall(vcall(:Conv, w, Float32[0], :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+        Symbol("dilation=$((params[:dilation]...,))")), x)
                                  # temp change (Until type fix)
   end
-  vcall(vcall(:Conv, w, b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))")), x)
+  vcall(vcall(:Conv, w, b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))"),
+       Symbol("dilation=$((params[:dilation]...,))")), x)
 end
 
 ops[:MaxPool] = function (params, x)
@@ -240,26 +243,22 @@ end
 #To-Do : add broadcast here (Urgent)
 #         Add axis condition here
 ops[:Add] = function(params, A, B)
-  if haskey(params, :broadcast) && params[:broadcast] == 1
-    if !haskey(params , :axis)
-      return vcall(:.+, A, B)
-    end
-    return vcall( :Add,params[:axis], A, B)                  # To-DO : Define Add function  
-  else
-    # Broadcast not defined: Perform normal addition.
+  s1 = vcall(:size, A)
+  s2 = vcall(:size, B)
+  if (s1==s2)
     return vcall(:+, A, B)
+  else
+    return vcall(:.+, A, B)
   end
 end
 
 ops[:Sub] = function(params, A , B)
-  if haskey(params, :broadcast) && params[:broadcast] == 1
-    if !haskey(params , :axis)
-      return vcall(:.-, A, B)
-    end
-    return vcall( :Sub,params[:axis], A, B)                  # To-DO : Define Sub function  
-  else
-    # Broadcast not defined: Perform normal sub.
+  s1 = vcall(:size, A)
+  s2 = vcall(:size, B)
+  if (s1==s2)
     return vcall(:-, A, B)
+  else
+    return vcall(:.-, A, B)
   end
 end
 
