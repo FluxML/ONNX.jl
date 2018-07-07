@@ -137,11 +137,12 @@ end
 # Regularise
 
 ops[:Dropout] = function (params, x)
-  if !haskey(params, :ratio)
-    return vcall(:identity, x)
-  else
-    return vcall(vcall(:Dropout, params[:ratio]), x)
-  end
+  #if !haskey(params, :ratio)
+  #  return vcall(:identity, x)
+  #else
+  #  return vcall(vcall(:Dropout, params[:ratio]), x)
+  #end
+  return vcall(:identity, x)
 end
 
 # Activation
