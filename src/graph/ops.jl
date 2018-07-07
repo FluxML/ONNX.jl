@@ -49,11 +49,11 @@ ops[:Conv] = function (params, x, w, b...)
   end
   params[:dilation] = [1,1]
   if isempty(b)
-    return vcall(vcall(:Conv, w, Float32[0], :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+    return vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
         Symbol("dilation=$((params[:dilation]...,))")), x)
                                  # temp change (Until type fix)
   end
-  vcall(vcall(:Conv, w, b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))"),
+  vcall(vcall(:Conv, vcall(:flipkernel, w), b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))"),
        Symbol("dilation=$((params[:dilation]...,))")), x)
 end
 
@@ -137,7 +137,11 @@ end
 # Regularise
 
 ops[:Dropout] = function (params, x)
-  vcall(vcall(:Dropout, params[:ratio]), x)
+  if !haskey(params, :ratio)
+    return vcall(:identity, x)
+  else
+    return vcall(vcall(:Dropout, params[:ratio]), x)
+  end
 end
 
 # Activation

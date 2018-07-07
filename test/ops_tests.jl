@@ -60,7 +60,8 @@ function main_test(filename,op_expected, ip...)
             
             touch("temp_conv.jl")
             open("temp_conv.jl","w") do file
-                write(file, string(temp))
+                str1 = "flipkernel(x) = x[end:-1:1, end:-1:1, :, :] \n"                     # Remove when Flux directly supports it
+                write(file, str1*string(temp))
             end
             model = include("temp_conv.jl")
             rm("temp_conv.jl")
