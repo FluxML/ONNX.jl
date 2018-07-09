@@ -1,4 +1,4 @@
-  using Base
+using Base
 # TODO: we need kwarg support for many of these
 
 # Generic
@@ -47,11 +47,14 @@ ops[:Conv] = function (params, x, w, b...)
       params[:pads] = vcat(temp, temp)                                    # To Do: Add support for other stride values.
     end                                                                           
   end
+  params[:dilation] = [1,1]
   if isempty(b)
-    return vcall(vcall(:Conv, w, Float64[0], :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))")), x)
+    return vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+        Symbol("dilation=$((params[:dilation]...,))")), x)
                                  # temp change (Until type fix)
   end
-  vcall(vcall(:Conv, w, b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))")), x)
+  vcall(vcall(:Conv, vcall(:flipkernel, w), b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))"),
+       Symbol("dilation=$((params[:dilation]...,))")), x)
 end
 
 ops[:MaxPool] = function (params, x)
@@ -104,10 +107,42 @@ ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
   vcall(vcall(:BatchNorm, vcall(:getindex, vcall(:size, x), 3), Symbol("ϵ=$(params[:epsilon])"),Symbol("momentum=$(params[:momentum])")), x)
 end
 
+function slice(a, s, e)
+  return a[s:e]
+end
+
+ops[:LSTM] = function(params, ip...)
+  if length(ip) == 3
+    len = params[:hidden_size]  
+    arg1 = vcall(reshape, ip[2], (4*len,2))
+    arg2 = vcall(reshape, ip[3], (4*len,3))
+    ip_ = vcall(reshape, ip[1], vcall(slice ,vcall(:size, ip[1]), 1, 2))
+    
+    a = vcall(Flux.LSTMCell, arg1, arg2, zeros(len*4), zeros(len), zeros(len))
+    b = vcall(:LSTM ,a)
+    return vcall(b, ip_)
+  elseif length(ip) == 4
+    len = params[:hidden_size]
+    arg1 = vcall(reshape, ip[2], (4*len,3))
+    arg2 = vcall(reshape, ip[3], (4*len,4))
+    arg3 = ip[4][1:4*len]
+    b1 = vcall(reinterpret, Float32, vcall(zeros, 2))
+    a = vcall(Flux.LSTMCell, arg1, arg2, arg3, b1, b1)
+    b = vcall(:LSTM ,a)
+    ip_ = vcall(reshape, ip[1], vcall(slice ,vcall(:size, ip[1]), 1, 2))
+    return vcall(b, ip_)
+  end
+end
+
 # Regularise
 
 ops[:Dropout] = function (params, x)
-  vcall(vcall(:Dropout, params[:ratio]), x)
+  #if !haskey(params, :ratio)
+  #  return vcall(:identity, x)
+  #else
+  #  return vcall(vcall(:Dropout, params[:ratio]), x)
+  #end
+  return vcall(:identity, x)
 end
 
 # Activation
@@ -213,26 +248,22 @@ end
 #To-Do : add broadcast here (Urgent)
 #         Add axis condition here
 ops[:Add] = function(params, A, B)
-  if haskey(params, :broadcast) && params[:broadcast] == 1
-    if !haskey(params , :axis)
-      return vcall(:.+, A, B)
-    end
-    return vcall( :Add,params[:axis], A, B)                  # To-DO : Define Add function  
-  else
-    # Broadcast not defined: Perform normal addition.
+  s1 = vcall(:size, A)
+  s2 = vcall(:size, B)
+  if (s1==s2)
     return vcall(:+, A, B)
+  else
+    return vcall(:.+, A, B)
   end
 end
 
 ops[:Sub] = function(params, A , B)
-  if haskey(params, :broadcast) && params[:broadcast] == 1
-    if !haskey(params , :axis)
-      return vcall(:.-, A, B)
-    end
-    return vcall( :Sub,params[:axis], A, B)                  # To-DO : Define Sub function  
-  else
-    # Broadcast not defined: Perform normal sub.
+  s1 = vcall(:size, A)
+  s2 = vcall(:size, B)
+  if (s1==s2)
     return vcall(:-, A, B)
+  else
+    return vcall(:.-, A, B)
   end
 end
 
