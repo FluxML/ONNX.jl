@@ -61,7 +61,11 @@ function get_array(x::Proto.TensorProto)
         return x
     end
     if x.data_type == 7
-        x = reshape(reinterpret(Int64, x.raw_data), reverse(x.dims)...)
+        if !isempty(x.raw_data)
+            x = reshape(reinterpret(Int64, x.raw_data), reverse(x.dims)...)
+        else
+            x = reshape(reinterpret(Int64, x.int64_data), reverse(x.dims)...)
+        end
         return x
     end
     if x.data_type == 9

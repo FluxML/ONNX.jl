@@ -104,7 +104,11 @@ ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
   if !haskey(params, Symbol("epsilon"))
     params[:epsilon] = 1e-5
   end
-  vcall(vcall(:BatchNorm, vcall(:getindex, vcall(:size, x), 3), Symbol("ϵ=$(params[:epsilon])"),Symbol("momentum=$(params[:momentum])")), x)
+  t = typeof(params[:momentum])
+  q = vcall(:broadcast, :+, params[:epsilon], var)
+  p = vcall(:broadcast, sqrt ,q)
+  r = vcall(:broadcast, Float32, p)
+  return vcall(vcall(:BatchNorm,identity, b, scale, mean, r, t(params[:epsilon]), params[:momentum], false), x)
 end
 
 function slice(a, s, e)
