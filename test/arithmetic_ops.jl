@@ -150,3 +150,15 @@ main_test("$ONNX_TEST_PATH/test_atan_example",
 # Flatten
 main_test("$ONNX_TEST_PATH/test_flatten_axis0", read_output("$ONNX_TEST_PATH/test_flatten_axis0"),
              read_input("$ONNX_TEST_PATH/test_flatten_axis0")[1])
+
+# test gemm broadcast
+main_test("$ONNX_TEST_PATH/test_gemm_broadcast", read_output("$ONNX_TEST_PATH/test_gemm_broadcast"),
+     read_input("$ONNX_TEST_PATH/test_gemm_broadcast")[1], 
+     read_input("$ONNX_TEST_PATH/test_gemm_broadcast")[2],
+     read_input("$ONNX_TEST_PATH/test_gemm_broadcast")[3])
+
+# test gemm nobroadcast
+main_test("$ONNX_TEST_PATH/test_gemm_nobroadcast", read_output("$ONNX_TEST_PATH/test_gemm_nobroadcast"),
+     read_input("$ONNX_TEST_PATH/test_gemm_nobroadcast")[1], 
+     read_input("$ONNX_TEST_PATH/test_gemm_nobroadcast")[2],
+     read_input("$ONNX_TEST_PATH/test_gemm_nobroadcast")[3])

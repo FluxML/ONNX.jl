@@ -11,13 +11,29 @@ ops[:Concat] = function (params, xs...)
 end
 
 ops[:Gemm] = function (params, A, B, C)
-  #@assert !haskey(params, :alpha) && !haskey(params, :beta)
-  layer = DataFlow.isconstant(B)
-  A = get(params, :transA, 0) == 1 ? vcall(:transpose, A) : A
-  B = get(params, :transB, 0) == 1 ? vcall(:transpose, B) : B
-  layer ?
-    vcall(vcall(:Dense, B, C), vcall(:vec, A)) :
-    vcall(:broadcast, :+, vcall(*, B, A), C)
+  if !haskey(params, :transA)
+    params[:transA] = 0
+  end
+  if !haskey(params, :transB)
+    params[:transB] = 0
+  end
+  if (params[:transA] != 1)
+    A = permutedims(A, reverse(range(1, ndims(A))))
+  end
+  if (params[:transB] != 1)
+    B = permutedims(B, reverse(range(1, ndims(B))))
+  end
+  ip1 = vcall(:*, params[:alpha], A, B)
+  s1 = ip1 |> syntax |> eval |> size
+  ip2 = vcall(:*, params[:beta], C)
+  s2 = ip2 |> syntax |> eval |> size
+  if reverse(s1) == s2
+    ip1 = vcall(:permutedims, ip1, vcall(:reverse, vcall(:range, 1, vcall(:ndims, ip1))))
+    res = vcall(:broadcast, :+, ip1, ip2)
+    return res
+  end
+  res = vcall(:broadcast, :+, ip1, ip2)
+  return vcall(:permutedims, res, vcall(:reverse, vcall(:range, 1, vcall(:ndims, res))))
 end
 
 # Image
