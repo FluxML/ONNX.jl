@@ -162,3 +162,7 @@ main_test("$ONNX_TEST_PATH/test_gemm_nobroadcast", read_output("$ONNX_TEST_PATH/
      read_input("$ONNX_TEST_PATH/test_gemm_nobroadcast")[1], 
      read_input("$ONNX_TEST_PATH/test_gemm_nobroadcast")[2],
      read_input("$ONNX_TEST_PATH/test_gemm_nobroadcast")[3])
+
+# test unsqueeze
+main_test("$ONNX_TEST_PATH/test_unsqueeze", read_output("$ONNX_TEST_PATH/test_unsqueeze"),
+     read_input("$ONNX_TEST_PATH/test_unsqueeze")[1])

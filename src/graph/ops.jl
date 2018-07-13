@@ -17,11 +17,17 @@ ops[:Gemm] = function (params, A, B, C)
   if !haskey(params, :transB)
     params[:transB] = 0
   end
+  if !haskey(params, :alpha)
+    params[:alpha] = 1
+  end
+  if !haskey(params, :beta)
+    params[:beta] = 1
+  end
   if (params[:transA] != 1)
-    A = permutedims(A, reverse(range(1, ndims(A))))
+    A =  vcall(:permutedims, A, vcall(:reverse, vcall(:range, 1, vcall(:ndims, A))))
   end
   if (params[:transB] != 1)
-    B = permutedims(B, reverse(range(1, ndims(B))))
+    B = vcall(:permutedims, B, vcall(:reverse, vcall(:range, 1, vcall(:ndims, B))))
   end
   ip1 = vcall(:*, params[:alpha], A, B)
   s1 = ip1 |> syntax |> eval |> size
@@ -88,6 +94,10 @@ end
 
 ops[:GlobalAveragePool] = function (params, x)
   vcall(:mean, x, (1,2))
+end
+
+ops[:GlobalMaxPool] = function (params, x)
+  vcall(:getindex, vcall(:findmax, x, (1,2)), 1)
 end
 
 ops[:AveragePool] = function (params, x)
@@ -244,6 +254,16 @@ end
 
 ops[:Ceil] = function (params ,x)
   vcall(:broadcast, :ceil, x)
+end
+
+ops[:Unsqueeze] = function(params, x)
+  l1 = length(params[:axes])
+  l2 = vcall(:+, l1, vcall(:ndims, x))
+  temp = x
+  for ele in params[:axes]
+    temp = vcall(Flux.unsqueeze, temp, vcall(:-, vcall(:+, vcall(:ndims, temp), 1), ele))
+  end
+  return temp
 end
 
 ops[:Reshape] = function(params, tensor1, shape...)
