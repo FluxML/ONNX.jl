@@ -23,6 +23,9 @@ ops[:Gemm] = function (params, A, B, C)
   if !haskey(params, :beta)
     params[:beta] = 1
   end
+  if !haskey(params, :broadcast)
+    params[:broadcast] = 0
+  end
   if (params[:transA] != 1)
     A =  vcall(:permutedims, A, vcall(:reverse, vcall(:range, 1, vcall(:ndims, A))))
   end
@@ -30,10 +33,8 @@ ops[:Gemm] = function (params, A, B, C)
     B = vcall(:permutedims, B, vcall(:reverse, vcall(:range, 1, vcall(:ndims, B))))
   end
   ip1 = vcall(:*, params[:alpha], A, B)
-  s1 = ip1 |> syntax |> eval |> size
   ip2 = vcall(:*, params[:beta], C)
-  s2 = ip2 |> syntax |> eval |> size
-  if reverse(s1) == s2
+  if params[:broadcast] == 0
     ip1 = vcall(:permutedims, ip1, vcall(:reverse, vcall(:range, 1, vcall(:ndims, ip1))))
     res = vcall(:broadcast, :+, ip1, ip2)
     return res
@@ -87,6 +88,13 @@ ops[:MaxPool] = function (params, x)
     params[:pads] = [0,0,0,0]
   end
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
+  if length(params[:kernel_shape]) == 1
+    push!(params[:kernel_shape], 1)
+    n_size = vcall(:Tuple, vcall(:push!, vcall(:collect, vcall(:size, x)), 1))
+    new_x = vcall(:reshape, x, n_size)
+    return vcall(:squeeze, vcall(:maxpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
+        Symbol("stride=$((params[:strides]...))")), 4) 
+  end
   length(params[:pads]) == 4 ?
   vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))")) :
   vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(params[:pads]...)"),Symbol("stride=$((params[:strides]...))"))
