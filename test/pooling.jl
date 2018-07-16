@@ -49,6 +49,18 @@ main_test("$ONNX_TEST_PATH/test_averagepool_2d_strides",
             read_output("$ONNX_TEST_PATH/test_averagepool_2d_strides"),
                                      read_input("$ONNX_TEST_PATH/test_averagepool_2d_strides")[1])
 
+# Averagepool 2d pads count include pad                                     
+ip = read_input("$ONNX_TEST_PATH/test_averagepool_2d_pads_count_include_pad")
+main_test("$ONNX_TEST_PATH/test_averagepool_2d_pads_count_include_pad", 
+    read_output("$ONNX_TEST_PATH/test_averagepool_2d_pads_count_include_pad"), 
+        read_input("$ONNX_TEST_PATH/test_averagepool_2d_pads_count_include_pad")[1]);
+
+# AveragePool 2d precomputed pads count include pad        
+ip = read_input("$ONNX_TEST_PATH/test_averagepool_2d_precomputed_pads_count_include_pad")
+main_test("$ONNX_TEST_PATH/test_averagepool_2d_precomputed_pads_count_include_pad", 
+    read_output("$ONNX_TEST_PATH/test_averagepool_2d_precomputed_pads_count_include_pad"), 
+        read_input("$ONNX_TEST_PATH/test_averagepool_2d_precomputed_pads_count_include_pad")[1])
+
 # Test globalaveragepool
 main_test("$ONNX_TEST_PATH/test_globalaveragepool", 
     read_output("$ONNX_TEST_PATH/test_globalaveragepool"), 
