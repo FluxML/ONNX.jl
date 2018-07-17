@@ -7,7 +7,7 @@ name_to_link = Dict()
 name_to_link["squeezenet"] = "https://s3.amazonaws.com/download.onnx/models/opset_8/squeezenet.tar.gz"
 name_to_link["mnist"] = "https://www.cntk.ai/OnnxModels/mnist/opset_7/mnist.tar.gz"
 name_to_link["emotion_ferplus"] = "https://www.cntk.ai/OnnxModels/emotion_ferplus/opset_7/emotion_ferplus.tar.gz"
-
+name_to_link["vgg19"] = "https://s3.amazonaws.com/download.onnx/models/opset_8/vgg19.tar.gz"
 
 function read_ip(name)
     ip = readproto(open(name), ONNX.Proto.TensorProto()) |> ONNX.get_array
@@ -48,9 +48,11 @@ model = include(pwd()*"/model.jl")
 num_test=2
 if args[1] == "squeezenet"
     num_test = 11
+elseif args[1] == "vgg19"
+    num_test = 2
 end
 @testset begin
-if args[1] == "squeezenet"
+if (args[1] == "squeezenet") || (args[1] == "vgg19")
     for x=0:num_test
         @test (findmax(model(read_ip("test_data_set_$x/input_0.pb")))[2] == 
             findmax(read_ip("test_data_set_$x/output_0.pb"))[2])

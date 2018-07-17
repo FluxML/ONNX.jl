@@ -50,3 +50,41 @@ main_test("$ONNX_TEST_PATH/test_transpose_all_permutations_4",
 main_test("$ONNX_TEST_PATH/test_transpose_all_permutations_5", 
           read_output("$ONNX_TEST_PATH/test_transpose_all_permutations_5"), 
           read_input("$ONNX_TEST_PATH/test_transpose_all_permutations_5")[1])
+
+## Test concat
+
+#Test concat 1d axis 0
+main_test("$ONNX_TEST_PATH/test_concat_1d_axis_0", 
+    read_output("$ONNX_TEST_PATH/test_concat_1d_axis_0"), 
+        read_input("$ONNX_TEST_PATH/test_concat_1d_axis_0")[1],
+            read_input("$ONNX_TEST_PATH/test_concat_1d_axis_0")[2])
+
+#Test concat 2d axis 0
+main_test("$ONNX_TEST_PATH/test_concat_2d_axis_0", 
+    read_output("$ONNX_TEST_PATH/test_concat_2d_axis_0"), 
+        read_input("$ONNX_TEST_PATH/test_concat_2d_axis_0")[1],
+            read_input("$ONNX_TEST_PATH/test_concat_2d_axis_0")[2])
+
+#Test concat 2d axis 1
+main_test("$ONNX_TEST_PATH/test_concat_2d_axis_1", 
+    read_output("$ONNX_TEST_PATH/test_concat_2d_axis_1"), 
+        read_input("$ONNX_TEST_PATH/test_concat_2d_axis_1")[1],
+            read_input("$ONNX_TEST_PATH/test_concat_2d_axis_1")[2])
+
+#Test concat 3d axis 0
+main_test("$ONNX_TEST_PATH/test_concat_3d_axis_0", 
+    read_output("$ONNX_TEST_PATH/test_concat_3d_axis_0"), 
+        read_input("$ONNX_TEST_PATH/test_concat_3d_axis_0")[1],
+            read_input("$ONNX_TEST_PATH/test_concat_3d_axis_0")[2])
+
+#Test concat 3d axis 1
+main_test("$ONNX_TEST_PATH/test_concat_3d_axis_1", 
+    read_output("$ONNX_TEST_PATH/test_concat_3d_axis_1"), 
+        read_input("$ONNX_TEST_PATH/test_concat_3d_axis_1")[1],
+            read_input("$ONNX_TEST_PATH/test_concat_3d_axis_1")[2])
+
+#Test concat 3d axis 2
+main_test("$ONNX_TEST_PATH/test_concat_3d_axis_2", 
+    read_output("$ONNX_TEST_PATH/test_concat_3d_axis_2"), 
+        read_input("$ONNX_TEST_PATH/test_concat_3d_axis_2")[1],
+            read_input("$ONNX_TEST_PATH/test_concat_3d_axis_2")[2])

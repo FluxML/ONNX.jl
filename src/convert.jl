@@ -77,7 +77,11 @@ function get_array(x::Proto.TensorProto)
         return x
     end
     if x.data_type == 11
-        x = reshape(reinterpret(Float64, x.raw_data), reverse(x.dims)...)
+        if !isempty(x.raw_data)
+            x = reshape(reinterpret(Float64, x.raw_data), reverse(x.dims)...)
+        else
+            x = Base.convert(Array{Float32, N} where N, reshape(x.double_data , reverse(x.dims)...))
+        end
         return x
     end
     if x.data_type == 10

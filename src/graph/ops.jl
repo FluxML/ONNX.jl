@@ -7,7 +7,8 @@ get_tuple() = nothing
 convert_type(x) = Base.convert(Array{Float32, 1}, x)
 
 ops[:Concat] = function (params, xs...)
-  vcall(:cat, params[:axis] + 2, xs...)
+  s = vcall(:ndims, vcall(:getindex, xs, 1))
+  return vcall(:cat, vcall(:-, s, params[:axis]), vcall(:getindex, xs,1), vcall(:getindex, xs,2))
 end
 
 ops[:Gemm] = function (params, A, B, C)
@@ -215,6 +216,12 @@ ops[:LeakyRelu] = function(params, x)
   vcall(:leakyrelu, x, params[:alpha])
 end
 
+ops[:PRelu] = function(params, x, slope)
+  ip1 = vcall(:broadcast, :clamp, x, 0, Inf)
+  ip2 = vcall(:.*, vcall(:broadcast, :clamp, x, -Inf, 0), slope)
+  return vcall(:broadcast, Float32, vcall(:+, ip1, ip2))
+end
+
 ops[:Sigmoid] = function (params, x)
   vcall(:sigmoid, x)
 end
@@ -289,8 +296,18 @@ ops[:Transpose] = function(params ,tensor)
 end
 
 ops[:LRN] = function(params, x)
-  vcall(:.+, x, 0)             # Needed: Flux support for LRN
+  #if !haskey(params, :bias)
+  #  params[:bias] = 1
+  #end
+  #if !haskey(params, :alpha)
+  #  params[:alpha] = 1e-4
+  #end
+  #if !haskey(params, :beta)
+  #  params[:beta] = 0.75
+  #end
+  #return vcall(vcall(:LRNorm, params[:bias], params[:size], params[:alpha], params[:beta]), x)
                                # currently, just bypassing the output
+  return vcall(:.+, 0, x)
 end
 
 #To-Do : add broadcast here (Urgent)

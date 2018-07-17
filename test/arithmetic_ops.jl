@@ -91,6 +91,15 @@ main_test("$ONNX_TEST_PATH/test_sum_two_inputs",
           read_input("$ONNX_TEST_PATH/test_sum_two_inputs")[1],
           read_input("$ONNX_TEST_PATH/test_sum_two_inputs")[2])
 
+# Test Prelu example
+main_test("$ONNX_TEST_PATH/test_prelu_example", read_output("$ONNX_TEST_PATH/test_prelu_example"),
+    read_input("$ONNX_TEST_PATH/test_prelu_example")[1],
+        read_input("$ONNX_TEST_PATH/test_prelu_example")[2])
+
+# Test PRelu broadcast
+main_test("$ONNX_TEST_PATH/test_prelu_broadcast", read_output("$ONNX_TEST_PATH/test_prelu_broadcast"),
+    read_input("$ONNX_TEST_PATH/test_prelu_broadcast")[1],
+        read_input("$ONNX_TEST_PATH/test_prelu_broadcast")[2])
 
 ## Trigonometric ops
 
