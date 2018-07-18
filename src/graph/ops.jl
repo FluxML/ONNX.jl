@@ -110,13 +110,20 @@ ops[:GlobalMaxPool] = function (params, x)
 end
 
 ops[:AveragePool] = function (params, x)
-  length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
+  length(params[:kernel_shape]) <= 2 || error("Only maxpool2d currently supported")
   if !haskey(params, :strides)
     params[:strides] = [1,1]
   end
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
   if !haskey(params, :pads)
     params[:pads] = [0,0,0,0]
+  end
+  if length(params[:kernel_shape]) == 1
+    push!(params[:kernel_shape], 1)
+    n_size = vcall(:Tuple, vcall(:push!, vcall(:collect, vcall(:size, x)), 1))
+    new_x = vcall(:reshape, x, n_size)
+    return vcall(:squeeze, vcall(:meanpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
+        Symbol("stride=$((params[:strides]...))")), 4) 
   end
   if params[:pads] == [0,0,0,0]
     return vcall(:meanpool, x ,(params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads]))"),
