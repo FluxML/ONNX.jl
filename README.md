@@ -35,8 +35,12 @@ It's always better to run the tests before moving on to importing a model. The o
 
 * Running these tests may take some time, as it may initially download the test files if you don't already have them.(You need to have git preinstalled in order to download the tests)
 
+In order to read more about these tests and run model specific tests, go throught the docs in the `test` directory. 
 
 ## Contributing and Help
+
+If you're looking to contribute to the development of this package, and don't know where to begin, [this blog post](https://medium.com/@ayush1999/onnx-jl-the-past-present-and-future-d3b497a0cd4c) can be a good 
+starting point. It lists the approach taken towards developing this package, the current obstacles, and the work to be done in the future.
 
 Since this package is currently under development, feel free to open an [issue](https://github.com/FluxML/ONNX.jl/issues) if you find any error/bug. 
 

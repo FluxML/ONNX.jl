@@ -6,9 +6,9 @@ get_tuple(x) = (x...,)
 get_tuple() = nothing
 convert_type(x) = Base.convert(Array{Float32, 1}, x)
 
-ops[:Concat] = function (params, xs...)
-  s = vcall(:ndims, vcall(:getindex, xs, 1))
-  return vcall(:cat, vcall(:-, s, params[:axis]), vcall(:getindex, xs,1), vcall(:getindex, xs,2))
+ops[:Concat] = function (params, ip1, ip2, ip3, ip4)
+  s = vcall(:ndims, ip1)
+  return vcall(:cat, vcall(:-, s, params[:axis]), ip1, ip2, ip3, ip4)
 end
 
 ops[:Gemm] = function (params, A, B, C)
@@ -65,20 +65,47 @@ ops[:Conv] = function (params, x, w, b...)
   if !haskey(params, Symbol("strides"))
     params[:strides] = (1,1)
   end
+  if !haskey(params, Symbol("dilations"))
+    params[:dilations] = (1,1)
+  end
   if (haskey(params, Symbol("auto_pad")))
     if (String(params[:auto_pad]) == "SAME_UPPER" || String(params[:auto_pad] == "SAME_LOWER"))
       temp = Base.convert(Array{Int64,1}, (params[:kernel_shape] .- 1)./2) # Only for strides = [1,1]
-      params[:pads] = vcat(temp, temp)                                    # To Do: Add support for other stride values.
-    end                                                                           
+      params[:pads] = vcat(temp, temp)                                    # To Do: Add support for other stride values.                                                                           
+    elseif String(params[:auto_pad]) == "VALID"
+      params[:pads] = [0,0,0,0]
+    end
   end
-  params[:dilation] = [1,1]
+  if haskey(params, :group)
+    s = vcall(:Int, vcall(:/, vcall(:size, x, 3), params[:group]))
+    x = vcall(:reshape, x, vcall(:size, x, 1), vcall(:size, x, 2), s, params[:group], vcall(:size, x, 4))
+    temp_x = vcall(:getindex, x, :,:,:,1,:)
+    temp = vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, 
+        Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+          Symbol("dilation=$((params[:dilations]...,))")), temp_x)
+    if isempty(b)    
+      for i=2:params[:group]
+        temp = vcall(:cat, 3, temp, vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, 
+          Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+            Symbol("dilation=$((params[:dilations]...,))")), temp))
+      end
+      
+    else
+      for i=2:params[:group]
+        temp = vcall(:cat, 3, temp, vcall(vcall(:Conv, vcall(:flipkernel, w), b[1], :relu, 
+          Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+            Symbol("dilation=$((params[:dilations]...,))")), temp))
+      end
+    end
+    return temp
+  end
   if isempty(b)
-    return vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
-        Symbol("dilation=$((params[:dilation]...,))")), x)
+    return vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, Symbol("stride=$((params[:strides]...,))"),
+     Symbol("pad=$(pads(params[:pads]))"), Symbol("dilation=$((params[:dilations]...,))")), x)
                                  # temp change (Until type fix)
   end
-  vcall(vcall(:Conv, vcall(:flipkernel, w), b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))"),
-       Symbol("dilation=$((params[:dilation]...,))")), x)
+  vcall(vcall(:Conv, vcall(:flipkernel, w), b[1], Symbol("stride=$((params[:strides]...,))"), 
+    Symbol("pad=$(pads(params[:pads]))"),  Symbol("dilation=$((params[:dilations]...,))")), x)
 end
 
 ops[:MaxPool] = function (params, x)
@@ -312,9 +339,9 @@ ops[:LRN] = function(params, x)
   #if !haskey(params, :beta)
   #  params[:beta] = 0.75
   #end
-  #return vcall(vcall(:LRNorm, params[:bias], params[:size], params[:alpha], params[:beta]), x)
+  return vcall(vcall(:LRNorm, params[:bias], params[:size], params[:alpha], params[:beta]), x)
                                # currently, just bypassing the output
-  return vcall(:.+, 0, x)
+  #return vcall(:.+, 0, x)
 end
 
 #To-Do : add broadcast here (Urgent)
@@ -323,9 +350,9 @@ ops[:Add] = function(params, A, B)
   s1 = vcall(:size, A)
   s2 = vcall(:size, B)
   if (s1==s2)
-    return vcall(:+, A, B)
+    return vcall(:Add, params[:axis], A, B)
   else
-    return vcall(:.+, A, B)
+    return vcall(:Add,params[:axis], A, B)
   end
 end
 
