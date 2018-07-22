@@ -13,7 +13,7 @@ main_test("$ONNX_TEST_PATH/test_batchnorm_epsilon", read_output("$ONNX_TEST_PATH
     read_input("$ONNX_TEST_PATH/test_batchnorm_epsilon")[4],
     read_input("$ONNX_TEST_PATH/test_batchnorm_epsilon")[5])
 
-# Test BtachNorm example
+# Test BatchNorm example
 main_test("$ONNX_TEST_PATH/test_batchnorm_example", 
     read_output("$ONNX_TEST_PATH/test_batchnorm_example"),
     read_input("$ONNX_TEST_PATH/test_batchnorm_example")[1] ,

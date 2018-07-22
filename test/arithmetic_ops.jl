@@ -2,9 +2,10 @@ using ONNX, Flux, ProtoBuf
 include("ops_tests.jl")
 
 #test add:
-main_test("$ONNX_TEST_PATH/test_add", read_output("$ONNX_TEST_PATH/test_add"), 
-                                      read_input("$ONNX_TEST_PATH/test_add")[1],
-                                      read_input("$ONNX_TEST_PATH/test_add")[2])
+main_test("$ONNX_TEST_PATH/test_add",
+    read_output("$ONNX_TEST_PATH/test_add"), 
+        read_input("$ONNX_TEST_PATH/test_add")[1],
+            read_input("$ONNX_TEST_PATH/test_add")[2])
 
 #test add bcast
 main_test("$ONNX_TEST_PATH/test_add_bcast", 
@@ -13,72 +14,87 @@ main_test("$ONNX_TEST_PATH/test_add_bcast",
           read_input("$ONNX_TEST_PATH/test_add_bcast")[2])    
 
 #test mul
-main_test("$ONNX_TEST_PATH/test_mul", read_output("$ONNX_TEST_PATH/test_mul"), 
-                                      read_input("$ONNX_TEST_PATH/test_mul")[1],
-                                      read_input("$ONNX_TEST_PATH/test_mul")[2])
+main_test("$ONNX_TEST_PATH/test_mul",
+    read_output("$ONNX_TEST_PATH/test_mul"), 
+        read_input("$ONNX_TEST_PATH/test_mul")[1],
+            read_input("$ONNX_TEST_PATH/test_mul")[2])
 
 #test mul bcast
-main_test("$ONNX_TEST_PATH/test_mul_bcast", read_output("$ONNX_TEST_PATH/test_mul_bcast"), 
-                                            read_input("$ONNX_TEST_PATH/test_mul_bcast")[1], 
-                                            read_input("$ONNX_TEST_PATH/test_mul_bcast")[2])
+main_test("$ONNX_TEST_PATH/test_mul_bcast",
+    read_output("$ONNX_TEST_PATH/test_mul_bcast"), 
+        read_input("$ONNX_TEST_PATH/test_mul_bcast")[1], 
+            read_input("$ONNX_TEST_PATH/test_mul_bcast")[2])
 
 #test sub
-main_test("$ONNX_TEST_PATH/test_sub", read_output("$ONNX_TEST_PATH/test_sub"), 
-                                      read_input("$ONNX_TEST_PATH/test_sub")[1], 
-                                      read_input("$ONNX_TEST_PATH/test_sub")[2])
+main_test("$ONNX_TEST_PATH/test_sub", 
+    read_output("$ONNX_TEST_PATH/test_sub"), 
+        read_input("$ONNX_TEST_PATH/test_sub")[1], 
+            read_input("$ONNX_TEST_PATH/test_sub")[2])
 
 #test sub bcast
-main_test("$ONNX_TEST_PATH/test_sub_bcast", read_output("$ONNX_TEST_PATH/test_sub_bcast"), 
-                                            read_input("$ONNX_TEST_PATH/test_sub_bcast")[1], 
-                                            read_input("$ONNX_TEST_PATH/test_sub_bcast")[2])
+main_test("$ONNX_TEST_PATH/test_sub_bcast",
+    read_output("$ONNX_TEST_PATH/test_sub_bcast"), 
+        read_input("$ONNX_TEST_PATH/test_sub_bcast")[1], 
+            read_input("$ONNX_TEST_PATH/test_sub_bcast")[2])
 
 #test div
-main_test("$ONNX_TEST_PATH/test_div", read_output("$ONNX_TEST_PATH/test_div"), 
-                                      read_input("$ONNX_TEST_PATH/test_div")[1], 
-                                      read_input("$ONNX_TEST_PATH/test_div")[2])
+main_test("$ONNX_TEST_PATH/test_div",
+    read_output("$ONNX_TEST_PATH/test_div"), 
+        read_input("$ONNX_TEST_PATH/test_div")[1], 
+            read_input("$ONNX_TEST_PATH/test_div")[2])
 
 #test div bcast
-main_test("$ONNX_TEST_PATH/test_div_bcast", read_output("$ONNX_TEST_PATH/test_div_bcast"), 
-                                            read_input("$ONNX_TEST_PATH/test_div_bcast")[1], 
-                                            read_input("$ONNX_TEST_PATH/test_div_bcast")[2])
+main_test("$ONNX_TEST_PATH/test_div_bcast",
+    read_output("$ONNX_TEST_PATH/test_div_bcast"), 
+        read_input("$ONNX_TEST_PATH/test_div_bcast")[1], 
+            read_input("$ONNX_TEST_PATH/test_div_bcast")[2])
 
 #test matmul 2d
-main_test("$ONNX_TEST_PATH/test_matmul_2d", read_output("$ONNX_TEST_PATH/test_matmul_2d"), 
-                                            read_input("$ONNX_TEST_PATH/test_matmul_2d")[1],
-                                            read_input("$ONNX_TEST_PATH/test_matmul_2d")[2])
+main_test("$ONNX_TEST_PATH/test_matmul_2d",
+    read_output("$ONNX_TEST_PATH/test_matmul_2d"), 
+        read_input("$ONNX_TEST_PATH/test_matmul_2d")[1],
+            read_input("$ONNX_TEST_PATH/test_matmul_2d")[2])
 #test exp
-main_test("$ONNX_TEST_PATH/test_exp", read_output("$ONNX_TEST_PATH/test_exp"), 
-                                      read_input("$ONNX_TEST_PATH/test_exp")[1])
+main_test("$ONNX_TEST_PATH/test_exp",
+    read_output("$ONNX_TEST_PATH/test_exp"), 
+        read_input("$ONNX_TEST_PATH/test_exp")[1])
 
 #test reciprocal
-main_test("$ONNX_TEST_PATH/test_reciprocal", read_output("$ONNX_TEST_PATH/test_reciprocal"), 
-                                             read_input("$ONNX_TEST_PATH/test_reciprocal")[1])
+main_test("$ONNX_TEST_PATH/test_reciprocal",
+    read_output("$ONNX_TEST_PATH/test_reciprocal"), 
+        read_input("$ONNX_TEST_PATH/test_reciprocal")[1])
 
 #test floor
-main_test("$ONNX_TEST_PATH/test_floor", read_output("$ONNX_TEST_PATH/test_floor"), 
-                                        read_input("$ONNX_TEST_PATH/test_floor")[1])
+main_test("$ONNX_TEST_PATH/test_floor",
+    read_output("$ONNX_TEST_PATH/test_floor"), 
+        read_input("$ONNX_TEST_PATH/test_floor")[1])
 
 #test ceil
-main_test("$ONNX_TEST_PATH/test_ceil", read_output("$ONNX_TEST_PATH/test_ceil"), 
-                                       read_input("$ONNX_TEST_PATH/test_ceil")[1])
+main_test("$ONNX_TEST_PATH/test_ceil",
+    read_output("$ONNX_TEST_PATH/test_ceil"), 
+        read_input("$ONNX_TEST_PATH/test_ceil")[1])
 
 #test log
-main_test("$ONNX_TEST_PATH/test_log", read_output("$ONNX_TEST_PATH/test_log"), 
-                                      read_input("$ONNX_TEST_PATH/test_log")[1])
+main_test("$ONNX_TEST_PATH/test_log",
+    read_output("$ONNX_TEST_PATH/test_log"), 
+        read_input("$ONNX_TEST_PATH/test_log")[1])
 
 #test pow
-main_test("$ONNX_TEST_PATH/test_pow", read_output("$ONNX_TEST_PATH/test_pow"), 
-                                      read_input("$ONNX_TEST_PATH/test_pow")[1],
-                                      read_input("$ONNX_TEST_PATH/test_pow")[2])
+main_test("$ONNX_TEST_PATH/test_pow",
+    read_output("$ONNX_TEST_PATH/test_pow"), 
+        read_input("$ONNX_TEST_PATH/test_pow")[1],
+            read_input("$ONNX_TEST_PATH/test_pow")[2])
 
 #test pow bcast
-main_test("$ONNX_TEST_PATH/test_pow_bcast_array", read_output("$ONNX_TEST_PATH/test_pow_bcast_array"), 
-                                            read_input("$ONNX_TEST_PATH/test_pow_bcast_array")[1],
-                                            read_input("$ONNX_TEST_PATH/test_pow_bcast_array")[2])
+main_test("$ONNX_TEST_PATH/test_pow_bcast_array", 
+    read_output("$ONNX_TEST_PATH/test_pow_bcast_array"), 
+        read_input("$ONNX_TEST_PATH/test_pow_bcast_array")[1],
+            read_input("$ONNX_TEST_PATH/test_pow_bcast_array")[2])
 
 #test relu
-main_test("$ONNX_TEST_PATH/test_relu", read_output("$ONNX_TEST_PATH/test_relu"), 
-                                       read_input("$ONNX_TEST_PATH/test_relu")[1])
+main_test("$ONNX_TEST_PATH/test_relu",
+    read_output("$ONNX_TEST_PATH/test_relu"), 
+        read_input("$ONNX_TEST_PATH/test_relu")[1])
 
 #Test sum one input
 main_test("$ONNX_TEST_PATH/test_sum_one_input", 
@@ -156,9 +172,30 @@ main_test("$ONNX_TEST_PATH/test_atan_example",
           read_output("$ONNX_TEST_PATH/test_atan_example"), 
           read_input("$ONNX_TEST_PATH/test_atan_example")[1])
 
-# Flatten
-main_test("$ONNX_TEST_PATH/test_flatten_axis0", read_output("$ONNX_TEST_PATH/test_flatten_axis0"),
-             read_input("$ONNX_TEST_PATH/test_flatten_axis0")[1])
+# Flatten axis 0
+main_test("$ONNX_TEST_PATH/test_flatten_axis0", 
+    read_output("$ONNX_TEST_PATH/test_flatten_axis0"),
+        read_input("$ONNX_TEST_PATH/test_flatten_axis0")[1])
+
+# Flatten axis 1
+main_test("$ONNX_TEST_PATH/test_flatten_axis1",
+    read_output("$ONNX_TEST_PATH/test_flatten_axis1"),
+        read_input("$ONNX_TEST_PATH/test_flatten_axis1")[1])
+
+# Flatten axis 2
+main_test("$ONNX_TEST_PATH/test_flatten_axis2",
+    read_output("$ONNX_TEST_PATH/test_flatten_axis2"),
+        read_input("$ONNX_TEST_PATH/test_flatten_axis2")[1])
+
+# Flatten axis 3
+main_test("$ONNX_TEST_PATH/test_flatten_axis3",
+    read_output("$ONNX_TEST_PATH/test_flatten_axis3"),
+        read_input("$ONNX_TEST_PATH/test_flatten_axis3")[1])
+
+# Flatten default axis
+main_test("$ONNX_TEST_PATH/test_flatten_default_axis",
+    read_output("$ONNX_TEST_PATH/test_flatten_default_axis"),
+        read_input("$ONNX_TEST_PATH/test_flatten_default_axis")[1])
 
 # test gemm broadcast
 main_test("$ONNX_TEST_PATH/test_gemm_broadcast", read_output("$ONNX_TEST_PATH/test_gemm_broadcast"),

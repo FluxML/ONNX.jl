@@ -228,8 +228,16 @@ ops[:Identity] = function(params, x)
 end
 
 ops[:Flatten] = function(params, x)
+  if !haskey(params, :axis)
+    params[:axis] = 1
+  end
+  l = vcall(:length, x)
+  rev = vcall(:reverse, vcall(:size, x))
   if (params[:axis] == 0)
-    return vcall(:reshape, x, vcall(:length, x), 1)
+    return vcall(:reshape, x, l, 1)
+  else 
+    s = vcall(:prod, vcall(:getindex, rev, 1:params[:axis]))
+    return vcall(:reshape, x, vcall(:div, l, s), s)
   end
 end
 
@@ -254,6 +262,10 @@ ops[:PRelu] = function(params, x, slope)
   ip1 = vcall(:broadcast, :clamp, x, 0, Inf)
   ip2 = vcall(:.*, vcall(:broadcast, :clamp, x, -Inf, 0), slope)
   return vcall(:broadcast, Float32, vcall(:+, ip1, ip2))
+end
+
+ops[:ArgMax] = function(params, x)
+  return vcall(Flux.argmax, x)
 end
 
 ops[:Abs] = function (params, x)
