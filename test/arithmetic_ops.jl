@@ -175,3 +175,46 @@ main_test("$ONNX_TEST_PATH/test_gemm_nobroadcast", read_output("$ONNX_TEST_PATH/
 # test unsqueeze
 main_test("$ONNX_TEST_PATH/test_unsqueeze", read_output("$ONNX_TEST_PATH/test_unsqueeze"),
      read_input("$ONNX_TEST_PATH/test_unsqueeze")[1])
+
+# test abs
+main_test("$ONNX_TEST_PATH/test_abs", read_output("$ONNX_TEST_PATH/test_abs"),
+        read_input("$ONNX_TEST_PATH/test_abs")[1])
+        
+# test clip
+main_test("$ONNX_TEST_PATH/test_clip", read_output("$ONNX_TEST_PATH/test_clip"), 
+    read_input("$ONNX_TEST_PATH/test_clip")[1])
+
+# test clip default inbounds
+main_test("$ONNX_TEST_PATH/test_clip_default_inbounds", 
+    read_output("$ONNX_TEST_PATH/test_clip_default_inbounds"),
+        read_input("$ONNX_TEST_PATH/test_clip_default_inbounds")[1])
+
+# test clip default max
+main_test("$ONNX_TEST_PATH/test_clip_default_max", 
+    read_output("$ONNX_TEST_PATH/test_clip_default_max"),
+        read_input("$ONNX_TEST_PATH/test_clip_default_max")[1])
+
+# test clip default min
+main_test("$ONNX_TEST_PATH/test_clip_default_min", 
+    read_output("$ONNX_TEST_PATH/test_clip_default_min"),
+        read_input("$ONNX_TEST_PATH/test_clip_default_min")[1])
+
+# test clip example
+main_test("$ONNX_TEST_PATH/test_clip_example", 
+    read_output("$ONNX_TEST_PATH/test_clip_example"),
+        read_input("$ONNX_TEST_PATH/test_clip_example")[1])
+
+# test clip inbounds        
+main_test("$ONNX_TEST_PATH/test_clip_inbounds", 
+    read_output("$ONNX_TEST_PATH/test_clip_inbounds"), 
+        read_input("$ONNX_TEST_PATH/test_clip_inbounds")[1])
+
+# test clip outbounds        
+main_test("$ONNX_TEST_PATH/test_clip_outbounds", 
+    read_output("$ONNX_TEST_PATH/test_clip_outbounds"), 
+        read_input("$ONNX_TEST_PATH/test_clip_outbounds")[1])
+
+# test clip splitbounds        
+main_test("$ONNX_TEST_PATH/test_clip_splitbounds", 
+    read_output("$ONNX_TEST_PATH/test_clip_splitbounds"), 
+        read_input("$ONNX_TEST_PATH/test_clip_splitbounds")[1])

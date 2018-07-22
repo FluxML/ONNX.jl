@@ -6,9 +6,9 @@ get_tuple(x) = (x...,)
 get_tuple() = nothing
 convert_type(x) = Base.convert(Array{Float32, 1}, x)
 
-ops[:Concat] = function (params, ip1, ip2, ip3, ip4)
+ops[:Concat] = function (params, ip1, ip2)
   s = vcall(:ndims, ip1)
-  return vcall(:cat, vcall(:-, s, params[:axis]), ip1, ip2, ip3, ip4)
+  return vcall(:cat, vcall(:-, s, params[:axis]), ip1, ip2)
 end
 
 ops[:Gemm] = function (params, A, B, C)
@@ -256,6 +256,20 @@ ops[:PRelu] = function(params, x, slope)
   return vcall(:broadcast, Float32, vcall(:+, ip1, ip2))
 end
 
+ops[:Abs] = function (params, x)
+  vcall(:broadcast, abs, x)
+end
+
+ops[:Clip] = function (params, x)
+  if !haskey(params, :min)
+    params[:min] = vcall(:getindex, vcall(:findmin, x), 1)
+  end
+  if !haskey(params, :max)
+    params[:max] = vcall(:getindex, vcall(:findmax, x), 1)
+  end
+  vcall(:broadcast, clamp, x, params[:min], params[:max])
+end
+
 ops[:Sigmoid] = function (params, x)
   vcall(:sigmoid, x)
 end
@@ -352,7 +366,7 @@ ops[:Add] = function(params, A, B)
   if (s1==s2)
     return vcall(:Add, params[:axis], A, B)
   else
-    return vcall(:Add,params[:axis], A, B)
+    return vcall(:.+, A, B)
   end
 end
 
