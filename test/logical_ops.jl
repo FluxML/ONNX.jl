@@ -48,3 +48,32 @@ main_test("$ONNX_TEST_PATH/test_and4d",
           read_output("$ONNX_TEST_PATH/test_and4d"), 
           read_input("$ONNX_TEST_PATH/test_and4d")[1],
           read_input("$ONNX_TEST_PATH/test_and4d")[2])
+
+# Test identity
+main_test("$ONNX_TEST_PATH/test_identity", 
+    read_output("$ONNX_TEST_PATH/test_identity"),
+        read_input("$ONNX_TEST_PATH/test_identity")[1])
+
+# Test equal
+main_test("$ONNX_TEST_PATH/test_equal", 
+    read_output("$ONNX_TEST_PATH/test_equal"),
+        read_input("$ONNX_TEST_PATH/test_equal")[1],
+            read_input("$ONNX_TEST_PATH/test_equal")[2])
+
+# Test equal bcast
+main_test("$ONNX_TEST_PATH/test_equal_bcast", 
+    read_output("$ONNX_TEST_PATH/test_equal_bcast"),
+        read_input("$ONNX_TEST_PATH/test_equal_bcast")[1],
+            read_input("$ONNX_TEST_PATH/test_equal_bcast")[2])
+
+# Test greater
+main_test("$ONNX_TEST_PATH/test_greater", 
+    read_output("$ONNX_TEST_PATH/test_greater"),
+        read_input("$ONNX_TEST_PATH/test_greater")[1],
+            read_input("$ONNX_TEST_PATH/test_greater")[2])
+
+# Test greater bcast
+main_test("$ONNX_TEST_PATH/test_greater_bcast", 
+    read_output("$ONNX_TEST_PATH/test_greater_bcast"),
+        read_input("$ONNX_TEST_PATH/test_greater_bcast")[1],
+            read_input("$ONNX_TEST_PATH/test_greater_bcast")[2])

@@ -282,6 +282,14 @@ ops[:Clip] = function (params, x)
   vcall(:broadcast, clamp, x, params[:min], params[:max])
 end
 
+ops[:Equal] = function(params, x, y)
+  return vcall(:broadcast, :Int, vcall(:broadcast, :isequal, x, y))
+end
+
+ops[:Greater] = function(params, x, y)
+  return vcall(:broadcast, :Int, vcall(:broadcast, :isless, y, x))
+end
+
 ops[:Sigmoid] = function (params, x)
   vcall(:sigmoid, x)
 end
