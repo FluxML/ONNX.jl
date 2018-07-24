@@ -77,3 +77,51 @@ main_test("$ONNX_TEST_PATH/test_greater_bcast",
     read_output("$ONNX_TEST_PATH/test_greater_bcast"),
         read_input("$ONNX_TEST_PATH/test_greater_bcast")[1],
             read_input("$ONNX_TEST_PATH/test_greater_bcast")[2])
+
+# test xor2d
+main_test("$ONNX_TEST_PATH/test_xor2d", 
+    read_output("$ONNX_TEST_PATH/test_xor2d"),
+        read_input("$ONNX_TEST_PATH/test_xor2d")[1],
+            read_input("$ONNX_TEST_PATH/test_xor2d")[2])
+
+# test xor3d
+main_test("$ONNX_TEST_PATH/test_xor3d", 
+    read_output("$ONNX_TEST_PATH/test_xor3d"),
+        read_input("$ONNX_TEST_PATH/test_xor3d")[1],
+            read_input("$ONNX_TEST_PATH/test_xor3d")[2])
+
+# test xor4d
+main_test("$ONNX_TEST_PATH/test_xor4d", 
+    read_output("$ONNX_TEST_PATH/test_xor4d"),
+        read_input("$ONNX_TEST_PATH/test_xor4d")[1],
+            read_input("$ONNX_TEST_PATH/test_xor4d")[2])
+
+# test xor bcast 3v1d
+main_test("$ONNX_TEST_PATH/test_xor_bcast3v1d", 
+    read_output("$ONNX_TEST_PATH/test_xor_bcast3v1d"),
+        read_input("$ONNX_TEST_PATH/test_xor_bcast3v1d")[1],
+            read_input("$ONNX_TEST_PATH/test_xor_bcast3v1d")[2])
+
+# test xor bcast 3v2d
+main_test("$ONNX_TEST_PATH/test_xor_bcast3v2d", 
+    read_output("$ONNX_TEST_PATH/test_xor_bcast3v2d"),
+        read_input("$ONNX_TEST_PATH/test_xor_bcast3v2d")[1],
+            read_input("$ONNX_TEST_PATH/test_xor_bcast3v2d")[2])
+
+# test xor bcast 4v2d
+main_test("$ONNX_TEST_PATH/test_xor_bcast4v2d", 
+    read_output("$ONNX_TEST_PATH/test_xor_bcast4v2d"),
+        read_input("$ONNX_TEST_PATH/test_xor_bcast4v2d")[1],
+            read_input("$ONNX_TEST_PATH/test_xor_bcast4v2d")[2])
+
+# test xor bcast 4v3d
+main_test("$ONNX_TEST_PATH/test_xor_bcast4v3d", 
+    read_output("$ONNX_TEST_PATH/test_xor_bcast4v3d"),
+        read_input("$ONNX_TEST_PATH/test_xor_bcast4v3d")[1],
+            read_input("$ONNX_TEST_PATH/test_xor_bcast4v3d")[2])
+
+# test xor bcast 4v4d
+main_test("$ONNX_TEST_PATH/test_xor_bcast4v4d", 
+    read_output("$ONNX_TEST_PATH/test_xor_bcast4v4d"),
+        read_input("$ONNX_TEST_PATH/test_xor_bcast4v4d")[1],
+            read_input("$ONNX_TEST_PATH/test_xor_bcast4v4d")[2])

@@ -451,6 +451,14 @@ ops[:Reciprocal] = function(params, A)
   vcall(:./ , 1, A)
 end
 
+ops[:Xor] = function (params, A, B)
+  ip1 = vcall(:broadcast, &, vcall(:Array, vcall(:broadcast, Bool, A)), vcall(:Array, 
+              vcall(:broadcast, !, vcall(:broadcast, Bool, B))))
+  ip2 = vcall(:broadcast, &, vcall(:Array, vcall(:broadcast, Bool, B)), vcall(:Array, 
+              vcall(:broadcast, !, vcall(:broadcast, Bool, A))))
+  return  vcall(:broadcast, :Int, vcall(:broadcast, |, ip1, ip2))   
+end
+
 ops[:And] = function(params, A, B)
   if (haskey(params, :broadcast) && params[:broadcast] == 1)
     if !haskey(params, :axis)
