@@ -64,6 +64,11 @@ main_test("$ONNX_TEST_PATH/test_reciprocal",
     read_output("$ONNX_TEST_PATH/test_reciprocal"), 
         read_input("$ONNX_TEST_PATH/test_reciprocal")[1])
 
+#test reciprocal example
+main_test("$ONNX_TEST_PATH/test_reciprocal_example",
+    read_output("$ONNX_TEST_PATH/test_reciprocal_example"), 
+        read_input("$ONNX_TEST_PATH/test_reciprocal_example")[1])
+
 #test floor
 main_test("$ONNX_TEST_PATH/test_floor",
     read_output("$ONNX_TEST_PATH/test_floor"), 
@@ -90,6 +95,18 @@ main_test("$ONNX_TEST_PATH/test_pow_bcast_array",
     read_output("$ONNX_TEST_PATH/test_pow_bcast_array"), 
         read_input("$ONNX_TEST_PATH/test_pow_bcast_array")[1],
             read_input("$ONNX_TEST_PATH/test_pow_bcast_array")[2])
+
+#test pow bcast scalar
+main_test("$ONNX_TEST_PATH/test_pow_bcast_scalar", 
+    read_output("$ONNX_TEST_PATH/test_pow_bcast_scalar"), 
+        read_input("$ONNX_TEST_PATH/test_pow_bcast_scalar")[1],
+            read_input("$ONNX_TEST_PATH/test_pow_bcast_scalar")[2])
+
+#test pow example
+main_test("$ONNX_TEST_PATH/test_pow_example", 
+    read_output("$ONNX_TEST_PATH/test_pow_example"), 
+        read_input("$ONNX_TEST_PATH/test_pow_example")[1],
+            read_input("$ONNX_TEST_PATH/test_pow_example")[2])
 
 #test relu
 main_test("$ONNX_TEST_PATH/test_relu",

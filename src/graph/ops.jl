@@ -1,3 +1,6 @@
+# This file contains the implementation of various operators.
+# Tests for them is at test/runtests.jl.
+
 using Base
 # TODO: we need kwarg support for many of these
 
@@ -50,8 +53,8 @@ function pads(ps)
   padbegin = ps[1:end÷2]
   padend   = ps[end÷2+1:end]
   if (padbegin != padend)
-    println("WARNING: RESHAPING PADS DUE TO ASYMMETRIC PADDING")
-    ele = Int64(sum(ps) / 4)
+    println("WARNING: RESHAPING PADS DUE TO ASYMMETRIC PADDING")    # We'd need support for asymmetric
+    ele = Int64(sum(ps) / 4)                                        # in the future.
     padbegin = (ele, ele)
     return padbegin
   end
@@ -123,6 +126,7 @@ ops[:MaxPool] = function (params, x)
     return vcall(:squeeze, vcall(:maxpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
         Symbol("stride=$((params[:strides]...))")), 4) 
   end
+  
   length(params[:pads]) == 4 ?
   vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))")) :
   vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(params[:pads]...)"),Symbol("stride=$((params[:strides]...))"))
@@ -210,12 +214,7 @@ end
 # Regularise
 
 ops[:Dropout] = function (params, x)
-  #if !haskey(params, :ratio)
-  #  return vcall(:identity, x)
-  #else
-  #  return vcall(vcall(:Dropout, params[:ratio]), x)
-  #end
-  return vcall(:identity, x)
+  return vcall(:identity, x)        # Inference mode: Dropout just bypasses input.
 end
 
 # Activation
@@ -242,12 +241,7 @@ ops[:Flatten] = function(params, x)
 end
 
 ops[:Relu] = function (params, x)
- # if islayer(x, :Conv) || islayer(x, :Dense)
- #   layer = x[1]
- #   layer = vcall(layer[1], layer[2:3]..., :relu, layer[end], layer[4])
- #   vcall(layer, x[2])
- # else
-    vcall(broadcast, :relu, x)
+  vcall(broadcast, :relu, x)
   #end
 end
 
@@ -364,18 +358,18 @@ ops[:Transpose] = function(params ,tensor)
 end
 
 ops[:LRN] = function(params, x)
-  #if !haskey(params, :bias)
-  #  params[:bias] = 1
-  #end
-  #if !haskey(params, :alpha)
-  #  params[:alpha] = 1e-4
-  #end
-  #if !haskey(params, :beta)
-  #  params[:beta] = 0.75
-  #end
-  return vcall(vcall(:LRNorm, params[:bias], params[:size], params[:alpha], params[:beta]), x)
+  if !haskey(params, :bias)
+    params[:bias] = 1
+  end
+  if !haskey(params, :alpha)
+    params[:alpha] = 1e-4
+  end
+  if !haskey(params, :beta)
+    params[:beta] = 0.75
+  end
+  #return vcall(vcall(:LRNorm, params[:bias], params[:size], params[:alpha], params[:beta]), x)
                                # currently, just bypassing the output
-  #return vcall(:.+, 0, x)
+  return vcall(:.+, 0, x)
 end
 
 #To-Do : add broadcast here (Urgent)

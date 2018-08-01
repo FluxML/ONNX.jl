@@ -5,6 +5,9 @@
     Node  => NodeProto
     Attribute => AttributeProto
     The new types will consist of Julian attributes.
+    
+    The purpose of dealing with these newer type is to make
+    the process simpler and easier to debug. 
 =# 
 
 module Types
