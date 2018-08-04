@@ -476,6 +476,11 @@ ops[:Or] = function(params, A, B)
                                                                                     #Perform normal Or operation.
   end
 end
+
+ops[:Expand] = function(params, A, B)
+  shape_new = vcall(:reverse, B)
+  return vcall(:repeat , A, Symbol("inner=$(vcall(:reverse, B))"))
+end 
 # Preprocessing
 
 ops[:ImageScaler] = function(params, A)
