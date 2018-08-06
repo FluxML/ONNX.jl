@@ -57,10 +57,15 @@ if (args[1] == "squeezenet") || (args[1] == "vgg19")
         @test (findmax(model(read_ip("test_data_set_$x/input_0.pb")))[2] == 
             findmax(read_ip("test_data_set_$x/output_0.pb"))[2])
     end
+elseif (args[1] == "mnist")
+    for x=0:num_test
+        @test (findmax(model(read_ip("test_data_set_$x/input_0.pb")))[2] == 
+            findmax(read_ip("test_data_set_$x/output_0.pb"))[2])
+    end 
 else
     for x=0:num_test
-        @test (findmax(model(read_ip("test_data_set_$x/input_$x.pb")))[2] == 
-            findmax(read_ip("test_data_set_$x/output_$x.pb"))[2])
-    end 
+        @test (findmax(model(read_ip("test_data_set_$x/input_0.pb")))[2] == 
+            findmax(read_ip("test_data_set_$x/output_0.pb"))[2])
+    end
 end
 end
