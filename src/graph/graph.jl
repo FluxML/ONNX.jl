@@ -24,6 +24,11 @@ vcall(a...) = vertex(Call(), constant.(a)...)
 # Placeholder for array values
 weights(f::Types.Model) = weights(f.graph)
   
+"""
+Checks location of weights and returns appropriate
+values. 
+Note: Constant weight is deprecated now.
+"""
 function weights(g::Types.Graph)
   count = 0
   for node in g.node
@@ -93,6 +98,9 @@ function graph(g::Types.Graph)
   return vertex(DataFlow.Lambda(n, v)) |> DataFlow.λopen |> DataFlow.λclose
 end
 
+"""
+Write out the Julia code for the model
+"""
 code(g::Types.Graph) = graph(g) |> syntax |>
   MacroTools.flatten |> MacroTools.gensym_ids
 

@@ -1,3 +1,5 @@
+# Generate protoBuf code, donot change directly.
+
 module Proto
 
 # syntax: proto2

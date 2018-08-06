@@ -1,3 +1,6 @@
+# This file contains the implementation of various operators.
+# Tests for them is at test/runtests.jl.
+
 using Base
 # TODO: we need kwarg support for many of these
 
@@ -6,18 +9,42 @@ get_tuple(x) = (x...,)
 get_tuple() = nothing
 convert_type(x) = Base.convert(Array{Float32, 1}, x)
 
-ops[:Concat] = function (params, xs...)
-  vcall(:cat, params[:axis] + 2, xs...)
+ops[:Concat] = function (params, ip1, ip2)
+  s = vcall(:ndims, ip1)
+  return vcall(:cat, vcall(:-, s, params[:axis]), ip1, ip2)
 end
 
 ops[:Gemm] = function (params, A, B, C)
-  #@assert !haskey(params, :alpha) && !haskey(params, :beta)
-  layer = DataFlow.isconstant(B)
-  A = get(params, :transA, 0) == 1 ? vcall(:transpose, A) : A
-  B = get(params, :transB, 0) == 1 ? vcall(:transpose, B) : B
-  layer ?
-    vcall(vcall(:Dense, B, C), vcall(:vec, A)) :
-    vcall(:broadcast, :+, vcall(*, B, A), C)
+  if !haskey(params, :transA)
+    params[:transA] = 0
+  end
+  if !haskey(params, :transB)
+    params[:transB] = 0
+  end
+  if !haskey(params, :alpha)
+    params[:alpha] = 1
+  end
+  if !haskey(params, :beta)
+    params[:beta] = 1
+  end
+  if !haskey(params, :broadcast)
+    params[:broadcast] = 0
+  end
+  if (params[:transA] != 1)
+    A =  vcall(:permutedims, A, vcall(:reverse, vcall(:range, 1, vcall(:ndims, A))))
+  end
+  if (params[:transB] != 1)
+    B = vcall(:permutedims, B, vcall(:reverse, vcall(:range, 1, vcall(:ndims, B))))
+  end
+  ip1 = vcall(:*, params[:alpha], A, B)
+  ip2 = vcall(:*, params[:beta], C)
+  if params[:broadcast] == 0
+    ip1 = vcall(:permutedims, ip1, vcall(:reverse, vcall(:range, 1, vcall(:ndims, ip1))))
+    res = vcall(:broadcast, :+, ip1, ip2)
+    return res
+  end
+  res = vcall(:broadcast, :+, ip1, ip2)
+  return vcall(:permutedims, res, vcall(:reverse, vcall(:range, 1, vcall(:ndims, res))))
 end
 
 # Image
@@ -26,8 +53,8 @@ function pads(ps)
   padbegin = ps[1:end÷2]
   padend   = ps[end÷2+1:end]
   if (padbegin != padend)
-    println("WARNING: RESHAPING PADS DUE TO ASYMMETRIC PADDING")
-    ele = Int64(sum(ps) / 4)
+    println("WARNING: RESHAPING PADS DUE TO ASYMMETRIC PADDING")    # We'd need support for asymmetric
+    ele = Int64(sum(ps) / 4)                                        # in the future.
     padbegin = (ele, ele)
     return padbegin
   end
@@ -41,20 +68,47 @@ ops[:Conv] = function (params, x, w, b...)
   if !haskey(params, Symbol("strides"))
     params[:strides] = (1,1)
   end
+  if !haskey(params, Symbol("dilations"))
+    params[:dilations] = (1,1)
+  end
   if (haskey(params, Symbol("auto_pad")))
     if (String(params[:auto_pad]) == "SAME_UPPER" || String(params[:auto_pad] == "SAME_LOWER"))
       temp = Base.convert(Array{Int64,1}, (params[:kernel_shape] .- 1)./2) # Only for strides = [1,1]
-      params[:pads] = vcat(temp, temp)                                    # To Do: Add support for other stride values.
-    end                                                                           
+      params[:pads] = vcat(temp, temp)                                    # To Do: Add support for other stride values.                                                                           
+    elseif String(params[:auto_pad]) == "VALID"
+      params[:pads] = [0,0,0,0]
+    end
   end
-  params[:dilation] = [1,1]
+  if haskey(params, :group)
+    s = vcall(:Int, vcall(:/, vcall(:size, x, 3), params[:group]))
+    x = vcall(:reshape, x, vcall(:size, x, 1), vcall(:size, x, 2), s, params[:group], vcall(:size, x, 4))
+    temp_x = vcall(:getindex, x, :,:,:,1,:)
+    temp = vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, 
+        Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+          Symbol("dilation=$((params[:dilations]...,))")), temp_x)
+    if isempty(b)    
+      for i=2:params[:group]
+        temp = vcall(:cat, 3, temp, vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, 
+          Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+            Symbol("dilation=$((params[:dilations]...,))")), temp))
+      end
+      
+    else
+      for i=2:params[:group]
+        temp = vcall(:cat, 3, temp, vcall(vcall(:Conv, vcall(:flipkernel, w), b[1], :relu, 
+          Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+            Symbol("dilation=$((params[:dilations]...,))")), temp))
+      end
+    end
+    return temp
+  end
   if isempty(b)
-    return vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
-        Symbol("dilation=$((params[:dilation]...,))")), x)
+    return vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, Symbol("stride=$((params[:strides]...,))"),
+     Symbol("pad=$(pads(params[:pads]))"), Symbol("dilation=$((params[:dilations]...,))")), x)
                                  # temp change (Until type fix)
   end
-  vcall(vcall(:Conv, vcall(:flipkernel, w), b[1], Symbol("stride=$((params[:strides]...,))"),Symbol("pad=$(pads(params[:pads]))"),
-       Symbol("dilation=$((params[:dilation]...,))")), x)
+  vcall(vcall(:Conv, vcall(:flipkernel, w), b[1], Symbol("stride=$((params[:strides]...,))"), 
+    Symbol("pad=$(pads(params[:pads]))"),  Symbol("dilation=$((params[:dilations]...,))")), x)
 end
 
 ops[:MaxPool] = function (params, x)
@@ -65,6 +119,14 @@ ops[:MaxPool] = function (params, x)
     params[:pads] = [0,0,0,0]
   end
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
+  if length(params[:kernel_shape]) == 1
+    push!(params[:kernel_shape], 1)
+    n_size = vcall(:Tuple, vcall(:push!, vcall(:collect, vcall(:size, x)), 1))
+    new_x = vcall(:reshape, x, n_size)
+    return vcall(:squeeze, vcall(:maxpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
+        Symbol("stride=$((params[:strides]...))")), 4) 
+  end
+  
   length(params[:pads]) == 4 ?
   vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))")) :
   vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(params[:pads]...)"),Symbol("stride=$((params[:strides]...))"))
@@ -74,14 +136,25 @@ ops[:GlobalAveragePool] = function (params, x)
   vcall(:mean, x, (1,2))
 end
 
+ops[:GlobalMaxPool] = function (params, x)
+  vcall(:getindex, vcall(:findmax, x, (1,2)), 1)
+end
+
 ops[:AveragePool] = function (params, x)
-  length(params[:kernel_shape]) == 2 || error("Only maxpool2d currently supported")
+  length(params[:kernel_shape]) <= 2 || error("Only maxpool2d currently supported")
   if !haskey(params, :strides)
     params[:strides] = [1,1]
   end
   strides = params[:strides] == params[:kernel_shape] ? [] : [params[:strides]]
   if !haskey(params, :pads)
     params[:pads] = [0,0,0,0]
+  end
+  if length(params[:kernel_shape]) == 1
+    push!(params[:kernel_shape], 1)
+    n_size = vcall(:Tuple, vcall(:push!, vcall(:collect, vcall(:size, x)), 1))
+    new_x = vcall(:reshape, x, n_size)
+    return vcall(:squeeze, vcall(:meanpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
+        Symbol("stride=$((params[:strides]...))")), 4) 
   end
   if params[:pads] == [0,0,0,0]
     return vcall(:meanpool, x ,(params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads]))"),
@@ -104,7 +177,11 @@ ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
   if !haskey(params, Symbol("epsilon"))
     params[:epsilon] = 1e-5
   end
-  vcall(vcall(:BatchNorm, vcall(:getindex, vcall(:size, x), 3), Symbol("ϵ=$(params[:epsilon])"),Symbol("momentum=$(params[:momentum])")), x)
+  t = typeof(params[:momentum])
+  q = vcall(:broadcast, :+, params[:epsilon], var)
+  p = vcall(:broadcast, sqrt ,q)
+  r = vcall(:broadcast, Float32, p)
+  return vcall(vcall(:BatchNorm,identity, b, scale, mean, r, t(params[:epsilon]), params[:momentum], false), x)
 end
 
 function slice(a, s, e)
@@ -137,12 +214,7 @@ end
 # Regularise
 
 ops[:Dropout] = function (params, x)
-  #if !haskey(params, :ratio)
-  #  return vcall(:identity, x)
-  #else
-  #  return vcall(vcall(:Dropout, params[:ratio]), x)
-  #end
-  return vcall(:identity, x)
+  return vcall(:identity, x)        # Inference mode: Dropout just bypasses input.
 end
 
 # Activation
@@ -155,18 +227,21 @@ ops[:Identity] = function(params, x)
 end
 
 ops[:Flatten] = function(params, x)
+  if !haskey(params, :axis)
+    params[:axis] = 1
+  end
+  l = vcall(:length, x)
+  rev = vcall(:reverse, vcall(:size, x))
   if (params[:axis] == 0)
-    return vcall(:reshape, x, vcall(:length, x), 1)
+    return vcall(:reshape, x, l, 1)
+  else 
+    s = vcall(:prod, vcall(:getindex, rev, 1:params[:axis]))
+    return vcall(:reshape, x, vcall(:div, l, s), s)
   end
 end
 
 ops[:Relu] = function (params, x)
- # if islayer(x, :Conv) || islayer(x, :Dense)
- #   layer = x[1]
- #   layer = vcall(layer[1], layer[2:3]..., :relu, layer[end], layer[4])
- #   vcall(layer, x[2])
- # else
-    vcall(broadcast, :relu, x)
+  vcall(broadcast, :relu, x)
   #end
 end
 
@@ -175,6 +250,38 @@ ops[:LeakyRelu] = function(params, x)
     params[:alpha] = 0.01
   end
   vcall(:leakyrelu, x, params[:alpha])
+end
+
+ops[:PRelu] = function(params, x, slope)
+  ip1 = vcall(:broadcast, :clamp, x, 0, Inf)
+  ip2 = vcall(:.*, vcall(:broadcast, :clamp, x, -Inf, 0), slope)
+  return vcall(:broadcast, Float32, vcall(:+, ip1, ip2))
+end
+
+ops[:ArgMax] = function(params, x)
+  return vcall(Flux.argmax, x)
+end
+
+ops[:Abs] = function (params, x)
+  vcall(:broadcast, abs, x)
+end
+
+ops[:Clip] = function (params, x)
+  if !haskey(params, :min)
+    params[:min] = vcall(:getindex, vcall(:findmin, x), 1)
+  end
+  if !haskey(params, :max)
+    params[:max] = vcall(:getindex, vcall(:findmax, x), 1)
+  end
+  vcall(:broadcast, clamp, x, params[:min], params[:max])
+end
+
+ops[:Equal] = function(params, x, y)
+  return vcall(:broadcast, :Int, vcall(:broadcast, :isequal, x, y))
+end
+
+ops[:Greater] = function(params, x, y)
+  return vcall(:broadcast, :Int, vcall(:broadcast, :isless, y, x))
 end
 
 ops[:Sigmoid] = function (params, x)
@@ -226,6 +333,16 @@ ops[:Ceil] = function (params ,x)
   vcall(:broadcast, :ceil, x)
 end
 
+ops[:Unsqueeze] = function(params, x)
+  l1 = length(params[:axes])
+  l2 = vcall(:+, l1, vcall(:ndims, x))
+  temp = x
+  for ele in params[:axes]
+    temp = vcall(Flux.unsqueeze, temp, vcall(:-, vcall(:+, vcall(:ndims, temp), 1), ele))
+  end
+  return temp
+end
+
 ops[:Reshape] = function(params, tensor1, shape...)
   if haskey(params, :shape)
     return vcall(:reshape, tensor1, vcall(:broadcast, Int64, vcall(:Tuple, params[:shape])))
@@ -241,8 +358,18 @@ ops[:Transpose] = function(params ,tensor)
 end
 
 ops[:LRN] = function(params, x)
-  vcall(:.+, x, 0)             # Needed: Flux support for LRN
+  if !haskey(params, :bias)
+    params[:bias] = 1
+  end
+  if !haskey(params, :alpha)
+    params[:alpha] = 1e-4
+  end
+  if !haskey(params, :beta)
+    params[:beta] = 0.75
+  end
+  #return vcall(vcall(:LRNorm, params[:bias], params[:size], params[:alpha], params[:beta]), x)
                                # currently, just bypassing the output
+  return vcall(:.+, 0, x)
 end
 
 #To-Do : add broadcast here (Urgent)
@@ -251,7 +378,7 @@ ops[:Add] = function(params, A, B)
   s1 = vcall(:size, A)
   s2 = vcall(:size, B)
   if (s1==s2)
-    return vcall(:+, A, B)
+    return vcall(:Add, params[:axis], A, B)
   else
     return vcall(:.+, A, B)
   end
@@ -318,6 +445,14 @@ ops[:Reciprocal] = function(params, A)
   vcall(:./ , 1, A)
 end
 
+ops[:Xor] = function (params, A, B)
+  ip1 = vcall(:broadcast, &, vcall(:Array, vcall(:broadcast, Bool, A)), vcall(:Array, 
+              vcall(:broadcast, !, vcall(:broadcast, Bool, B))))
+  ip2 = vcall(:broadcast, &, vcall(:Array, vcall(:broadcast, Bool, B)), vcall(:Array, 
+              vcall(:broadcast, !, vcall(:broadcast, Bool, A))))
+  return  vcall(:broadcast, :Int, vcall(:broadcast, |, ip1, ip2))   
+end
+
 ops[:And] = function(params, A, B)
   if (haskey(params, :broadcast) && params[:broadcast] == 1)
     if !haskey(params, :axis)
@@ -341,6 +476,11 @@ ops[:Or] = function(params, A, B)
                                                                                     #Perform normal Or operation.
   end
 end
+
+ops[:Expand] = function(params, A, B)
+  shape_new = vcall(:reverse, B)
+  return vcall(:repeat , A, Symbol("inner=$(vcall(:reverse, B))"))
+end 
 # Preprocessing
 
 ops[:ImageScaler] = function(params, A)
