@@ -1,13 +1,11 @@
 # ONNX
 
-[![Build Status](https://travis-ci.org/MikeInnes/ONNX.jl.svg?branch=master)](https://travis-ci.org/MikeInnes/ONNX.jl)
-
-[![Coverage Status](https://coveralls.io/repos/MikeInnes/ONNX.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/MikeInnes/ONNX.jl?branch=master)
-
-[![codecov.io](http://codecov.io/github/MikeInnes/ONNX.jl/coverage.svg?branch=master)](http://codecov.io/github/MikeInnes/ONNX.jl?branch=master)
+[![Build Status](https://travis-ci.org/ayush1999/ONNX.jl.svg?branch=master)](https://travis-ci.org/MikeInnes/ONNX.jl)
 
 
 ONNX.jl : Read [ONNX](https://onnx.ai/) graphs and load these models in Julia. ONNX.jl provides an instance of transfer learning into Julia, by reading pretrained models from ONNX format to [Flux.jl](https://github.com/FluxML/Flux.jl). This is done by generating the DataFlow graph from the model, and then reading it as Julia code.
+
+Note: If you're using julia-0.6, checkout to the `v0.6` branch.
 
 ## Loading models
 
