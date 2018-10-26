@@ -58,7 +58,7 @@ function pads(ps)
     padbegin = (ele, ele)
     return padbegin
   end
-  return (padbegin...)
+  return (padbegin...,)
 end
 
 ops[:Conv] = function (params, x, w, b...)
@@ -128,8 +128,8 @@ ops[:MaxPool] = function (params, x)
   end
   
   length(params[:pads]) == 4 ?
-  vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...))")) :
-  vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(params[:pads]...)"),Symbol("stride=$((params[:strides]...))"))
+  vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...,))")) :
+  vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$((params[:pads]...,))"),Symbol("stride=$((params[:strides]...,))"))
 end
 
 ops[:GlobalAveragePool] = function (params, x)
