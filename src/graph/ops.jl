@@ -11,7 +11,8 @@ convert_type(x) = Base.convert(Array{Float32, 1}, x)
 
 ops[:Concat] = function (params, ip1, ip2)
   s = vcall(:ndims, ip1)
-  return vcall(:cat, vcall(:-, s, params[:axis]), ip1, ip2)
+
+  return vcall(:cat, ip1, ip2, Symbol("dims = 4 - $(params[:axis])"))
 end
 
 ops[:Gemm] = function (params, A, B, C)
@@ -133,7 +134,7 @@ ops[:MaxPool] = function (params, x)
 end
 
 ops[:GlobalAveragePool] = function (params, x)
-  vcall(:mean, x, (1,2))
+  vcall(:mean, x, Symbol("dims = (1,2)"))
 end
 
 ops[:GlobalMaxPool] = function (params, x)
