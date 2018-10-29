@@ -1,6 +1,6 @@
 module ONNX
 
-using ProtoBuf, MacroTools, DataFlow
+using ProtoBuf, MacroTools, DataFlow, Statistics
 
 include("onnx_pb.jl")
 include("convert.jl")
