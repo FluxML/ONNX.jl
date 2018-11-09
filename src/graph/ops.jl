@@ -2,6 +2,7 @@
 # Tests for them is at test/runtests.jl.
 
 using Base
+using Statistics
 # TODO: we need kwarg support for many of these
 
 # Generic
@@ -12,7 +13,7 @@ convert_type(x) = Base.convert(Array{Float32, 1}, x)
 ops[:Concat] = function (params, ip1, ip2)
   s = vcall(:ndims, ip1)
 
-  return vcall(:cat, ip1, ip2, Symbol("dims = 4 - $(params[:axis])"))
+  return vcall(:cat, ip1, ip2, Symbol("dims =1"))
 end
 
 ops[:Gemm] = function (params, A, B, C)
@@ -124,8 +125,8 @@ ops[:MaxPool] = function (params, x)
     push!(params[:kernel_shape], 1)
     n_size = vcall(:Tuple, vcall(:push!, vcall(:collect, vcall(:size, x)), 1))
     new_x = vcall(:reshape, x, n_size)
-    return vcall(:squeeze, vcall(:maxpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
-        Symbol("stride=$((params[:strides]...))")), 4) 
+    return vcall(:dropdims, vcall(:maxpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
+        Symbol("stride=$((params[:strides]...,))")), Symbol("dims=4")) 
   end
   
   length(params[:pads]) == 4 ?
@@ -138,11 +139,11 @@ ops[:GlobalAveragePool] = function (params, x)
 end
 
 ops[:GlobalMaxPool] = function (params, x)
-  vcall(:getindex, vcall(:findmax, x, (1,2)), 1)
+  vcall(:getindex, vcall(:findmax, x, Symbol("dims=(1,2)")), 1)
 end
 
 ops[:AveragePool] = function (params, x)
-  length(params[:kernel_shape]) <= 2 || error("Only maxpool2d currently supported")
+  length(params[:kernel_shape]) <= 2 || error("Only averagepool2d currently supported")
   if !haskey(params, :strides)
     params[:strides] = [1,1]
   end
@@ -154,20 +155,20 @@ ops[:AveragePool] = function (params, x)
     push!(params[:kernel_shape], 1)
     n_size = vcall(:Tuple, vcall(:push!, vcall(:collect, vcall(:size, x)), 1))
     new_x = vcall(:reshape, x, n_size)
-    return vcall(:squeeze, vcall(:meanpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
-        Symbol("stride=$((params[:strides]...))")), 4) 
+    return vcall(:dropdims, vcall(:meanpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
+        Symbol("stride=$((params[:strides]...,))")), Symbol("dims=4")) 
   end
   if params[:pads] == [0,0,0,0]
-    return vcall(:meanpool, x ,(params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads]))"),
-                                                    Symbol("stride=$((params[:strides]...))"))
+    return vcall(:meanpool, x ,(params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
+                                                    Symbol("stride=$((params[:strides]...,))"))
   else
     params[:strides_temp] = [1,1]
     params[:kernel_shape_temp] = [1,1]
     params[:pads_temp] = [0,0,0,0]
-    temp = vcall(:meanpool, x ,(params[:kernel_shape_temp]...), Symbol("pad=$(pads(params[:pads]))"),
-                                                    Symbol("stride=$((params[:strides_temp]...))"))
-    return vcall(:meanpool, temp, (params[:kernel_shape]...), Symbol("pad=$(pads(params[:pads_temp]))"),
-                                                    Symbol("stride=$((params[:strides]...))"))
+    temp = vcall(:meanpool, x ,(params[:kernel_shape_temp]...,), Symbol("pad=$(pads(params[:pads]))"),
+                                                    Symbol("stride=$((params[:strides_temp]...,))"))
+    return vcall(:meanpool, temp, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads_temp]))"),
+                                                    Symbol("stride=$((params[:strides]...,))"))
   end                                               
 end
 

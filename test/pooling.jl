@@ -76,21 +76,25 @@ main_test("$ONNX_TEST_PATH/test_averagepool_2d_strides",
 
 
 # Test globalaveragepool
+ip = read_input("$ONNX_TEST_PATH/test_globalaveragepool")
 main_test("$ONNX_TEST_PATH/test_globalaveragepool", 
     read_output("$ONNX_TEST_PATH/test_globalaveragepool"), 
         read_input("$ONNX_TEST_PATH/test_globalaveragepool")[1])
 
 # Test globalaveragepool precomputed
+ip = read_input("$ONNX_TEST_PATH/test_globalaveragepool_precomputed")
 main_test("$ONNX_TEST_PATH/test_globalaveragepool_precomputed", 
     read_output("$ONNX_TEST_PATH/test_globalaveragepool_precomputed"), 
         read_input("$ONNX_TEST_PATH/test_globalaveragepool_precomputed")[1])
     
 # Test globalmaxpool
+ip = read_input("$ONNX_TEST_PATH/test_globalmaxpool")
 main_test("$ONNX_TEST_PATH/test_globalmaxpool", 
     read_output("$ONNX_TEST_PATH/test_globalmaxpool"),
         read_input("$ONNX_TEST_PATH/test_globalmaxpool")[1])
 
 # Test globalmaxpool precomputed
+ip = read_input("$ONNX_TEST_PATH/test_globalmaxpool_precomputed")
 main_test("$ONNX_TEST_PATH/test_globalmaxpool_precomputed", 
     read_output("$ONNX_TEST_PATH/test_globalmaxpool_precomputed"),
         read_input("$ONNX_TEST_PATH/test_globalmaxpool_precomputed")[1])

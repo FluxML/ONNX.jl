@@ -1,6 +1,7 @@
 using ONNX, Flux, ProtoBuf
 using DataFlow: Call, vertex, syntax, constant
-using Base.Test, Base.run
+using Test
+using Base:run
 # test taken from : https://github.com/onnx/onnx/tree/master/onnx/backend/test/data 
 # clone onnx here if onnx dir does not exist
 
@@ -18,7 +19,7 @@ ONNX_TEST_PATH = "$ONNX_PATH/onnx/backend/test/data/node"
 function read_input(folder_name)
     ar = Array{Any, 1}()
     for ele in readdir(folder_name*"/test_data_set_0")
-        push!(ar, readproto(open(folder_name*"/test_data_set_0/"*ele), ONNX.Proto.TensorProto()) |> ONNX.get_array)
+        push!(ar, Float32.(readproto(open(folder_name*"/test_data_set_0/"*ele), ONNX.Proto.TensorProto()) |> ONNX.get_array))
     end
     return ar[1:end-1]
 end
@@ -26,7 +27,7 @@ end
 function read_output(folder_name)
     ar = Array{Any, 1}()
     for ele in readdir(folder_name*"/test_data_set_0")
-        push!(ar, readproto(open(folder_name*"/test_data_set_0/"*ele), ONNX.Proto.TensorProto()) |> ONNX.get_array)
+        push!(ar, Float32.(readproto(open(folder_name*"/test_data_set_0/"*ele), ONNX.Proto.TensorProto()) |> ONNX.get_array))
     end
     return ar[end]
 end
@@ -88,7 +89,17 @@ function main_test(filename,op_expected, ip...)
             model = include("temp_averagepool.jl")
             rm("temp_averagepool.jl")
             @test model ≈ op_expected atol=0.001
-        elseif Symbol(get_optype(read_model(filename))) == :Expand
+        elseif Symbol(get_optype(read_model(filename))) in [:GlobalAveragePool, :GlobalMaxPool]
+            temp = ONNX.ops[Symbol(get_optype(read_model(filename)))](get_dict(read_model(filename)),
+                                                                                     Symbol("ip[1]")) |> syntax
+            touch("temp_averagepool.jl")
+            open("temp_averagepool.jl","w") do file
+                write(file, "using Statistics \n" * string(temp))
+            end
+            model = include("temp_averagepool.jl")
+            rm("temp_averagepool.jl")
+            @test model ≈ op_expected atol=0.001
+        elseif Symbol(get_optype(read_model(filename))) in [:Expand, :Concat]
             temp = ONNX.ops[Symbol(get_optype(read_model(filename)))](get_dict(read_model(filename)),
                                                                                      Symbol("ip[1]"), Symbol("ip[2]")) |> syntax
             touch("temp_expand.jl")
