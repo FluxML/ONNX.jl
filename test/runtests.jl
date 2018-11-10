@@ -12,6 +12,6 @@ include("pooling.jl")
 include("conv.jl")
 include("reshape.jl")
 include("arithmetic_ops.jl")
-#include("lstm.jl")
+include("lstm.jl")
 
 end

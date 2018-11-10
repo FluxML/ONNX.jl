@@ -197,19 +197,19 @@ ops[:LSTM] = function(params, ip...)
     arg2 = vcall(reshape, ip[3], (4*len,3))
     ip_ = vcall(reshape, ip[1], vcall(slice ,vcall(:size, ip[1]), 1, 2))
     
-    a = vcall(Flux.LSTMCell, arg1, arg2, zeros(len*4), zeros(len), zeros(len))
-    b = vcall(:LSTM ,a)
-    return vcall(b, ip_)
+    a = vcall(LSTM, arg1, arg2, zeros(len*4), zeros(len), zeros(len))
+    
+    return vcall(a, ip_)
   elseif length(ip) == 4
     len = params[:hidden_size]
     arg1 = vcall(reshape, ip[2], (4*len,3))
     arg2 = vcall(reshape, ip[3], (4*len,4))
     arg3 = ip[4][1:4*len]
-    b1 = vcall(reinterpret, Float32, vcall(zeros, 2))
-    a = vcall(Flux.LSTMCell, arg1, arg2, arg3, b1, b1)
-    b = vcall(:LSTM ,a)
+    b1 = vcall(:broadcast, Float32, vcall(reinterpret, Float32, vcall(zeros, 2)))
+    a = vcall(LSTM, arg1, arg2, arg3, b1, b1)
+    
     ip_ = vcall(reshape, ip[1], vcall(slice ,vcall(:size, ip[1]), 1, 2))
-    return vcall(b, ip_)
+    return vcall(a, ip_)
   end
 end
 
