@@ -183,7 +183,7 @@ ops[:BatchNormalization] = function (params, x, scale, b, mean, var)
   q = vcall(:broadcast, :+, params[:epsilon], var)
   p = vcall(:broadcast, sqrt ,q)
   r = vcall(:broadcast, Float32, p)
-  return vcall(vcall(:BatchNorm,identity, b, scale, mean, r, t(params[:epsilon]), params[:momentum], false), x)
+  return vcall(vcall(:BatchNorm,identity, b, scale, vcall(:broadcast, :Float32, mean), r, t(params[:epsilon]), params[:momentum], false), x)
 end
 
 function slice(a, s, e)
@@ -251,7 +251,7 @@ ops[:LeakyRelu] = function(params, x)
   if !haskey(params, :alpha)
     params[:alpha] = 0.01
   end
-  vcall(:leakyrelu, x, params[:alpha])
+  vcall(:broadcast, :leakyrelu, x, params[:alpha])
 end
 
 ops[:PRelu] = function(params, x, slope)
