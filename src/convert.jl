@@ -223,9 +223,8 @@ function write_julia_file(model_file)
     str1="using Statistics \n"
     str2="Mul(a,b,c) = b .* reshape(c, (1,1,size(c)[a],1)) \n"
     str3 = "Add(axis, A ,B) = A .+ reshape(B, (1,1,size(B)[1],1)) \n"
-    str4 = "flipkernel(x) = x[end:-1:1, end:-1:1, :, :] \n"
     open("model.jl","w") do file
-        write(file, str1*str2*str3*str4*string(data))
+        write(file, str1*str2*str3*string(data))
     end
 end
 

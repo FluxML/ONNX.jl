@@ -51,18 +51,6 @@ end
 
 # Image
 
-function pads(ps)
-  padbegin = ps[1:end÷2]
-  padend   = ps[end÷2+1:end]
-  if (padbegin != padend)
-    println("WARNING: RESHAPING PADS DUE TO ASYMMETRIC PADDING")    # We'd need support for asymmetric
-    ele = Int64(sum(ps) / 4)                                        # in the future.
-    padbegin = (ele, ele)
-    return padbegin
-  end
-  return (padbegin...,)
-end
-
 ops[:Conv] = function (params, x, w, b...)
   if !haskey(params, Symbol("pads"))
     params[:pads] = [0,0,0,0]
@@ -81,36 +69,36 @@ ops[:Conv] = function (params, x, w, b...)
       params[:pads] = [0,0,0,0]
     end
   end
-  if haskey(params, :group)
-    s = vcall(:Int, vcall(:/, vcall(:size, x, 3), params[:group]))
-    x = vcall(:reshape, x, vcall(:size, x, 1), vcall(:size, x, 2), s, params[:group], vcall(:size, x, 4))
-    temp_x = vcall(:getindex, x, :,:,:,1,:)
-    temp = vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, 
-        Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
-          Symbol("dilation=$((params[:dilations]...,))")), temp_x)
-    if isempty(b)    
-      for i=2:params[:group]
-        temp = vcall(:cat, 3, temp, vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, 
-          Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
-            Symbol("dilation=$((params[:dilations]...,))")), temp))
-      end
-      
-    else
-      for i=2:params[:group]
-        temp = vcall(:cat, 3, temp, vcall(vcall(:Conv, vcall(:flipkernel, w), b[1], :relu, 
-          Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
-            Symbol("dilation=$((params[:dilations]...,))")), temp))
-      end
-    end
-    return temp
-  end
+  #if haskey(params, :group)
+  #  s = vcall(:Int, vcall(:/, vcall(:size, x, 3), params[:group]))
+  #  x = vcall(:reshape, x, vcall(:size, x, 1), vcall(:size, x, 2), s, params[:group], vcall(:size, x, 4))
+  #  temp_x = vcall(:getindex, x, :,:,:,1,:)
+  #  temp = vcall(vcall(:Conv, Float32[0], :relu, 
+  #      Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+  #        Symbol("dilation=$((params[:dilations]...,))")), temp_x)
+  #  if isempty(b)    
+  #    for i=2:params[:group]
+  #      temp = vcall(:cat, 3, temp, vcall(vcall(:Conv, Float32[0], :relu, 
+  #        Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+  #          Symbol("dilation=$((params[:dilations]...,))")), temp))
+  #    end
+  #    
+  #  else
+  #    for i=2:params[:group]
+  #      temp = vcall(:cat, 3, temp, vcall(vcall(:Conv, b[1], :relu, 
+  #        Symbol("stride=$((params[:strides]...,))"), Symbol("pad=$(pads(params[:pads]))"),
+  #          Symbol("dilation=$((params[:dilations]...,))")), temp))
+  #    end
+  #  end
+  #  return temp
+  #end
   if isempty(b)
-    return vcall(vcall(:Conv, vcall(:flipkernel, w), Float32[0], :relu, Symbol("stride=$((params[:strides]...,))"),
-     Symbol("pad=$(pads(params[:pads]))"), Symbol("dilation=$((params[:dilations]...,))")), x)
+    return vcall(vcall(:CrossCor, w, Float32[0], :relu, Symbol("stride=$((params[:strides]...,))"),
+     Symbol("pad=$((params[:pads]...,))"), Symbol("dilation=$((params[:dilations]...,))")), x)
                                  # temp change (Until type fix)
   end
-  vcall(vcall(:Conv, vcall(:flipkernel, w), b[1], Symbol("stride=$((params[:strides]...,))"), 
-    Symbol("pad=$(pads(params[:pads]))"),  Symbol("dilation=$((params[:dilations]...,))")), x)
+  vcall(vcall(:CrossCor, w, b[1], Symbol("stride=$((params[:strides]...,))"), 
+    Symbol("pad=$((params[:pads]...,))"),  Symbol("dilation=$((params[:dilations]...,))")), x)
 end
 
 ops[:MaxPool] = function (params, x)
@@ -125,13 +113,11 @@ ops[:MaxPool] = function (params, x)
     push!(params[:kernel_shape], 1)
     n_size = vcall(:Tuple, vcall(:push!, vcall(:collect, vcall(:size, x)), 1))
     new_x = vcall(:reshape, x, n_size)
-    return vcall(:dropdims, vcall(:maxpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
+    return vcall(:dropdims, vcall(:maxpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(params[:pads])"),
         Symbol("stride=$((params[:strides]...,))")), Symbol("dims=4")) 
   end
   
-  length(params[:pads]) == 4 ?
-  vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),Symbol("stride=$((params[:strides]...,))")) :
-  vcall(:maxpool, x, (params[:kernel_shape]...,), Symbol("pad=$((params[:pads]...,))"),Symbol("stride=$((params[:strides]...,))"))
+  vcall(vcall(:MaxPool, (params[:kernel_shape]...,), Symbol("pad=$((params[:pads]...,))"),Symbol("stride=$((params[:strides]...,))")), x)
 end
 
 ops[:GlobalAveragePool] = function (params, x)
@@ -155,20 +141,20 @@ ops[:AveragePool] = function (params, x)
     push!(params[:kernel_shape], 1)
     n_size = vcall(:Tuple, vcall(:push!, vcall(:collect, vcall(:size, x)), 1))
     new_x = vcall(:reshape, x, n_size)
-    return vcall(:dropdims, vcall(:meanpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
+    return vcall(:dropdims, vcall(:meanpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$((params[:pads]...,))"),
         Symbol("stride=$((params[:strides]...,))")), Symbol("dims=4")) 
   end
   if params[:pads] == [0,0,0,0]
-    return vcall(:meanpool, x ,(params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads]))"),
-                                                    Symbol("stride=$((params[:strides]...,))"))
+    return vcall(vcall(:MeanPool, (params[:kernel_shape]...,), Symbol("pad=$((params[:pads]...,))"),
+                                                    Symbol("stride=$((params[:strides]...,))")), x)
   else
     params[:strides_temp] = [1,1]
     params[:kernel_shape_temp] = [1,1]
     params[:pads_temp] = [0,0,0,0]
-    temp = vcall(:meanpool, x ,(params[:kernel_shape_temp]...,), Symbol("pad=$(pads(params[:pads]))"),
-                                                    Symbol("stride=$((params[:strides_temp]...,))"))
-    return vcall(:meanpool, temp, (params[:kernel_shape]...,), Symbol("pad=$(pads(params[:pads_temp]))"),
-                                                    Symbol("stride=$((params[:strides]...,))"))
+    temp = vcall(vcall(:MeanPool, (params[:kernel_shape_temp]...,), Symbol("pad=$((params[:pads]...,))"),
+                                                    Symbol("stride=$((params[:strides_temp]...,))")), x)
+    return vcall(vcall(:MeanPool, (params[:kernel_shape]...,), Symbol("pad=$((params[:pads_temp]...,))"),
+                                                    Symbol("stride=$((params[:strides]...,))")), temp)
   end                                               
 end
 
