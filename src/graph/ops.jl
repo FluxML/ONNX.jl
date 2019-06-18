@@ -10,10 +10,10 @@ get_tuple(x) = (x...,)
 get_tuple() = nothing
 convert_type(x) = Base.convert(Array{Float32, 1}, x)
 
-ops[:Concat] = function (params, ip1, ip2)
-  s = vcall(:ndims, ip1)
+ops[:Concat] = function (params, ip...)
+  #s = vcall(:ndims, ip1, ip2, ip3, ip4)
 
-  return vcall(:cat, ip1, ip2, Symbol("dims =1"))
+  return vcall(:cat, ip..., Symbol("dims =1"))
 end
 
 ops[:Gemm] = function (params, A, B, C)
@@ -355,9 +355,9 @@ ops[:LRN] = function(params, x)
   if !haskey(params, :beta)
     params[:beta] = 0.75
   end
-  #return vcall(vcall(:LRNorm, params[:bias], params[:size], params[:alpha], params[:beta]), x)
+  return vcall(vcall(:LRNorm, params[:bias], params[:size], params[:alpha], params[:beta]), x)
                                # currently, just bypassing the output
-  return vcall(:.+, 0, x)
+  #return vcall(:.+, 0, x)
 end
 
 #To-Do : add broadcast here (Urgent)
