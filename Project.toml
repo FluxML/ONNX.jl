@@ -1,3 +1,7 @@
+name = "ONNX"
+uuid = "d0dd6a25-fac6-55c0-abf7-829e0c774d20"
+version = "0.1.1"
+
 [deps]
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
