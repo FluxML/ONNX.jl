@@ -4,6 +4,20 @@ rawproto(io::IO) = readproto(io, Proto.ModelProto())
 rawproto(path::String) = open(rawproto, path)
 
 """
+Helper function to check the layers present
+in the ONNX model.
+"""
+function layers(filename::String)
+    f = filename |> open |> rawproto
+    lay = []
+    for node in f.graph.node
+        push!(lay, node.op_type)
+    end
+
+    return lay |> unique
+end
+
+"""
 Retrieve only the useful information from a AttributeProto
 object into a Dict format.
 """

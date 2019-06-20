@@ -113,8 +113,9 @@ ops[:MaxPool] = function (params, x)
     push!(params[:kernel_shape], 1)
     n_size = vcall(:Tuple, vcall(:push!, vcall(:collect, vcall(:size, x)), 1))
     new_x = vcall(:reshape, x, n_size)
-    return vcall(:dropdims, vcall(:maxpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$(params[:pads])"),
-        Symbol("stride=$((params[:strides]...,))")), Symbol("dims=4")) 
+    return vcall(:dropdims, vcall(vcall(:MaxPool, (params[:kernel_shape]...,), 
+      Symbol("pad=$((params[:pads]...,))"),Symbol("stride=$((params[:strides]...,))")), new_x), 
+        Symbol("dims=4")) 
   end
   
   vcall(vcall(:MaxPool, (params[:kernel_shape]...,), Symbol("pad=$((params[:pads]...,))"),Symbol("stride=$((params[:strides]...,))")), x)
@@ -141,8 +142,8 @@ ops[:AveragePool] = function (params, x)
     push!(params[:kernel_shape], 1)
     n_size = vcall(:Tuple, vcall(:push!, vcall(:collect, vcall(:size, x)), 1))
     new_x = vcall(:reshape, x, n_size)
-    return vcall(:dropdims, vcall(:meanpool, new_x, (params[:kernel_shape]...,), Symbol("pad=$((params[:pads]...,))"),
-        Symbol("stride=$((params[:strides]...,))")), Symbol("dims=4")) 
+    return vcall(:dropdims, vcall(vcall(:MeanPool, (params[:kernel_shape]...,), Symbol("pad=$((params[:pads]...,))"),
+    Symbol("stride=$((params[:strides]...,))")), new_x), Symbol("dims=4")) 
   end
   if params[:pads] == [0,0,0,0]
     return vcall(vcall(:MeanPool, (params[:kernel_shape]...,), Symbol("pad=$((params[:pads]...,))"),
@@ -419,6 +420,10 @@ ops[:MatMul] = function(params, A, B)
   #tempa = vcall(:permutedims, A, vcall(:reverse, vcall(:range, 1, vcall(:ndims, A))))
   #tempb = vcall(:permutedims, B, vcall(:reverse, vcall(:range, 1, vcall(:ndims, B))))
   vcall(:*, B, A)
+end
+
+ops[:Shape] = function(params, A)
+  vcall(:size, A)
 end
 
 ops[:size] = function(params, A)
