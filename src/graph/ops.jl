@@ -11,9 +11,7 @@ get_tuple() = nothing
 convert_type(x) = Base.convert(Array{Float32, 1}, x)
 
 ops[:Concat] = function (params, ip...)
-  #s = vcall(:ndims, ip1, ip2, ip3, ip4)
-
-  return vcall(:cat, ip..., Symbol("dims =1"))
+  return vcall(:cat, ip..., Symbol("dims = 3"))
 end
 
 ops[:Gemm] = function (params, A, B, C)
