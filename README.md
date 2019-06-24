@@ -5,8 +5,6 @@
 
 ONNX.jl : Read [ONNX](https://onnx.ai/) graphs and load these models in Julia. ONNX.jl provides an instance of transfer learning into Julia, by reading pretrained models from ONNX format to [Flux.jl](https://github.com/FluxML/Flux.jl). This is done by generating the DataFlow graph from the model, and then reading it as Julia code.
 
-Note: If you're using julia-0.6, checkout to the `v0.6` branch.
-
 ## Loading models
 
 You need to have the `model.onnx` ( or in some cases `model.pb` ) file,  which will be read. Several pretrained ONNX model files can also be downloaded from [here](https://github.com/onnx/models).  Now that we have the `model.onnx` file, we can read it into Flux as :
@@ -25,15 +23,11 @@ This package is currently under development, don't tell us we didn't warn you!
 
 ## Running the tests
 
-It's always better to run the tests before moving on to importing a model. The operator tests ensure that all ops are working. Follow the given steps to run these tests:
-
-* Change your working directory to the `test` directory (`cd ~/.julia/v0.6/ONNX.jl/test` from the terminal)
-
-* Inside the test repository, run the `runtests.jl` script. (`julia runtests.jl`).
+It's always better to run the tests before moving on to importing a model. The operator tests ensure that all ops are working. Use `]test ONNX` to run the tests.
 
 * Running these tests may take some time, as it may initially download the test files if you don't already have them.(You need to have git preinstalled in order to download the tests)
 
-In order to read more about these tests and run model specific tests, go throught the docs in the `test` directory. 
+In order to read more about these tests and run model specific tests, please go through the docs in the `test` directory. 
 
 ## Contributing and Help
 
