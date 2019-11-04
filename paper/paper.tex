@@ -5,27 +5,63 @@
 
 \begin{document}
 
-\input{header}
+\title{Interoperating Deep Learning models with ONNX.jl}
+
+\author[1]{Ayush Shridhar}
+\author[2]{Mike Innes}
+
+\affil[1]{International Institute of Information Technology, Bhubaneswar, India}
+\affil[2]{Julia Computing}
+
+\keywords{Julia, Machine Learning, Deep Learning, Transfer Learning}
 
 \maketitle
 
 \begin{abstract}
 
-Flux\cite{innes:2018} is a machine learning framework, written using the numerical computing language Julia\cite{bezanson2017julia}. The framework makes writing layers as simple as writing mathematical formulae, and it's advanced AD, Zygote\cite{DBLP:journals/corr/abs-1810-07951}, applies automatic differentiation (AD) to seamlessly calculate derivatives and train the model. It makes heavy use of Julia's language and compiler features to carry out code analysis and make optimisations.  For example, Julia's GPU compilation support\cite{besard:2017} can be used to JIT-compile custom GPU kernels for model layers\cite{CuArrays}. Flux also supports a number of a hardware options, from CPUs, GPUs and even including TPUs.\newline
+Flux\cite{innes:2018} is a machine learning framework, written using the numerical computing
+language Julia\cite{bezanson2017julia}. The framework makes writing layers as simple as
+writing mathematical formulae, and it's advanced AD,
+Zygote\cite{DBLP:journals/corr/abs-1810-07951}, applies automatic differentiation (AD) to
+calculate derivatives and train the model. It makes heavy use of Julia's language and
+compiler features to carry out code analysis and make optimisations.  For example, Julia's
+GPU compilation support\cite{besard:2017} can be used to JIT-compile custom GPU kernels for
+model layers\cite{CuArrays}. Flux also supports a number of a hardware options, from CPUs,
+GPUs and even including TPUs.\newline
 
-ONNX.jl is an Open Neural Network Exchange backend for the Flux.jl deep learning framework. ONNX.jl supports directly importing high quality ONNX standard models into Flux, thus saving time and reducing the need for additional computation resources.
+ONNX.jl is an Open Neural Network Exchange backend for the Flux.jl deep learning framework.
+ONNX.jl supports directly importing high quality ONNX standard models into Flux, thus saving
+time and reducing the need for additional computation resources. In this paper we'll look
+into finer details of how ONNX.jl produces Julia code of a model from a serialized file.
 
 \end{abstract}
 
 \section{Introduction}
 
-Open Neural Network Exchange (ONNX) is an open ecosystem that empowers AI developers to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard data types. It provides a set of specifications to convert a model to a basic ONNX format, and another set of specifications to get the model back from this ONNX form.\newline  At a high level, ONNX is designed to allow framework inter-operability. There are many excellent machine learning libraries in various languages — PyTorch, TensorFlow, MXNet, and Caffe are just a few that have become very popular in recent years, but there are many others as well.
+Open Neural Network Exchange (ONNX) is an open ecosystem that empowers AI developers to
+choose the right tools as their project evolves. ONNX provides an open source format for AI
+models, both deep learning and traditional machine learning. It defines an extensible
+computation graph model, as well as definitions of built-in operators and standard data
+types. It provides a set of specifications to convert a model to a basic ONNX format, and
+another set of specifications to get the model back from this ONNX form.\newline  At a high
+level, ONNX is designed to allow framework inter-operability. There are many excellent
+machine learning libraries in various languages : PyTorch, TensorFlow, MXNet, and Caffe are
+just a few that have become very popular in recent years, but there are many others as well.
 
 \subsection{A simple use case}
-ONNX is simplifying AI choices by defining a standard which is here to stay, and is usable anywhere from small mobile devices to large server farms, across chipsets and vendors, and with extensive runtimes and tools support. ONNX reduces the friction of moving trained AI models among your favorite tools and frameworks and platforms. A simple example of how ONNX is ideal for ML is the case when large deep learning models need to be deployed. \newline \newline \newline Consider the simple case of deploying a Deep Learning model to an iOS application. This particular model can be implemented in any framework : TensorFlow, PyTorch, MXNet just to name a few. However, iOS applications expect to use CoreML inside the application. Up until now, developers have been porting large models to different frameworks, which is a waste of time and energy, better spent somewhere else. This is also retraining the entire model from scratch, which isn't efficient. This makes the entire process cumbersome and impractical. ONNX exists to solve this very problem : By connecting the common dots from different frameworks, ONNX makes it possible to express a model of type A to type B, thus saving time and the need to train the model again.
+ONNX is simplifying AI choices by defining a standard which is here to stay, and is usable anywhere from small mobile devices to large server farms, across chipsets and vendors, and with extensive runtimes and tools support. ONNX reduces the friction of moving trained AI
+models among your favorite tools and frameworks and platforms. A simple example of how ONNX is ideal for ML is the case when large deep learning models need to be deployed. \newline \newline \newline Consider the simple case of deploying a Deep Learning model to an iOS
+application. This particular model can be implemented in any framework : TensorFlow, PyTorch, MXNet just to name a few. However, iOS applications expect to use CoreML inside the application. Up until now, developers have been porting large models to different frameworks,
+which is a waste of time and energy, better spent somewhere else. This is also retraining the entire model from scratch, which isn't efficient. This makes the entire process cumbersome and impractical. ONNX exists to solve this very problem : By connecting the common dots from
+different frameworks, ONNX makes it possible to express a model of type A to type B, thus saving time and the need to train the model again.
 
-\section{Structure of an ONNX serialized model:}
-ONNX uses Google's Protocol Buffers to serialize and de-serialize models. Julia has a Protocol Buffer backend via \texit{ProtoBuf.jl}. \newline
+\section{ONNX backend in Julia: ONNX.jl}
+
+At the heart of it, ONNX.jl solves a compiler problem by dealing with intermediate code representations to generate readable graphs. While doing this, ONNX operators are mapped to corresponding Flux layers, thus tracing out the model's computation graph at the end. This graph can then be travelled to generate the Julia code for the model. 
+
+\section{Structure of an ONNX serialized model}
+
+ONNX uses Google's Protocol Buffers to serialize and de-serialize models. Julia has a Protocol Buffer backend via ProtoBuf.jl. \newline
 Since ONNX tries to inherit properties from diverse frameworks, ONNX serialized models can be large and complicated. In general, the model is essentially a \textit{ModelProto} object, that consists a number of sub-fields. The \textit{ModelProto} structure looks something like:
 
 \begin{lstlisting}[language=julia]
@@ -42,7 +78,8 @@ mutable struct ModelProto <: ProtoType
 end
 \end{lstlisting}{}
 
-Of all these fields, \textit{graph} is the most essential attribute. It captures the entire computation graph of the model. The \textit{GraphProto} follows the structure:
+Of all these fields, \textit{graph} is the most essential attribute. It captures the entire
+computation graph of the model. The \textit{GraphProto} follows the structure:
 
 \begin{lstlisting}[language=julia]
 mutable struct GraphProto <: ProtoType
@@ -75,7 +112,11 @@ end
 \section{Extracting data from the \textit{ModelProto}}
 \label{sec:documentclass}
 %
-Every ONNX serialized model is stored in an \textit{ModelProto} object. This captures all attributes, parameters and hyper-parameters needed to load the model. Internally, \textit{ModelProto} consists of several other \textit{Proto} objects. The major ones that capture the entire nature of the model are \texit{GraphProto , NodeProto, TensorProto and AttributeProto}. Each serves a different purpose, as follows:
+Every ONNX serialized model is stored in an \textit{ModelProto} object. This captures all
+attributes, parameters and hyper-parameters needed to load the model. Internally,
+\textit{ModelProto} consists of several other \textit{Proto} objects. The major ones that
+capture the entire nature of the model are \textit{GraphProto , NodeProto, TensorProto and
+AttributeProto}. Each serves a different purpose, as follows:
 
 \begin{itemize}
     \item \textit{GraphProto} stores the entire computation graph for the deep learning model. \newline
@@ -113,6 +154,11 @@ Internally, the task of generating the aforementioned files can be summarized in
 \section{Additional features}
 
 Unlike other ONNX backends, the result of the ONNX.jl is the Julia code for the model. This makes it much more intuitive and ideal for using this as a starting point for other tasks, say neural style transfer or semantic segmentation.
+
+\section{Related Work}
+
+Another recent development in this direction is Google's \textit{Multi-Level Intermediate
+Representation}, or \textit{mlir}. Unlike ONNX, mlir aims an implementing a common Intermediate Representation for deep learning models, thus unifying TensorFlow and other frameworks.
 
 \section{Example Usage:}
 
