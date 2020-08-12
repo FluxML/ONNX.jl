@@ -1,0 +1,23 @@
+title: "Interoperating Deep Learning models with ONNX.jl"
+keywords:
+  - Julia
+  - Machine Learning
+  - Deep Learning
+  - Transfer Learning
+authors:
+  - name: Ayush Shridhar
+    orcid: 0000-0003-3550-691X
+    affiliation: 1
+  - name: Phil Tomson
+    affiliation: 2
+  - name: Mike Innes
+    affiliation: 3
+affiliations:
+  - name: International Institute of Information Technology, Bhubaneswar, India
+    index: 1
+  - name: Unaffiliated
+    index: 2
+  - name : Julia Computing, Inc
+    index: 3
+date: 24 April 2019
+bibliography: ref.bib
