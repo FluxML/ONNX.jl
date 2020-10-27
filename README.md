@@ -36,4 +36,4 @@ starting point. It lists the approach taken towards developing this package, the
 
 Since this package is currently under development, feel free to open an [issue](https://github.com/FluxML/ONNX.jl/issues) if you find any error/bug. 
 
-For more discussion, you can get in touch with us on [Julia Slack](https://slackinvite.julialang.org/). We're pretty active on the #machine-learning channel.
+For more discussion, you can get in touch with us on [Julia Slack](https://julialang.org/slack/). We're pretty active on the #machine-learning channel.
