@@ -1,5 +1,7 @@
 # ONNX
 
+**This package is currently under reconstruction! The README below is outdated and will be rewritten soon!**
+
 [![Build Status](https://travis-ci.org/ayush1999/ONNX.jl.svg?branch=master)](https://travis-ci.org/ayush1999/ONNX.jl.svg?branch=master)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3994216.svg)](https://doi.org/10.5281/zenodo.3994216)
 
