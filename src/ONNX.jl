@@ -1,12 +1,6 @@
 module ONNX
-
-using ProtoBuf, MacroTools, DataFlow, Statistics
-
-include("onnx_pb.jl")
-include("convert.jl")
-include("new_types.jl")
-include("graph/graph.jl")
-
-using Flux
-
-end # module
+  const _ProtoBuf_Top_ = @static isdefined(parentmodule(@__MODULE__), :_ProtoBuf_Top_) ? (parentmodule(@__MODULE__))._ProtoBuf_Top_ : parentmodule(@__MODULE__)
+  include("onnx_pb.jl")
+  include("read.jl")
+  include("write.jl")
+end
