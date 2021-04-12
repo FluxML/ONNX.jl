@@ -16,9 +16,10 @@ const Version = (;[
 mutable struct StringStringEntryProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function StringStringEntryProto(; kwargs...)
-        obj = new(meta(StringStringEntryProto), Dict{Symbol,Any}())
+        obj = new(meta(StringStringEntryProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -54,9 +55,10 @@ end
 mutable struct TensorAnnotation <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function TensorAnnotation(; kwargs...)
-        obj = new(meta(TensorAnnotation), Dict{Symbol,Any}())
+        obj = new(meta(TensorAnnotation), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -117,9 +119,10 @@ const TensorProto_DataLocation = (;[
 mutable struct TensorProto_Segment <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function TensorProto_Segment(; kwargs...)
-        obj = new(meta(TensorProto_Segment), Dict{Symbol,Any}())
+        obj = new(meta(TensorProto_Segment), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -155,9 +158,10 @@ end
 mutable struct TensorProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function TensorProto(; kwargs...)
-        obj = new(meta(TensorProto), Dict{Symbol,Any}())
+        obj = new(meta(TensorProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -176,7 +180,7 @@ function meta(::Type{TensorProto})
             __meta_TensorProto[] = target = ProtoMeta(TensorProto)
             fnum = Int[1,2,3,4,5,6,7,8,12,9,13,14,10,11]
             pack = Symbol[:float_data,:int32_data,:int64_data,:double_data,:uint64_data]
-            allflds = Pair{Symbol,Union{Type,String}}[:dims => Base.Vector{Int64}, :data_type => Int32, :segment => TensorProto_Segment, :float_data => Base.Vector{Float32}, :int32_data => Base.Vector{Int32}, :string_data => Base.Vector{Array{UInt8,1}}, :int64_data => Base.Vector{Int64}, :name => AbstractString, :doc_string => AbstractString, :raw_data => Array{UInt8,1}, :external_data => Base.Vector{StringStringEntryProto}, :data_location => Int32, :double_data => Base.Vector{Float64}, :uint64_data => Base.Vector{UInt64}]
+            allflds = Pair{Symbol,Union{Type,String}}[:dims => Base.Vector{Int64}, :data_type => Int32, :segment => TensorProto_Segment, :float_data => Base.Vector{Float32}, :int32_data => Base.Vector{Int32}, :string_data => Base.Vector{Vector{UInt8}}, :int64_data => Base.Vector{Int64}, :name => AbstractString, :doc_string => AbstractString, :raw_data => Vector{UInt8}, :external_data => Base.Vector{StringStringEntryProto}, :data_location => Int32, :double_data => Base.Vector{Float64}, :uint64_data => Base.Vector{UInt64}]
             meta(target, TensorProto, allflds, ProtoBuf.DEF_REQ, fnum, ProtoBuf.DEF_VAL, pack, ProtoBuf.DEF_WTYPES, ProtoBuf.DEF_ONEOFS, ProtoBuf.DEF_ONEOF_NAMES)
         end
         __meta_TensorProto[]
@@ -194,7 +198,7 @@ function Base.getproperty(obj::TensorProto, name::Symbol)
     elseif name === :int32_data
         return (obj.__protobuf_jl_internal_values[name])::Base.Vector{Int32}
     elseif name === :string_data
-        return (obj.__protobuf_jl_internal_values[name])::Base.Vector{Array{UInt8,1}}
+        return (obj.__protobuf_jl_internal_values[name])::Base.Vector{Vector{UInt8}}
     elseif name === :int64_data
         return (obj.__protobuf_jl_internal_values[name])::Base.Vector{Int64}
     elseif name === :name
@@ -202,7 +206,7 @@ function Base.getproperty(obj::TensorProto, name::Symbol)
     elseif name === :doc_string
         return (obj.__protobuf_jl_internal_values[name])::AbstractString
     elseif name === :raw_data
-        return (obj.__protobuf_jl_internal_values[name])::Array{UInt8,1}
+        return (obj.__protobuf_jl_internal_values[name])::Vector{UInt8}
     elseif name === :external_data
         return (obj.__protobuf_jl_internal_values[name])::Base.Vector{StringStringEntryProto}
     elseif name === :data_location
@@ -219,9 +223,10 @@ end
 mutable struct SparseTensorProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function SparseTensorProto(; kwargs...)
-        obj = new(meta(SparseTensorProto), Dict{Symbol,Any}())
+        obj = new(meta(SparseTensorProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -259,9 +264,10 @@ end
 mutable struct TensorShapeProto_Dimension <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function TensorShapeProto_Dimension(; kwargs...)
-        obj = new(meta(TensorShapeProto_Dimension), Dict{Symbol,Any}())
+        obj = new(meta(TensorShapeProto_Dimension), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -279,7 +285,7 @@ function meta(::Type{TensorShapeProto_Dimension})
         if !isassigned(__meta_TensorShapeProto_Dimension)
             __meta_TensorShapeProto_Dimension[] = target = ProtoMeta(TensorShapeProto_Dimension)
             allflds = Pair{Symbol,Union{Type,String}}[:dim_value => Int64, :dim_param => AbstractString, :denotation => AbstractString]
-            oneofs = Int[1,1,1]
+            oneofs = Int[1,1,0]
             oneof_names = Symbol[Symbol("value")]
             meta(target, TensorShapeProto_Dimension, allflds, ProtoBuf.DEF_REQ, ProtoBuf.DEF_FNUM, ProtoBuf.DEF_VAL, ProtoBuf.DEF_PACK, ProtoBuf.DEF_WTYPES, oneofs, oneof_names)
         end
@@ -301,9 +307,10 @@ end
 mutable struct TensorShapeProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function TensorShapeProto(; kwargs...)
-        obj = new(meta(TensorShapeProto), Dict{Symbol,Any}())
+        obj = new(meta(TensorShapeProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -337,9 +344,10 @@ end
 mutable struct OperatorSetIdProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function OperatorSetIdProto(; kwargs...)
-        obj = new(meta(OperatorSetIdProto), Dict{Symbol,Any}())
+        obj = new(meta(OperatorSetIdProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -391,9 +399,10 @@ const AttributeProto_AttributeType = (;[
 mutable struct AttributeProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function AttributeProto(; kwargs...)
-        obj = new(meta(AttributeProto), Dict{Symbol,Any}())
+        obj = new(meta(AttributeProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -411,7 +420,7 @@ function meta(::Type{AttributeProto})
         if !isassigned(__meta_AttributeProto)
             __meta_AttributeProto[] = target = ProtoMeta(AttributeProto)
             fnum = Int[1,21,13,20,2,3,4,5,6,22,7,8,9,10,11,23]
-            allflds = Pair{Symbol,Union{Type,String}}[:name => AbstractString, :ref_attr_name => AbstractString, :doc_string => AbstractString, :_type => Int32, :f => Float32, :i => Int64, :s => Array{UInt8,1}, :t => TensorProto, :g => "GraphProto", :sparse_tensor => SparseTensorProto, :floats => Base.Vector{Float32}, :ints => Base.Vector{Int64}, :strings => Base.Vector{Array{UInt8,1}}, :tensors => Base.Vector{TensorProto}, :graphs => "Base.Vector{GraphProto}", :sparse_tensors => Base.Vector{SparseTensorProto}]
+            allflds = Pair{Symbol,Union{Type,String}}[:name => AbstractString, :ref_attr_name => AbstractString, :doc_string => AbstractString, :_type => Int32, :f => Float32, :i => Int64, :s => Vector{UInt8}, :t => TensorProto, :g => "GraphProto", :sparse_tensor => SparseTensorProto, :floats => Base.Vector{Float32}, :ints => Base.Vector{Int64}, :strings => Base.Vector{Vector{UInt8}}, :tensors => Base.Vector{TensorProto}, :graphs => "Base.Vector{GraphProto}", :sparse_tensors => Base.Vector{SparseTensorProto}]
             meta(target, AttributeProto, allflds, ProtoBuf.DEF_REQ, fnum, ProtoBuf.DEF_VAL, ProtoBuf.DEF_PACK, ProtoBuf.DEF_WTYPES, ProtoBuf.DEF_ONEOFS, ProtoBuf.DEF_ONEOF_NAMES)
         end
         __meta_AttributeProto[]
@@ -431,7 +440,7 @@ function Base.getproperty(obj::AttributeProto, name::Symbol)
     elseif name === :i
         return (obj.__protobuf_jl_internal_values[name])::Int64
     elseif name === :s
-        return (obj.__protobuf_jl_internal_values[name])::Array{UInt8,1}
+        return (obj.__protobuf_jl_internal_values[name])::Vector{UInt8}
     elseif name === :t
         return (obj.__protobuf_jl_internal_values[name])::TensorProto
     elseif name === :g
@@ -443,7 +452,7 @@ function Base.getproperty(obj::AttributeProto, name::Symbol)
     elseif name === :ints
         return (obj.__protobuf_jl_internal_values[name])::Base.Vector{Int64}
     elseif name === :strings
-        return (obj.__protobuf_jl_internal_values[name])::Base.Vector{Array{UInt8,1}}
+        return (obj.__protobuf_jl_internal_values[name])::Base.Vector{Vector{UInt8}}
     elseif name === :tensors
         return (obj.__protobuf_jl_internal_values[name])::Base.Vector{TensorProto}
     elseif name === :graphs
@@ -458,9 +467,10 @@ end
 mutable struct ValueInfoProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function ValueInfoProto(; kwargs...)
-        obj = new(meta(ValueInfoProto), Dict{Symbol,Any}())
+        obj = new(meta(ValueInfoProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -498,9 +508,10 @@ end
 mutable struct NodeProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function NodeProto(; kwargs...)
-        obj = new(meta(NodeProto), Dict{Symbol,Any}())
+        obj = new(meta(NodeProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -547,9 +558,10 @@ end
 mutable struct TrainingInfoProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function TrainingInfoProto(; kwargs...)
-        obj = new(meta(TrainingInfoProto), Dict{Symbol,Any}())
+        obj = new(meta(TrainingInfoProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -589,9 +601,10 @@ end
 mutable struct ModelProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function ModelProto(; kwargs...)
-        obj = new(meta(ModelProto), Dict{Symbol,Any}())
+        obj = new(meta(ModelProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -644,9 +657,10 @@ end
 mutable struct GraphProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function GraphProto(; kwargs...)
-        obj = new(meta(GraphProto), Dict{Symbol,Any}())
+        obj = new(meta(GraphProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -697,9 +711,10 @@ end
 mutable struct TypeProto_Tensor <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function TypeProto_Tensor(; kwargs...)
-        obj = new(meta(TypeProto_Tensor), Dict{Symbol,Any}())
+        obj = new(meta(TypeProto_Tensor), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -733,13 +748,13 @@ function Base.getproperty(obj::TypeProto_Tensor, name::Symbol)
 end
 
 
-
 mutable struct TypeProto_Sequence <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function TypeProto_Sequence(; kwargs...)
-        obj = new(meta(TypeProto_Sequence), Dict{Symbol,Any}())
+        obj = new(meta(TypeProto_Sequence), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -773,9 +788,10 @@ end
 mutable struct TypeProto_Map <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function TypeProto_Map(; kwargs...)
-        obj = new(meta(TypeProto_Map), Dict{Symbol,Any}())
+        obj = new(meta(TypeProto_Map), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -811,9 +827,10 @@ end
 mutable struct TypeProto <: ProtoType
     __protobuf_jl_internal_meta::ProtoMeta
     __protobuf_jl_internal_values::Dict{Symbol,Any}
+    __protobuf_jl_internal_defaultset::Set{Symbol}
 
     function TypeProto(; kwargs...)
-        obj = new(meta(TypeProto), Dict{Symbol,Any}())
+        obj = new(meta(TypeProto), Dict{Symbol,Any}(), Set{Symbol}())
         values = obj.__protobuf_jl_internal_values
         symdict = obj.__protobuf_jl_internal_meta.symdict
         for nv in kwargs
@@ -832,7 +849,7 @@ function meta(::Type{TypeProto})
             __meta_TypeProto[] = target = ProtoMeta(TypeProto)
             fnum = Int[1,4,5,6]
             allflds = Pair{Symbol,Union{Type,String}}[:tensor_type => TypeProto_Tensor, :sequence_type => TypeProto_Sequence, :map_type => TypeProto_Map, :denotation => AbstractString]
-            oneofs = Int[1,1,1,1]
+            oneofs = Int[1,1,1,0]
             oneof_names = Symbol[Symbol("value")]
             meta(target, TypeProto, allflds, ProtoBuf.DEF_REQ, fnum, ProtoBuf.DEF_VAL, ProtoBuf.DEF_PACK, ProtoBuf.DEF_WTYPES, oneofs, oneof_names)
         end
