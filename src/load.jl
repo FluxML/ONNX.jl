@@ -8,7 +8,7 @@ struct ONNXCtx
     default_val::Union{Missing, Nothing}
 end
 
-ONNXCtx(;eval=true) = ONNXCtx(Dict(), eval ? missing : nothing)
+ONNXCtx(;exec=true) = ONNXCtx(Dict(), exec ? missing : nothing)
 
 # TODO: implement rebind_context!()
 
@@ -44,14 +44,18 @@ load_node!(tape::Tape, nd::NodeProto) = load_node!(tape, nd, Val(Symbol(nd.op_ty
 
 function load_node!(tape::Tape, nd::NodeProto, ::Val{:Conv})
     attrs = Dict(nd.attribute)
-    a,_,p,s,d = akpsd(attrs)
-    # @assert get(attrs, :group, 1) == 1 "Group size not supported!" #Or?
-
+    _,_,p,s,d = akpsd(attrs)
+    kw = (stride = s, pad = p, dilation = d, groups = get(attrs, "group", 1))
+    # positional arguments
     x, w, b = [tape.c.name2var[name] for name in nd.input]
-    # TODO: ignoring attributes/kw args for a moment, will use Core.kwfunc(conv) instead later
-    c = push!(tape, mkcall(NNlib.conv, x, w; val=tape.c.default_val))
-    r = push!(tape, mkcall(broadcast, +, c, b; val=tape.c.default_val))
-    # TODO: ^ should we have a single conv(x, w, b) instead?
+    # record conv
+    kwconv = Core.kwfunc(NNlib.conv)
+    c = push!(tape, mkcall(kwconv, kw, NNlib.conv, x, w; val=tape.c.default_val))
+    # record bias addition
+    bias_size = (ntuple(_ -> 1, length(s))..., :, 1)
+    br = push!(tape, mkcall(reshape, b, bias_size; val=tape.c.default_val))
+    r = push!(tape, mkcall(broadcast, +, c, br; val=tape.c.default_val))
+    # update name mapping
     tape.c.name2var[nd.output[1]] = r
 end
 
@@ -68,12 +72,12 @@ end
 ###############################################################################
 
 
-function load(filename::AbstractString, args...; eval::Bool=true)
+function load(filename::AbstractString, args...; exec::Bool=true)
     onnx_model = open(filename) do io
         readproto(io, ModelProto())
     end;
     g = onnx_model.graph;
-    tape = Tape(ONNXCtx(; eval=eval))
+    tape = Tape(ONNXCtx(; exec=exec))
     # create map of initializers
     init_vals = Dict{String, Any}()
     for init in g.initializer
@@ -83,8 +87,8 @@ function load(filename::AbstractString, args...; eval::Bool=true)
     # load inputs
     arg_idx = 1
     for inp in g.input
-        val = get(init_vals, inp.name, nothing)
-        if val === nothing && eval == true
+        val = get(init_vals, inp.name, missing)
+        if val === missing && exec == true
             val = args[arg_idx]
             arg_idx += 1
         end
