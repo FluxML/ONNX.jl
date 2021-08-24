@@ -5,10 +5,11 @@ using NNlib
 
 struct ONNXCtx
     name2var::Dict{String, Variable}
+    backends::Vector{Symbol}
     exec::Bool
 end
 
-ONNXCtx(; exec=true) = ONNXCtx(Dict(), exec)
+ONNXCtx(backends; exec=true) = ONNXCtx(Dict(), backends, exec)
 
 # TODO: implement rebind_context!()
 
@@ -47,9 +48,12 @@ function push_call!(tape::Tape{ONNXCtx}, fn, args...; kwargs...)
 end
 
 
-load_node!(tape::Tape, nd::NodeProto) = load_node!(tape, nd, Val(Symbol(nd.op_type)))
+# function load_node!(tape::Tape, nd::NodeProto, ::Val{BE}) where BE
+#     load_node!(tape, nd, Val(BE), Val(Symbol(nd.op_type)))
+# end
 
-function load_node!(tape::Tape, nd::NodeProto, ::Val{:Conv})
+
+function load_node!(tape::Tape, nd::NodeProto, ::Val{:NNlib}, ::Val{:Conv})
     attrs = Dict(nd.attribute)
     _,_,p,s,d = akpsd(attrs)
     kw = (stride = s, pad = p, dilation = d, groups = get(attrs, "group", 1))
@@ -68,7 +72,7 @@ function load_node!(tape::Tape, nd::NodeProto, ::Val{:Conv})
 end
 
 
-function load_node!(tape::Tape, nd::NodeProto, ::Val{:Gemm})
+function load_node!(tape::Tape, nd::NodeProto, ::Val{:Base}, ::Val{:Gemm})
     args = [tape.c.name2var[name] for name in nd.input]
     A, B = args[1:2]
     attrs = Dict(nd.attribute)
@@ -95,28 +99,28 @@ function load_node!(tape::Tape, nd::NodeProto, ::Val{:Gemm})
 end
 
 
-function load_node!(tape::Tape, nd::NodeProto, ::Val{:Add})
+function load_node!(tape::Tape, nd::NodeProto, ::Val{:Base}, ::Val{:Add})
     args = [tape.c.name2var[name] for name in nd.input]
     r = push_call!(tape, broadcast, +, args[1], args[2])
     tape.c.name2var[nd.output[1]] = r
 end
 
 
-function load_node!(tape::Tape, nd::NodeProto, ::Val{:Mul})
+function load_node!(tape::Tape, nd::NodeProto, ::Val{:Base}, ::Val{:Mul})
     args = [tape.c.name2var[name] for name in nd.input]
     r = push_call!(tape, broadcast, *, args[1], args[2])
     tape.c.name2var[nd.output[1]] = r
 end
 
 
-function load_node!(tape::Tape, nd::NodeProto, ::Val{:Relu})
+function load_node!(tape::Tape, nd::NodeProto, ::Val{:NNlib}, ::Val{:Relu})
     args = [tape.c.name2var[name] for name in nd.input]
     r = push_call!(tape, broadcast, NNlib.relu, args[1])
     tape.c.name2var[nd.output[1]] = r
 end
 
 
-function load_node!(tape::Tape, nd::NodeProto, ::Val{:MaxPool})
+function load_node!(tape::Tape, nd::NodeProto, ::Val{:NNlib}, ::Val{:MaxPool})
     args = [tape.c.name2var[name] for name in nd.input]
     attrs = Dict(nd.attribute)
     _,k,p,s,d = akpsd(attrs)
@@ -125,12 +129,12 @@ function load_node!(tape::Tape, nd::NodeProto, ::Val{:MaxPool})
 end
 
 
-function load_node!(tape::Tape, nd::NodeProto, ::Val{OP}) where OP
-    @warn "add_node!() is not implemented for op_type = $OP, adding dummy operation instead"
-    args = [tape.c.name2var[name] for name in nd.input]
-    r = push!(tape, mkcall(identity, args[1]))
-    tape.c.name2var[nd.output[1]] = r
-end
+# function load_node!(tape::Tape, nd::NodeProto, ::Val{BE}, ::Val{OP}) where {BE, OP}
+#     @warn "add_node!() is not implemented for op_type = $OP, adding dummy operation instead"
+#     args = [tape.c.name2var[name] for name in nd.input]
+#     r = push!(tape, mkcall(identity, args[1]))
+#     tape.c.name2var[nd.output[1]] = r
+# end
 
 
 ###############################################################################
@@ -138,12 +142,12 @@ end
 ###############################################################################
 
 
-function load(filename::AbstractString, model_args...; exec::Bool=true)
+function load(filename::AbstractString, model_args...; backends=[:Base, :NNlib], exec::Bool=true)
     onnx_model = open(filename) do io
         readproto(io, ModelProto())
     end;
     g = onnx_model.graph;
-    tape = Tape(ONNXCtx(; exec=exec))
+    tape = Tape(ONNXCtx(backends; exec=exec))
     # create map of initializers
     init_vals = Dict{String, Any}()
     for init in g.initializer
@@ -163,7 +167,20 @@ function load(filename::AbstractString, model_args...; exec::Bool=true)
     end
     # load nodes
     for nd in g.node
-        load_node!(tape, nd)
+        success = false
+        for backend in tape.c.backends
+            # TODO: test methods using @which or iterating over methods(load_node!)
+            try
+                load_node!(tape, nd, Val(backend), Val(Symbol(nd.op_type)))
+                @warn "Loaded $(nd.op_type) using backend $(backend)"
+            catch e
+                e isa MethodError && continue
+                rethrow()
+            end
+            success = true
+        end
+        success || error("Couldn't load node for $(nd.op_type), " *
+                        "tried the following backends: $(tape.c.backends)")
     end
     return tape
 end
