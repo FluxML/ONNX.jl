@@ -1,3 +1,9 @@
+# Default implementations of ONNX operations
+
+import NNlib
+import Flux
+
+
 conv(x, w; kw...) = NNlib.conv(x, w; kw...)
 
 function conv(x, w, b; kw...)
@@ -38,6 +44,33 @@ mul(xs...) = broadcast(*, xs...)
 relu(x) = broadcast(NNlib.relu, x)
 maxpool(x, k; pad, stride) = NNlib.maxpool(x, k; pad=pad, stride=stride)
 
+
+# mutable struct BatchNorm{F,V,N,W}
+#     λ::F  # activation function
+#     β::V  # bias
+#     γ::V  # scale
+#     μ::W     # moving mean
+#     σ²::W    # moving var
+#     ϵ::N
+#     momentum::N
+#     affine::Bool
+#     track_stats::Bool
+#     active::Union{Bool, Nothing}
+#     chs::Int # number of channels
+#   end
+
+function batch_norm(x, γ, β, μ, σ², ϵ, momentum, training_mode)
+    bn = Flux.BatchNorm(
+        identity, β, γ, μ, σ², ϵ, momentum, true, true, nothing, length(γ))
+    y = bn(x)
+    if training_mode
+        return y, bn.μ, bn.σ²  # TODO: are bn.μ and bn.σ² actually updated?
+    else
+        return y
+    end
+end
+
+
+
 # TODO: implement hese functions
-batch_norm(args...) = error("Not implemented")
 global_average_pool(args...) = error("Not implemented")

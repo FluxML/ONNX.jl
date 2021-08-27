@@ -1,6 +1,5 @@
 using Ghost
 using Ghost: Tape, Input, mkcall, Variable, V
-import NNlib
 
 
 struct ONNXCtx
@@ -59,7 +58,13 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     attrs = convert(Dict{Symbol, Any}, Dict(nd.attribute))
     conf = OpConfig{backend, Symbol(nd.op_type)}()
     out = load_node!(tape, conf, args, attrs)
-    tape.c.name2var[nd.output[1]] = out
+    if out isa Tuple
+        for i=1:length(nd.output)
+            tape.c.name2var[nd.output[i]] = out[i]
+        end
+    else
+        tape.c.name2var[nd.output[1]] = out
+    end
 end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
@@ -107,7 +112,18 @@ end
 
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, batch_norm, args...)
+    ϵ = get(attrs, :epsilon, 1f-5)
+    momentum = get(attrs, :momentum, 9f-1)
+    training_mode = Bool(get(attrs, :training_mode, 0))
+    res = push_call!(tape, batch_norm, args..., ϵ, momentum, training_mode)
+    if training_mode
+        y = push_call!(tape, getfield, 1)
+        μ_new = push_call!(tape, getfield, 2)
+        σ²_new = push_call!(tape, getfield, 3)
+        return y, μ_new, σ²_new
+    else
+        return res
+    end
 end
 
 
@@ -152,11 +168,13 @@ function load(
     for nd in g.node
         success = false
         for backend in tape.c.backends
+            # check if there's an implementation for this op in this backend
             if OpConfig{backend, Symbol(nd.op_type)} in op_configs
                 load_node!(tape, nd, backend)
+                success = true
+                break
                 @debug "Loaded $(nd.op_type) using backend $(backend)"
             end
-            success = true
         end
         success || error("Couldn't load node for $(nd.op_type), " *
                         "tried the following backends: $(tape.c.backends)")
