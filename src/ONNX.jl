@@ -4,5 +4,6 @@ module ONNX
   include("read.jl")
   include("write.jl")
   include("show.jl")
+  include("ops.jl")
   include("load.jl")
 end
