@@ -6,4 +6,6 @@ module ONNX
   include("show.jl")
   include("ops.jl")
   include("load.jl")
+  include("save.jl")
+  include("validate.jl")
 end

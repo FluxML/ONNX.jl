@@ -12,6 +12,14 @@ ONNXCtx(backends; exec=true) = ONNXCtx(Dict(), backends, exec)
 
 # TODO: implement rebind_context!()
 
+"""
+    getindex(tape::Tape{ONNXCtx}, onnx_name::String)
+
+Get operation on the tape using the name in ONNX graph
+"""
+Base.getindex(tape::Tape{ONNXCtx}, onnx_name::String) =
+    tape[tape.c.name2var[onnx_name]]
+
 ###############################################################################
 #                               Operations                                    #
 ###############################################################################
@@ -29,6 +37,14 @@ akpsd(params) = a2t.(_akpsd(params))
 a2t(x) = x
 a2t(a::AbstractArray) = Tuple(a)
 
+
+conv_attr_onnx2tape(attrs) = Dict(
+    :stride => mrev(get(attrs, :strides, 1)),
+    :pad => prev(get(attrs, :pads, 0)),
+    :dilation => mrev(get(attrs, :dilations, 1)),
+    :groups => get(attrs, :group, 1),
+    # kenrnel_shape => mrev(get(params, :kernel_shape, 1)) -- not used in NNlib.conv
+)
 
 """
     push_call!(tape::Tape{ONNXCtx}, fn, args...; kwargs)
@@ -81,12 +97,12 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::A
         :α => get(attrs, :alpha, 1),
         :β => get(attrs, :beta, 0)
     )
-    return push_call!(tape, gemm, args...; kw...)
+    return push_call!(tape, onnx_gemm, args...; kw...)
 end
 
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Flatten}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, flatten, args...; attrs...)
+    return push_call!(tape, onnx_flatten, args...; attrs...)
 end
 
 
@@ -179,5 +195,6 @@ function load(
         success || error("Couldn't load node for $(nd.op_type), " *
                         "tried the following backends: $(tape.c.backends)")
     end
+    tape.result = Ghost.bound(tape, V(length(tape)))
     return tape
 end

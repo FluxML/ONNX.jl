@@ -13,16 +13,18 @@ function conv(x, w, b; kw...)
 end
 
 
-function gemm(A, B, C; tA=0, tB=false, α=1, β=1)
+function onnx_gemm(A, B, C; tA=0, tB=false, α=1, β=1)
     A = Bool(tA) ? A' : A
     B = Bool(tB) ? B' : B
-    return α * A * B .+ β * C
+    # note: order of arguments reversed due to row-major layout
+    return α * B * A .+ β * C
 end
 
-function gemm(A, B; tA=0, tB=0, α=1)
+function onnx_gemm(A, B; tA=0, tB=0, α=1)
     A = Bool(tA) ? A' : A
     B = Bool(tB) ? B' : B
-    return α * A * B
+    # note: order of arguments reversed due to row-major layout
+    return α * B * A
 end
 
 # Julia-friendly flatten
@@ -34,7 +36,7 @@ end
 
 # ONNX-specific flatten
 function onnx_flatten(x; axis=1)
-    dim = axis >= 0 ? axis + 1 : ndims(x) - axis + 1
+    dim = axis >= 0 ? ndims(x) - axis + 1 : axis + 1
     return flatten(x; dim=dim)
 
 end
@@ -71,6 +73,6 @@ function batch_norm(x, γ, β, μ, σ², ϵ, momentum, training_mode)
 end
 
 
-
-# TODO: implement hese functions
-global_average_pool(args...) = error("Not implemented")
+function global_average_pool(x)
+    return Flux.GlobalMeanPool()(x)
+end
