@@ -2,10 +2,7 @@ import sys
 import os
 import onnx
 import onnxruntime
-
-
-def to_numpy(tensor):
-    return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
+import numpy as np
 
 
 def check_and_run(path):
@@ -19,8 +16,12 @@ def check_and_run(path):
     print("Running the model")
     ort_session = onnxruntime.InferenceSession(path)
     # compute ONNX Runtime output prediction
-    ort_inputs = {ort_session.get_inputs()[0].name: to_numpy(x)}
+    ort_inputs = {
+        ort_session.get_inputs()[0].name: np.random.rand(4, 3),
+        ort_session.get_inputs()[1].name: np.random.rand(4, 3)
+    }
     ort_outs = ort_session.run(None, ort_inputs)
+    print(ort_outs)
 
 
 if __name__ == "__main__":

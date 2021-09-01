@@ -64,6 +64,12 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(add)}, op::Ghost.Cal
 end
 
 
+ValueInfoProto(op::Ghost.AbstractOp) = ValueInfoProto(
+    onnx_name(op),
+    mrev(size(op.val)),
+    eltype(op.val)
+)
+
 
 ##############################################################################
 #                                    API                                     #
@@ -76,15 +82,15 @@ function save(filename::String, tape::Tape{ONNXCtx})
         @show op
         if op isa Ghost.Input
             @show onnx_name(op)
-            add!(g, TensorProto(op.val, onnx_name(op)))
+            # add!(g, TensorProto(op.val, onnx_name(op)))
+            push!(g.input, ValueInfoProto(op))
         elseif op isa Ghost.Call
             save_node!(g, op)
         else
             error("$(typeof(op)) is not yet supported in model export")
         end
     end
-    res_op = tape[tape.result]
-    push!(g.output, ValueInfoProto(onnx_name(res_op), size(res_op.val)))
+    push!(g.output, ValueInfoProto(tape[tape.result]))
     m = modelproto();
     m.graph = g;
     open(filename, "w") do io
