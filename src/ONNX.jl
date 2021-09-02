@@ -3,9 +3,9 @@ module ONNX
   include("onnx_pb.jl")
   include("read.jl")
   include("write.jl")
+  include("conversions.jl")
   include("show.jl")
   include("ops.jl")
   include("load.jl")
   include("save.jl")
-  include("validate.jl")
 end

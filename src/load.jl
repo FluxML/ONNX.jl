@@ -9,6 +9,7 @@ struct ONNXCtx
 end
 
 ONNXCtx(backends; exec=true) = ONNXCtx(Dict(), backends, exec)
+ONNXCtx(;exec=true) = ONNXCtx(Dict(), [:ONNX], exec)
 
 # TODO: implement rebind_context!()
 
@@ -155,7 +156,7 @@ end
 
 function load(
         filename::AbstractString, model_args...;
-        backends=[:Base, :NNlib, :ONNX], exec::Bool=true)
+        backends=[:ONNX], exec::Bool=true)
     onnx_model = open(filename) do io
         readproto(io, ModelProto())
     end;

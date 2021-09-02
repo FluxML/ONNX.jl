@@ -1,3 +1,4 @@
+import Pkg
 
 modelproto(;kwargs...) = ModelProto(;
     ir_version=6,
@@ -79,9 +80,13 @@ function save(filename::String, tape::Tape{ONNXCtx})
     g = graphproto()
     g.name = "generated_model"
     for op in tape
-        @show op
         if op isa Ghost.Input
-            @show onnx_name(op)
+            # Ghost.Tape represents both - arguments and model parameters
+            # as Input ops. In ONNX, parameters (and constants) must be added
+            # to .initializer, so will we have to do when we understand how to
+            # handle parameters (and complex structs) in general.
+            # For reference, the following commented line shows how to add Input
+            # to the .initializer:
             # add!(g, TensorProto(op.val, onnx_name(op)))
             push!(g.input, ValueInfoProto(op))
         elseif op isa Ghost.Call
