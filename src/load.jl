@@ -84,27 +84,27 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     end
 end
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
-    _,_,p,s,d = akpsd(attrs)
-    kw = (stride = s, pad = p, dilation = d, groups = get(attrs, "group", 1))
-    return push_call!(tape, conv, args...; kw...)
-end
+# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
+#     _,_,p,s,d = akpsd(attrs)
+#     kw = (stride = s, pad = p, dilation = d, groups = get(attrs, "group", 1))
+#     return push_call!(tape, conv, args...; kw...)
+# end
 
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::AttrDict)
-    kw = Dict(
-        :tA => get(attrs, :transA, 0),
-        :tB => get(attrs, :transB, 0),
-        :α => get(attrs, :alpha, 1),
-        :β => get(attrs, :beta, 0)
-    )
-    return push_call!(tape, onnx_gemm, args...; kw...)
-end
+# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::AttrDict)
+#     kw = Dict(
+#         :tA => get(attrs, :transA, 0),
+#         :tB => get(attrs, :transB, 0),
+#         :α => get(attrs, :alpha, 1),
+#         :β => get(attrs, :beta, 0)
+#     )
+#     return push_call!(tape, onnx_gemm, args...; kw...)
+# end
 
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Flatten}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, onnx_flatten, args...; attrs...)
-end
+# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Flatten}, args::VarVec, attrs::AttrDict)
+#     return push_call!(tape, onnx_flatten, args...; attrs...)
+# end
 
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Add}, args::VarVec, attrs::AttrDict)
@@ -112,41 +112,41 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Add}, args::VarVec, attrs::At
 end
 
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Mul}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, mul, args...)
-end
+# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Mul}, args::VarVec, attrs::AttrDict)
+#     return push_call!(tape, mul, args...)
+# end
 
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, relu, args[1])
-end
+# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::AttrDict)
+#     return push_call!(tape, relu, args[1])
+# end
 
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs::AttrDict)
-    _,k,p,s,_ = akpsd(attrs)
-    return push_call!(tape, maxpool, args[1], k; pad=p, stride=s)
-end
+# function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs::AttrDict)
+#     _,k,p,s,_ = akpsd(attrs)
+#     return push_call!(tape, maxpool, args[1], k; pad=p, stride=s)
+# end
 
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization}, args::VarVec, attrs::AttrDict)
-    ϵ = get(attrs, :epsilon, 1f-5)
-    momentum = get(attrs, :momentum, 9f-1)
-    training_mode = Bool(get(attrs, :training_mode, 0))
-    res = push_call!(tape, batch_norm, args..., ϵ, momentum, training_mode)
-    if training_mode
-        y = push_call!(tape, getfield, 1)
-        μ_new = push_call!(tape, getfield, 2)
-        σ²_new = push_call!(tape, getfield, 3)
-        return y, μ_new, σ²_new
-    else
-        return res
-    end
-end
+# function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization}, args::VarVec, attrs::AttrDict)
+#     ϵ = get(attrs, :epsilon, 1f-5)
+#     momentum = get(attrs, :momentum, 9f-1)
+#     training_mode = Bool(get(attrs, :training_mode, 0))
+#     res = push_call!(tape, batch_norm, args..., ϵ, momentum, training_mode)
+#     if training_mode
+#         y = push_call!(tape, getfield, 1)
+#         μ_new = push_call!(tape, getfield, 2)
+#         σ²_new = push_call!(tape, getfield, 3)
+#         return y, μ_new, σ²_new
+#     else
+#         return res
+#     end
+# end
 
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :GlobalAveragePool}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, global_average_pool, args...)
-end
+# function load_node!(tape::Tape, ::OpConfig{:ONNX, :GlobalAveragePool}, args::VarVec, attrs::AttrDict)
+#     return push_call!(tape, global_average_pool, args...)
+# end
 
 
 ###############################################################################
@@ -154,12 +154,22 @@ end
 ###############################################################################
 
 
-function load(
-        filename::AbstractString, model_args...;
-        backends=[:ONNX], exec::Bool=true)
-    onnx_model = open(filename) do io
-        readproto(io, ModelProto())
-    end;
+"""
+    load(io::IO, model_args...; backends=[:ONNX], exec::Bool=true)
+    load(filename::String, model_args...; backends=[:ONNX], exec::Bool=true)
+
+Load an ONNX model as a Ghost.Tape. The way a particular ONNX node is deserialized is
+controlled by methods of [load_node!](@ref) dispatched by backend and node's op_type.
+
+`backends` parameter can be used to customize the loading process.
+
+`exec` parameter instructs the loader to execute every added operation just after
+the addition, making the debugging easier. Default is `true`.
+
+See also: [save!](@ref)
+"""
+function load(io::IO, model_args...; backends=[:ONNX], exec::Bool=true)
+    onnx_model = readproto(io, ModelProto());
     g = onnx_model.graph;
     tape = Tape(ONNXCtx(backends; exec=exec))
     # create map of initializers
@@ -198,4 +208,10 @@ function load(
     end
     tape.result = Ghost.bound(tape, V(length(tape)))
     return tape
+end
+
+function load(filename::String, model_args...; backends=[:ONNX], exec::Bool=true)
+    return open(filename) do io
+        load(io, model_args...; backends=backends, exec=exec)
+    end
 end

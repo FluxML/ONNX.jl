@@ -35,22 +35,28 @@ onnx_name(v::Variable) = "x$(v.id)"
 onnx_name(op::Ghost.AbstractOp) = "x$(op.id)"
 
 
+"""
+    save_node!(g::GraphProto, op::Ghost.Call)
+    save_node!(g::GraphProto, ::OpConfig{:Backend, Fn}, op::Ghost.Call)
+
+Serialize a single operation from a tape to graph.
+"""
 function save_node!(g::GraphProto, op::Ghost.Call)
     save_node!(g, OpConfig{:ONNX, typeof(op.fn)}(), op)
 end
 
 
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(conv)}, op::Ghost.Call)
+# function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(conv)}, op::Ghost.Call)
 
-    nd = NodeProto(
-        input=[onnx_name(v) for v in op.args],
-        output=[onnx_name(op)],
-        name=onnx_name(op),
-        attribute=AttributeProto[],  # TODO
-        op_type="Conv"
-    )
-    push!(g.node, nd)
-end
+#     nd = NodeProto(
+#         input=[onnx_name(v) for v in op.args],
+#         output=[onnx_name(op)],
+#         name=onnx_name(op),
+#         attribute=AttributeProto[],  # TODO
+#         op_type="Conv"
+#     )
+#     push!(g.node, nd)
+# end
 
 
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(add)}, op::Ghost.Call)
@@ -76,7 +82,16 @@ ValueInfoProto(op::Ghost.AbstractOp) = ValueInfoProto(
 #                                    API                                     #
 ##############################################################################
 
-function save(filename::String, tape::Tape{ONNXCtx})
+"""
+    save(io::IO, tape::Ghost.Tape{ONNXCtx})
+    save(filename::String, tape::Ghost.Tape{ONNXCtx})
+
+Save tape as an ONNX model. The way a particular operation is serialized is
+controlled by methods of [save_node!](@ref).
+
+See also: [load!](@ref)
+"""
+function save(io::IO, tape::Tape{ONNXCtx})
     g = graphproto()
     g.name = "generated_model"
     for op in tape
@@ -98,8 +113,12 @@ function save(filename::String, tape::Tape{ONNXCtx})
     push!(g.output, ValueInfoProto(tape[tape.result]))
     m = modelproto();
     m.graph = g;
-    open(filename, "w") do io
-        writeproto(io, m)
-    end
+    writeproto(io, m)
 end
 
+
+function save(filename::String, tape::Tape{ONNXCtx})
+    open(filename, "w") do io
+        save(io, tape)
+    end
+end
