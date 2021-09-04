@@ -41,7 +41,7 @@ function onnx_flatten(x; axis=1)
 
 end
 
-add(xs...) = broadcast(+, xs...)
+add(xs...) = +(xs...)
 mul(xs...) = broadcast(*, xs...)
 relu(x) = broadcast(NNlib.relu, x)
 maxpool(x, k; pad, stride) = NNlib.maxpool(x, k; pad=pad, stride=stride)
