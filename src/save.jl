@@ -89,7 +89,7 @@ ValueInfoProto(op::Ghost.AbstractOp) = ValueInfoProto(
 Save tape as an ONNX model. The way a particular operation is serialized is
 controlled by methods of [save_node!](@ref).
 
-See also: [load!](@ref)
+See also: [`load!`](@ref)
 """
 function save(io::IO, tape::Tape{ONNXCtx})
     g = graphproto()
