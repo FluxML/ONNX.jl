@@ -84,6 +84,9 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     end
 end
 
+load_node!(::Tape, ::OpConfig{BE, Op}, ::VarVec, ::AttrDict) where {BE, Op} = missing
+
+
 # function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
 #     _,_,p,s,d = akpsd(attrs)
 #     kw = (stride = s, pad = p, dilation = d, groups = get(attrs, "group", 1))
@@ -190,21 +193,17 @@ function load(io::IO, model_args...; backends=[:ONNX], exec::Bool=true)
         tape.c.name2var[inp.name] = v
     end
     # load nodes
-    op_configs = [meth.sig.parameters[3] for meth in methods(load_node!).ms]
-    op_configs = [config for config in op_configs if config <: OpConfig]
     for nd in g.node
         success = false
         for backend in tape.c.backends
-            # check if there's an implementation for this op in this backend
-            if OpConfig{backend, Symbol(nd.op_type)} in op_configs
-                load_node!(tape, nd, backend)
-                success = true
-                break
-                @debug "Loaded $(nd.op_type) using backend $(backend)"
-            end
+          if !ismissing(load_node!(tape, nd, backend))
+            success = true
+            @debug "Loaded $(nd.op_type) using backend $(backend)"
+            break
+          end
         end
         success || error("Couldn't load node for $(nd.op_type), " *
-                        "tried the following backends: $(tape.c.backends)")
+                         "tried the following backends: $(tape.c.backends)")
     end
     tape.result = Ghost.bound(tape, V(length(tape)))
     return tape
