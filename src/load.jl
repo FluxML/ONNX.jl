@@ -161,10 +161,10 @@ end
 Load an ONNX model as a Ghost.Tape. The way a particular ONNX node is deserialized is
 controlled by methods of [load_node!](@ref) dispatched by backend and node's op_type.
 
-`backends` parameter can be used to customize the loading process.
+`backends` can be used to customize the (in-order) choices for which backend libraries to use.
 
-`exec` parameter instructs the loader to execute every added operation just after
-the addition, making the debugging easier. Default is `true`.
+`exec` parameter instructs the loader to execute every operation pushed onto the tape just after
+the push, making the debugging easier. Default is `true`.
 
 See also: [save!](@ref)
 """
