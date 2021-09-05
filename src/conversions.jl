@@ -1,58 +1,17 @@
-"Maybe reverse"
-mrev(x) = x
-mrev(x::AbstractVector) = reverse(x)
-
-"""
-Convert padding between ONNX convolution (cross-correlation) and
-NNlib (proper) convolution
-"""
-prev(x) = x
-prev(x::AbstractVector) = reshape(
-    permutedims(
-        reverse(
-            reshape(
-                x,
-                length(x) ÷ 2,
-                :
-            )
-            ; dims=1
-        )
-    ),
-    :
-)
-
-
-# mrev = maybe reverse. prev = rearrange padding, e.g. (1,2,1,2) => (2,2,1,1) or (1,2,3,1,2,3) => (3,3,2,2,1,1)
-_akpsd(params) = get(params, :activation, identity), mrev(get(params, :kernel_shape, 1)), prev(get(params, :pads, 0)), mrev(get(params, :strides, 1)), mrev(get(params, :dilations, 1))
-akpsd(params) = a2t.(_akpsd(params))
-a2t(x) = x
-a2t(a::AbstractArray) = Tuple(a)
-
-
-conv_attr_onnx2tape(attrs) = Dict(
-    :stride => mrev(get(attrs, :strides, 1)),
-    :pad => prev(get(attrs, :pads, 0)),
-    :dilation => mrev(get(attrs, :dilations, 1)),
-    :groups => get(attrs, :group, 1),
-    # kenrnel_shape => mrev(get(params, :kernel_shape, 1)) -- not used in NNlib.conv
-)
-
+##############################################################################
+#                                Tensors                                     #
+##############################################################################
 
 """
     julia2onnx(x)
 
 Convert argument from Julia-friendly to ONNX-friendly format.
-For example:
+The reverse operation is available as [`onnx2julia`](@ref).
 
- * tensors are reshaped from column-major to row-major
- * shape tuples are rearranged accordingly
- * attributes in dicts are renamed, their values are converted too
-
- The reverse operation is available as [`onnx2julia`](@ref).
+See also: [`onnx2julia_conv`](@ref), [`onnx2julia_spatial`](@ref),
+[`onnx2julia_conv`](@ref) and similar.
 """
 julia2onnx(x::AbstractArray) = permutedims(x, ndims(x):-1:1)
-
-
 
 """
     onnx2julia(x)
@@ -61,11 +20,80 @@ The reverse of [`julia2onnx`](@ref).
 """
 onnx2julia(x::AbstractArray) = permutedims(x, ndims(x):-1:1)
 
-function onnx2julia(attrs::Dict)
+
+##############################################################################
+#                             Conv Attributes                                #
+##############################################################################
+
+"""
+    julia2onnx_spatial(x)
+
+Convert spetial attributes such as Conv's stride or dilation
+from Julia to ONNX format
+"""
+julia2onnx_spatial(x) = x
+julia2onnx_spatial(x::Tuple) = collect(reverse(x))
+
+onnx2julia_spatial(x) = x
+onnx2julia_spatial(x::AbstractVector) = Tuple(reverse(x))
+
+
+function julia2onnx_pad(pad::Int, N::Int)
+    return [pad for i=1:2N]
+end
+
+function julia2onnx_pad(pad::NTuple{T, K}, N::Int) where {T, K}
+    @assert(K == N || K == 2N, "Padding should be either a tuple of N or 2N elements")
+    if K == 2N
+        pad = [pad; pad]
+    end
+    return [pad[N:-1:1]; pad[2N:-1:N+1]]
+end
+
+function onnx2julia_pad(pad::Vector{Int})
+    # In ONNX, `pads` is always a list of size 2N such as
+    # [x1_begin, x2_begin...x1_end, x2_end,...].
+    # In NNlib (the default backend for Conv), `pad` expects either Int,
+    # or list of Ints of size N or 2N.
+    # So ONNX -> Julia is straghtforward except for the reversed order of dimensions.
+    # [x1_begin, x2_begin, x1_end, x2_end] => [x2_begin, x1_begin, x1_end, x2_end]
+    N = length(pad) ÷ 2
+    out = [pad[N:-1:1]; pad[2N:-1:N+1]]
+    return out
+end
+
+
+function julia2onnx_conv(attrs::Dict)
     out = Dict{Symbol, Any}()
     if haskey(attrs, :stride)
-        # TODO:
-        out[:strides] = mrev(attrs[:stride])
+        out[:strides] = attrs[:stride] |> julia2onnx_spatial
     end
+    if haskey(attrs, :dilation)
+        out[:dilations] = attrs[:dilation] |> julia2onnx_spatial
+    end
+    if haskey(attrs, :groups)
+        out[:group] = attrs[:groups]
+    end
+    if haskey(attrs, :pad)
+        out[:pads] = attrs[:pad] |> julia2onnx_pad
+    end
+    return out
+end
 
+
+function onnx2julia_conv(attrs::Dict)
+    out = Dict{Symbol, Any}()
+    if haskey(attrs, :strides)
+        out[:stride] = attrs[:strides] |> onnx2julia_spatial
+    end
+    if haskey(attrs, :dilations)
+        out[:dilation] = attrs[:dilations] |> onnx2julia_spatial
+    end
+    if haskey(attrs, :group)
+        out[:groups] = attrs[:group]
+    end
+    if haskey(attrs, :pads)
+        out[:pad] = attrs[:pads] |> onnx2julia_pad
+    end
+    return out
 end

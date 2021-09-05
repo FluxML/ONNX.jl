@@ -1,10 +1,12 @@
-# Default implementations of ONNX operations
+# Default implementations of ONNX operators
 
 import NNlib
 import Flux
 
 
-conv(x, w; kw...) = NNlib.conv(x, w; kw...)
+flipweights(w::AbstractArray{T, N}) where {T,N} = w[(size(w,i):-1:1 for i in 1:(N-2))..., :, :]
+
+conv(x, w; kw...) = NNlib.conv(x, flipweights(w); kw...)
 
 function conv(x, w, b; kw...)
     bias_size = (ntuple(_ -> 1, length(kw.stride))..., :, 1)

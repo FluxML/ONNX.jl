@@ -73,7 +73,11 @@ end
 
 ValueInfoProto(op::Ghost.AbstractOp) = ValueInfoProto(
     onnx_name(op),
-    mrev(size(op.val)),
+    # something down the road reverses the shape, so we don't do it here
+    # try the following for example:
+    #     TypeProto_Tensor((4, 3), Float64).shape.dim[1].dim_value
+    # which gives 3 instead of 4
+    size(op.val),
     eltype(op.val)
 )
 

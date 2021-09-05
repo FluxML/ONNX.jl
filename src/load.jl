@@ -53,6 +53,7 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     attrs = convert(Dict{Symbol, Any}, Dict(nd.attribute))
     conf = OpConfig{backend, Symbol(nd.op_type)}()
     out = load_node!(tape, conf, args, attrs)
+    ismissing(out) && return out
     if out isa Tuple
         for i=1:length(nd.output)
             tape.c.name2var[nd.output[i]] = out[i]
@@ -62,14 +63,10 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     end
 end
 
-load_node!(::Tape, ::OpConfig{BE, Op}, ::VarVec, ::AttrDict) where {BE, Op} = missing
-
-
-# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
-#     _,_,p,s,d = akpsd(attrs)
-#     kw = (stride = s, pad = p, dilation = d, groups = get(attrs, "group", 1))
-#     return push_call!(tape, conv, args...; kw...)
-# end
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
+    kw = onnx2julia_conv(attrs) |> NamedTuple
+    return push_call!(tape, conv, args...; kw...)
+end
 
 
 # function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::AttrDict)
@@ -142,10 +139,10 @@ end
 Load an ONNX model as a Ghost.Tape. The way a particular ONNX node is deserialized is
 controlled by methods of [load_node!](@ref) dispatched by backend and node's op_type.
 
-`backends` can be used to customize the (in-order) choices for which backend libraries to use.
+`backends` parameter can be used to customize the loading process.
 
-`exec` parameter instructs the loader to execute every operation pushed onto the tape just after
-the push, making the debugging easier. Default is `true`.
+`exec` parameter instructs the loader to execute every added operation just after
+the addition, making the debugging easier. Default is `true`.
 
 See also: [`save!`](@ref)
 """
