@@ -39,15 +39,15 @@ onnx2julia_spatial(x::AbstractVector) = Tuple(reverse(x))
 
 
 function julia2onnx_pad(pad::Int, N::Int)
-    return [pad for i=1:2N]
+    return Tuple([pad for i=1:2N])
 end
 
-function julia2onnx_pad(pad::NTuple{T, K}, N::Int) where {T, K}
-    @assert(K == N || K == 2N, "Padding should be either a tuple of N or 2N elements")
-    if K == 2N
-        pad = [pad; pad]
+function julia2onnx_pad(pad::NTuple{N, T}, ND::Int) where {N, T}
+    @assert(N == ND || N == 2ND, "Padding should be either a tuple of N or 2N elements")
+    if N != 2ND
+        pad = [pad...; pad...]
     end
-    return [pad[N:-1:1]; pad[2N:-1:N+1]]
+    return Tuple([pad[N:-1:1]; pad[2N:-1:N+1]])
 end
 
 function onnx2julia_pad(pad::Vector{Int})
@@ -58,24 +58,24 @@ function onnx2julia_pad(pad::Vector{Int})
     # So ONNX -> Julia is straghtforward except for the reversed order of dimensions.
     # [x1_begin, x2_begin, x1_end, x2_end] => [x2_begin, x1_begin, x1_end, x2_end]
     N = length(pad) ÷ 2
-    out = [pad[N:-1:1]; pad[2N:-1:N+1]]
+    out = Tuple([pad[N:-1:1]; pad[2N:-1:N+1]])
     return out
 end
 
 
-function julia2onnx_conv(attrs::Dict)
+function julia2onnx_conv(attrs::Dict, N::Int)
     out = Dict{Symbol, Any}()
     if haskey(attrs, :stride)
-        out[:strides] = attrs[:stride] |> julia2onnx_spatial
+        out[:strides] = julia2onnx_spatial(attrs[:stride])
     end
     if haskey(attrs, :dilation)
-        out[:dilations] = attrs[:dilation] |> julia2onnx_spatial
+        out[:dilations] = julia2onnx_spatial(attrs[:dilation])
     end
     if haskey(attrs, :groups)
         out[:group] = attrs[:groups]
     end
     if haskey(attrs, :pad)
-        out[:pads] = attrs[:pad] |> julia2onnx_pad
+        out[:pads] = julia2onnx_pad(attrs[:pad], N)
     end
     return out
 end
@@ -83,17 +83,18 @@ end
 
 function onnx2julia_conv(attrs::Dict)
     out = Dict{Symbol, Any}()
+    haskey(attrs, :auto_pad) && error("auto_pad attribute is currently not supported")
     if haskey(attrs, :strides)
-        out[:stride] = attrs[:strides] |> onnx2julia_spatial
+        out[:stride] = onnx2julia_spatial(attrs[:strides])
     end
     if haskey(attrs, :dilations)
-        out[:dilation] = attrs[:dilations] |> onnx2julia_spatial
+        out[:dilation] = onnx2julia_spatial(attrs[:dilations])
     end
     if haskey(attrs, :group)
         out[:groups] = attrs[:group]
     end
     if haskey(attrs, :pads)
-        out[:pad] = attrs[:pads] |> onnx2julia_pad
+        out[:pad] = onnx2julia_pad(attrs[:pads])
     end
     return out
 end

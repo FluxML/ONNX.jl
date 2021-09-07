@@ -25,10 +25,10 @@ function ort_test(tape::Tape, args...)
 end
 
 
-function ort_test(fn::Function, args...)
+function ort_test(fn::Function, args...; kwargs...)
     tape = Tape(ONNXCtx())
     inp = [push!(tape, Input(arg)) for arg in args]
-    res = push_call!(tape, fn, inp...)
+    res = push_call!(tape, fn, inp...; kwargs...)
     tape.result = res
     ort_test(tape, args...)
 end
