@@ -42,24 +42,50 @@ function julia2onnx_pad(pad::Int, N::Int)
     return Tuple([pad for i=1:2N])
 end
 
+# function swap_pairs(pad)
+#     pad = deepcopy(pad)
+#     for i=1:2:length(pad)-1
+#         tmp = pad[i]
+#         pad[i] = pad[i + 1]
+#         pad[i + 1] = tmp
+#     end
+#     return pad
+# end
+
 function julia2onnx_pad(pad::NTuple{N, T}, ND::Int) where {N, T}
-    @assert(N == ND || N == 2ND, "Padding should be either a tuple of N or 2N elements")
+    @assert(N == ND || N == 2ND,
+        "Padding should be either a tuple of N or 2N elements " *
+        "where N is the number of spacial dimensions")
+    pad = collect(pad)
     if N != 2ND
-        pad = [pad...; pad...]
+        # e.g. [1, 2] -> [1, 1, 2, 2]
+        pad = repeat(pad, inner=2)
     end
-    return Tuple([pad[N:-1:1]; pad[2N:-1:N+1]])
+
+    # # reverse dimensions, flip sides: [1, 2, 3, 4] -> [4, 3, 2, 1]
+    # pad_onnx = reverse(pad)
+    # len = length(pad_onnx)
+    # pad_onnx = [pad_onnx[2:2:len]; pad_onnx[1:2:len]]
+    # return pad_onnx
+
+
+    # notation: (1, 2, 3) - dimensions; b - beginning, e - end of dimension
+    # our goal (for 3D case): [b1, e1, b2, e2, b3, e3] -> [b3, b2, b1, e3, e2, e1]
+    d = length(pad) ÷ 2
+    return [pad[2d-1:-2:1]; pad[2d:-2:2]]
 end
 
 function onnx2julia_pad(pad::Vector{Int})
-    # In ONNX, `pads` is always a list of size 2N such as
-    # [x1_begin, x2_begin...x1_end, x2_end,...].
-    # In NNlib (the default backend for Conv), `pad` expects either Int,
-    # or list of Ints of size N or 2N.
-    # So ONNX -> Julia is straghtforward except for the reversed order of dimensions.
-    # [x1_begin, x2_begin, x1_end, x2_end] => [x2_begin, x1_begin, x1_end, x2_end]
-    N = length(pad) ÷ 2
-    out = Tuple([pad[N:-1:1]; pad[2N:-1:N+1]])
-    return out
+    # notation: (1, 2, 3) - dimensions; b - beginning, e - end of dimension
+    # our goal (for 3D case): [b3, b2, b1, e3, e2, e1] -> [b1, e1, b2, e2, b3, e3]
+    d = length(pad) ÷ 2
+    # step 1: [b3, b2, b1, e3, e2, e1] -> [b1, b2, b3, e1, e2, e3]
+    out = [pad[d:-1:1]; pad[2d:-1:d+1]]
+    # step 2: [b1, b2, b3, e1, e2, e3] -> [(b1, e1), (b2, e2), (b3, e3)]
+    out = [(out[i], out[d + i]) for i=1:d]
+    # step 3: [(b1, e1), (b2, e2), (b3, e3)] -> [b1, e1, b2, e2, b3, e3]
+    out = reduce((x, y) -> [x...; y...], out)
+    return Tuple(out)
 end
 
 

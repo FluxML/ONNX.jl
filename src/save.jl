@@ -60,7 +60,6 @@ macro opconfig_kw(backend, fn)
     end
 end
 
-# OpConfig{:ONNX, typeof(Core.kwfunc(conv))}
 function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, conv), op::Ghost.Call)
     w = op.args[end]._op.val
     # ONNXRuntime gives the following error for Float64:
@@ -69,7 +68,6 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, conv), op::Ghost.Call)
     attrs = julia2onnx_conv(kwargs2dict(op), ndims(w) - 2)
     args = iskwfunc(op.fn) ? op.args[3:end] : op.args
     nd = NodeProto(
-        # TODO: conv can have 2 or 3 arguments, here we handle only 2
         input=[onnx_name(v) for v in args],
         output=[onnx_name(op)],
         name=onnx_name(op),
