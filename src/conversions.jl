@@ -26,13 +26,16 @@ onnx2julia(x::AbstractArray) = permutedims(x, ndims(x):-1:1)
 ##############################################################################
 
 """
-    julia2onnx_spatial(x)
+    julia2onnx_spatial(x, d)
 
-Convert spetial attributes such as Conv's stride or dilation
-from Julia to ONNX format
+Convert spatial attributes such as Conv's stride or dilation
+from Julia to ONNX format.
+
+`x` is a Julia values of that attribute
+`d` is the number of spatial dimensions
 """
-julia2onnx_spatial(x) = x
-julia2onnx_spatial(x::Tuple) = collect(reverse(x))
+julia2onnx_spatial(x::Int, d::Int) = [x for i=1:d]
+julia2onnx_spatial(x::Tuple, d::Int) = collect(reverse(x))
 
 onnx2julia_spatial(x) = x
 onnx2julia_spatial(x::AbstractVector) = Tuple(reverse(x))
@@ -42,33 +45,16 @@ function julia2onnx_pad(pad::Int, N::Int)
     return Tuple([pad for i=1:2N])
 end
 
-# function swap_pairs(pad)
-#     pad = deepcopy(pad)
-#     for i=1:2:length(pad)-1
-#         tmp = pad[i]
-#         pad[i] = pad[i + 1]
-#         pad[i + 1] = tmp
-#     end
-#     return pad
-# end
 
-function julia2onnx_pad(pad::NTuple{N, T}, ND::Int) where {N, T}
-    @assert(N == ND || N == 2ND,
-        "Padding should be either a tuple of N or 2N elements " *
-        "where N is the number of spacial dimensions")
+function julia2onnx_pad(pad::NTuple{N, T}, d::Int) where {N, T}
+    @assert(N == d || N == 2d,
+        "Padding should be a tuple of either `N` or 2N elements where N is the number " *
+        "of spatial dimensions, but got `pad = $pad` and N = $d")
     pad = collect(pad)
-    if N != 2ND
+    if N != 2d
         # e.g. [1, 2] -> [1, 1, 2, 2]
         pad = repeat(pad, inner=2)
     end
-
-    # # reverse dimensions, flip sides: [1, 2, 3, 4] -> [4, 3, 2, 1]
-    # pad_onnx = reverse(pad)
-    # len = length(pad_onnx)
-    # pad_onnx = [pad_onnx[2:2:len]; pad_onnx[1:2:len]]
-    # return pad_onnx
-
-
     # notation: (1, 2, 3) - dimensions; b - beginning, e - end of dimension
     # our goal (for 3D case): [b1, e1, b2, e2, b3, e3] -> [b3, b2, b1, e3, e2, e1]
     d = length(pad) ÷ 2
@@ -89,19 +75,19 @@ function onnx2julia_pad(pad::Vector{Int})
 end
 
 
-function julia2onnx_conv(attrs::Dict, N::Int)
+function julia2onnx_conv(attrs::Dict, d::Int)
     out = Dict{Symbol, Any}()
     if haskey(attrs, :stride)
-        out[:strides] = julia2onnx_spatial(attrs[:stride])
+        out[:strides] = julia2onnx_spatial(attrs[:stride], d)
     end
     if haskey(attrs, :dilation)
-        out[:dilations] = julia2onnx_spatial(attrs[:dilation])
+        out[:dilations] = julia2onnx_spatial(attrs[:dilation], d)
     end
     if haskey(attrs, :groups)
         out[:group] = attrs[:groups]
     end
     if haskey(attrs, :pad)
-        out[:pads] = julia2onnx_pad(attrs[:pad], N)
+        out[:pads] = julia2onnx_pad(attrs[:pad], d)
     end
     return out
 end

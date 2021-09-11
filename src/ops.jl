@@ -9,7 +9,8 @@ flipweights(w::AbstractArray{T, N}) where {T,N} = w[(size(w,i):-1:1 for i in 1:(
 conv(x, w; kw...) = NNlib.conv(x, flipweights(w); kw...)
 
 function conv(x, w, b; kw...)
-    bias_size = (ntuple(_ -> 1, length(kw.stride))..., :, 1)
+    d = ndims(x) - 2
+    bias_size = (ntuple(_ -> 1, d)..., :, 1)
     b = reshape(b, bias_size)
     return conv(x, w; kw...) .+ b
 end

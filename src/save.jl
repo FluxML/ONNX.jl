@@ -61,12 +61,12 @@ macro opconfig_kw(backend, fn)
 end
 
 function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, conv), op::Ghost.Call)
-    w = op.args[end]._op.val
+    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
+    w = args[2]._op.val
     # ONNXRuntime gives the following error for Float64:
     # NOT_IMPLEMENTED : Could not find an implementation for the node x3:Conv(11)')
     eltype(w) == Float64 && @warn "Not all ONNX runtimes support input & weights as Float64"
     attrs = julia2onnx_conv(kwargs2dict(op), ndims(w) - 2)
-    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
     nd = NodeProto(
         input=[onnx_name(v) for v in args],
         output=[onnx_name(op)],
