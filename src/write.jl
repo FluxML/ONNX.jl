@@ -32,13 +32,13 @@ TensorProto(x::Number, name ="") = TensorProto([x], name)
 TensorProto(t::AbstractArray{Float64,N}, name ="") where N = TensorProto(
     dims=collect(reverse(size(t))),
     data_type=TensorProto_DataType.DOUBLE,
-    double_data = reshape(t,:),
+    double_data = reshape(julia2onnx(t), :),
     name=name)
 
 TensorProto(t::AbstractArray{Float32,N}, name ="") where N = TensorProto(
     dims=collect(reverse(size(t))),
     data_type=TensorProto_DataType.FLOAT,
-    float_data = reshape(t,:),
+    float_data = reshape(julia2onnx(t), :),
     name=name)
 
 TensorProto(t::AbstractArray{Float16,N}, name ="") where N = TensorProto(t, TensorProto_DataType.FLOAT16, name)
@@ -46,13 +46,13 @@ TensorProto(t::AbstractArray{Float16,N}, name ="") where N = TensorProto(t, Tens
 TensorProto(t::AbstractArray{Int64,N}, name ="") where N = TensorProto(
     dims=collect(reverse(size(t))),
     data_type=TensorProto_DataType.INT64,
-    int64_data = reshape(t,:),
+    int64_data = reshape(julia2onnx(t), :),
     name=name)
 
 TensorProto(t::AbstractArray{Int32,N}, name ="") where N = TensorProto(
     dims=collect(reverse(size(t))),
     data_type=TensorProto_DataType.INT32,
-    int32_data = reshape(t,:),
+    int32_data = reshape(julia2onnx(t), :),
     name=name)
 
 TensorProto(t::AbstractArray{Int8,N}, name ="") where N = TensorProto(t, TensorProto_DataType.INT8, name)
@@ -60,7 +60,7 @@ TensorProto(t::AbstractArray{Int8,N}, name ="") where N = TensorProto(t, TensorP
 TensorProto(t::AbstractArray, data_type::Int32, name) = TensorProto(
     dims=collect(reverse(size(t))),
     data_type=data_type,
-    raw_data = reinterpret(UInt8, reshape(t,:)),
+    raw_data = reinterpret(UInt8, reshape(julia2onnx(t), :)),
     name=name)
 
 
