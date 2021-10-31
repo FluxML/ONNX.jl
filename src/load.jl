@@ -64,7 +64,7 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
 end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
-    kw = onnx2julia_conv(attrs) |> NamedTuple
+    kw = from_onnx_conv(attrs) |> NamedTuple
     return push_call!(tape, conv, args...; kw...)
 end
 

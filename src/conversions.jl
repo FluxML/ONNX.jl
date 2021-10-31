@@ -3,22 +3,22 @@
 ##############################################################################
 
 """
-    julia2onnx(x)
+    from_nnlib(x)
 
-Convert argument from Julia-friendly to ONNX-friendly format.
-The reverse operation is available as [`onnx2julia`](@ref).
+Convert argument from NNlib-friendly to ONNX-friendly format.
+The reverse operation is available as [`from_onnx`](@ref).
 
-See also: [`onnx2julia_conv`](@ref), [`onnx2julia_spatial`](@ref),
-[`onnx2julia_conv`](@ref) and similar.
+See also: [`from_onnx_conv`](@ref), [`from_onnx_spatial`](@ref),
+[`from_onnx_conv`](@ref) and similar.
 """
-julia2onnx(x::AbstractArray) = permutedims(x, ndims(x):-1:1)
+from_nnlib(x::AbstractArray) = permutedims(x, ndims(x):-1:1)
 
 """
-    onnx2julia(x)
+    from_onnx(x)
 
-The reverse of [`julia2onnx`](@ref).
+The reverse of [`from_nnlib`](@ref).
 """
-onnx2julia(x::AbstractArray) = permutedims(x, ndims(x):-1:1)
+from_onnx(x::AbstractArray) = permutedims(x, ndims(x):-1:1)
 
 
 ##############################################################################
@@ -26,7 +26,7 @@ onnx2julia(x::AbstractArray) = permutedims(x, ndims(x):-1:1)
 ##############################################################################
 
 """
-    julia2onnx_spatial(x, d)
+    from_nnlib_spatial(x, d)
 
 Convert spatial attributes such as Conv's stride or dilation
 from Julia to ONNX format.
@@ -34,19 +34,19 @@ from Julia to ONNX format.
 `x` is a Julia values of that attribute
 `d` is the number of spatial dimensions
 """
-julia2onnx_spatial(x::Int, d::Int) = [x for i=1:d]
-julia2onnx_spatial(x::Tuple, d::Int) = collect(reverse(x))
+from_nnlib_spatial(x::Int, d::Int) = [x for i=1:d]
+from_nnlib_spatial(x::Tuple, d::Int) = collect(reverse(x))
 
-onnx2julia_spatial(x) = x
-onnx2julia_spatial(x::AbstractVector) = Tuple(reverse(x))
+from_onnx_spatial(x) = x
+from_onnx_spatial(x::AbstractVector) = Tuple(reverse(x))
 
 
-function julia2onnx_pad(pad::Int, N::Int)
+function from_nnlib_pad(pad::Int, N::Int)
     return Tuple([pad for i=1:2N])
 end
 
 
-function julia2onnx_pad(pad::NTuple{N, T}, d::Int) where {N, T}
+function from_nnlib_pad(pad::NTuple{N, T}, d::Int) where {N, T}
     @assert(N == d || N == 2d,
         "Padding should be a tuple of either `N` or 2N elements where N is the number " *
         "of spatial dimensions, but got `pad = $pad` and N = $d")
@@ -61,7 +61,7 @@ function julia2onnx_pad(pad::NTuple{N, T}, d::Int) where {N, T}
     return [pad[2d-1:-2:1]; pad[2d:-2:2]]
 end
 
-function onnx2julia_pad(pad::Vector{Int})
+function from_onnx_pad(pad::Vector{Int})
     # notation: (1, 2, 3) - dimensions; b - beginning, e - end of dimension
     # our goal (for 3D case): [b3, b2, b1, e3, e2, e1] -> [b1, e1, b2, e2, b3, e3]
     d = length(pad) ÷ 2
@@ -75,38 +75,38 @@ function onnx2julia_pad(pad::Vector{Int})
 end
 
 
-function julia2onnx_conv(attrs::Dict, d::Int)
+function from_nnlib_conv(attrs::Dict, d::Int)
     out = Dict{Symbol, Any}()
     if haskey(attrs, :stride)
-        out[:strides] = julia2onnx_spatial(attrs[:stride], d)
+        out[:strides] = from_nnlib_spatial(attrs[:stride], d)
     end
     if haskey(attrs, :dilation)
-        out[:dilations] = julia2onnx_spatial(attrs[:dilation], d)
+        out[:dilations] = from_nnlib_spatial(attrs[:dilation], d)
     end
     if haskey(attrs, :groups)
         out[:group] = attrs[:groups]
     end
     if haskey(attrs, :pad)
-        out[:pads] = julia2onnx_pad(attrs[:pad], d)
+        out[:pads] = from_nnlib_pad(attrs[:pad], d)
     end
     return out
 end
 
 
-function onnx2julia_conv(attrs::Dict)
+function from_onnx_conv(attrs::Dict)
     out = Dict{Symbol, Any}()
     haskey(attrs, :auto_pad) && error("auto_pad attribute is currently not supported")
     if haskey(attrs, :strides)
-        out[:stride] = onnx2julia_spatial(attrs[:strides])
+        out[:stride] = from_onnx_spatial(attrs[:strides])
     end
     if haskey(attrs, :dilations)
-        out[:dilation] = onnx2julia_spatial(attrs[:dilations])
+        out[:dilation] = from_onnx_spatial(attrs[:dilations])
     end
     if haskey(attrs, :group)
         out[:groups] = attrs[:group]
     end
     if haskey(attrs, :pads)
-        out[:pad] = onnx2julia_pad(attrs[:pads])
+        out[:pad] = from_onnx_pad(attrs[:pads])
     end
     return out
 end

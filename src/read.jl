@@ -10,38 +10,38 @@ function array(p::TensorProto, wrap=Array)
     # TODO: Add missing datatypes...
     if p.data_type === TensorProto_DataType.INT64
         if hasproperty(p, :int64_data) && !isempty(p.int64_data)
-            return reshape(reinterpret(Int64, p.int64_data), p.dims...) |> wrap |> onnx2julia
+            return reshape(reinterpret(Int64, p.int64_data), p.dims...) |> wrap |> from_onnx
         end
-        return reshape(reinterpret(Int64, p.raw_data), p.dims...) |> wrap |> onnx2julia
+        return reshape(reinterpret(Int64, p.raw_data), p.dims...) |> wrap |> from_onnx
     end
 
     if p.data_type === TensorProto_DataType.INT32
         if hasproperty(p, :int32_data) && !isempty(p.int32_data)
-            return reshape(p.int32_data , p.dims...) |> wrap |> onnx2julia
+            return reshape(p.int32_data , p.dims...) |> wrap |> from_onnx
         end
-        return reshape(reinterpret(Int32, p.raw_data), p.dims...) |> wrap |> onnx2julia
+        return reshape(reinterpret(Int32, p.raw_data), p.dims...) |> wrap |> from_onnx
     end
 
     if p.data_type === TensorProto_DataType.INT8
-        return reshape(reinterpret(Int8, p.raw_data), p.dims...) |> wrap |> onnx2julia
+        return reshape(reinterpret(Int8, p.raw_data), p.dims...) |> wrap |> from_onnx
     end
 
     if p.data_type === TensorProto_DataType.DOUBLE
         if hasproperty(p, :double_data) && !isempty(p.double_data)
-            return reshape(p.double_data , p.dims...) |> wrap |> onnx2julia
+            return reshape(p.double_data , p.dims...) |> wrap |> from_onnx
         end
-        return reshape(reinterpret(Float64, p.raw_data), p.dims...) |> wrap |> onnx2julia
+        return reshape(reinterpret(Float64, p.raw_data), p.dims...) |> wrap |> from_onnx
     end
 
     if p.data_type === TensorProto_DataType.FLOAT
         if hasproperty(p,:float_data) && !isempty(p.float_data)
-            return reshape(reinterpret(Float32, p.float_data), p.dims...) |> wrap |> onnx2julia
+            return reshape(reinterpret(Float32, p.float_data), p.dims...) |> wrap |> from_onnx
         end
-        return reshape(reinterpret(Float32, p.raw_data), p.dims...) |> wrap |> onnx2julia
+        return reshape(reinterpret(Float32, p.raw_data), p.dims...) |> wrap |> from_onnx
     end
 
     if p.data_type === TensorProto_DataType.FLOAT16
-        return reshape(reinterpret(Float16, p.raw_data), p.dims...) |> wrap |> onnx2julia
+        return reshape(reinterpret(Float16, p.raw_data), p.dims...) |> wrap |> from_onnx
     end
 end
 

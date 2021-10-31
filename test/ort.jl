@@ -1,7 +1,7 @@
 using Test
 using PyCall
 import Ghost: play!, Tape, Input
-import ONNX: ONNXCtx, push_call!, julia2onnx, onnx2julia, save, load
+import ONNX: ONNXCtx, push_call!, from_nnlib, from_onnx, save, load
 
 
 function ort_run(path, args...)
@@ -16,7 +16,7 @@ function ort_test(tape::Tape, args...)
     mktemp() do path, _
         r1 = play!(tape, args...)
         save(path, tape)
-        r2 = ort_run(path, julia2onnx.(args)...)[1] |> onnx2julia
+        r2 = ort_run(path, from_nnlib.(args)...)[1] |> from_onnx
         tape2 = load(path, args...; exec=true)
         r3 = tape2[tape2.result].val
         @test isapprox(r1, r2)
