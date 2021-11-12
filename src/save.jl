@@ -1,8 +1,8 @@
 import Pkg
 
 modelproto(;kwargs...) = ModelProto(;
-    ir_version=6,
-    opset_import=[OperatorSetIdProto(version=11)],
+    ir_version=7,
+    opset_import=[OperatorSetIdProto(version=14)],
     producer_name="ONNX.jl",
     producer_version=string(Pkg.Types.Context().env.project.version), # TODO: Ugh....
     kwargs...)
@@ -46,17 +46,36 @@ function save_node!(g::GraphProto, op::Ghost.Call)
 end
 
 
-# function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(conv)}, op::Ghost.Call)
+# can we make it more robust?
+iskwfunc(f) = endswith(string(f), "##kw")
 
-#     nd = NodeProto(
-#         input=[onnx_name(v) for v in op.args],
-#         output=[onnx_name(op)],
-#         name=onnx_name(op),
-#         attribute=AttributeProto[],  # TODO
-#         op_type="Conv"
-#     )
-#     push!(g.node, nd)
-# end
+function kwargs2dict(op::Ghost.Call)
+    kw = iskwfunc(op.fn) ? op.args[1] : (;)
+    return Dict(zip(keys(kw), values(kw)))
+end
+
+macro opconfig_kw(backend, fn)
+    return quote
+        $OpConfig{$backend, <:Union{typeof($fn), typeof(Core.kwfunc($fn))}}
+    end
+end
+
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, conv), op::Ghost.Call)
+    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
+    w = args[2]._op.val
+    # ONNXRuntime gives the following error for Float64:
+    # NOT_IMPLEMENTED : Could not find an implementation for the node x3:Conv(11)')
+    eltype(w) == Float64 && @warn "Not all ONNX runtimes support input & weights as Float64"
+    attrs = from_nnlib_conv(kwargs2dict(op), ndims(w) - 2)
+    nd = NodeProto(
+        input=[onnx_name(v) for v in args],
+        output=[onnx_name(op)],
+        name=onnx_name(op),
+        attribute=AttributeProto.(keys(attrs), values(attrs)),
+        op_type="Conv"
+    )
+    push!(g.node, nd)
+end
 
 
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(add)}, op::Ghost.Call)
@@ -73,7 +92,11 @@ end
 
 ValueInfoProto(op::Ghost.AbstractOp) = ValueInfoProto(
     onnx_name(op),
-    mrev(size(op.val)),
+    # something down the road reverses the shape, so we don't do it here
+    # try the following for example:
+    #     TypeProto_Tensor((4, 3), Float64).shape.dim[1].dim_value
+    # which gives 3 instead of 4
+    size(op.val),
     eltype(op.val)
 )
 
@@ -89,7 +112,7 @@ ValueInfoProto(op::Ghost.AbstractOp) = ValueInfoProto(
 Save tape as an ONNX model. The way a particular operation is serialized is
 controlled by methods of [save_node!](@ref).
 
-See also: [load!](@ref)
+See also: [`load!`](@ref)
 """
 function save(io::IO, tape::Tape{ONNXCtx})
     g = graphproto()

@@ -25,28 +25,6 @@ Base.getindex(tape::Tape{ONNXCtx}, onnx_name::String) =
 #                               Operations                                    #
 ###############################################################################
 
-
-mrev(x) = x
-mrev(x::AbstractVector) = reverse(x)
-prev(x) = x
-prev(x::AbstractVector) = reshape(permutedims(reverse(reshape(x, length(x) ÷ 2,:);dims=1)),:)
-
-
-# mrev = maybe reverse. prev = rearrange padding, e.g. (1,2,1,2) => (2,2,1,1) or (1,2,3,1,2,3) => (3,3,2,2,1,1)
-_akpsd(params) = get(params, :activation, identity), mrev(get(params, :kernel_shape, 1)), prev(get(params, :pads, 0)), mrev(get(params, :strides, 1)), mrev(get(params, :dilations, 1))
-akpsd(params) = a2t.(_akpsd(params))
-a2t(x) = x
-a2t(a::AbstractArray) = Tuple(a)
-
-
-conv_attr_onnx2tape(attrs) = Dict(
-    :stride => mrev(get(attrs, :strides, 1)),
-    :pad => prev(get(attrs, :pads, 0)),
-    :dilation => mrev(get(attrs, :dilations, 1)),
-    :groups => get(attrs, :group, 1),
-    # kenrnel_shape => mrev(get(params, :kernel_shape, 1)) -- not used in NNlib.conv
-)
-
 """
     push_call!(tape::Tape{ONNXCtx}, fn, args...; kwargs)
 
@@ -75,6 +53,7 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     attrs = convert(Dict{Symbol, Any}, Dict(nd.attribute))
     conf = OpConfig{backend, Symbol(nd.op_type)}()
     out = load_node!(tape, conf, args, attrs)
+    ismissing(out) && return out
     if out isa Tuple
         for i=1:length(nd.output)
             tape.c.name2var[nd.output[i]] = out[i]
@@ -84,14 +63,10 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     end
 end
 
-load_node!(::Tape, ::OpConfig{BE, Op}, ::VarVec, ::AttrDict) where {BE, Op} = missing
-
-
-# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
-#     _,_,p,s,d = akpsd(attrs)
-#     kw = (stride = s, pad = p, dilation = d, groups = get(attrs, "group", 1))
-#     return push_call!(tape, conv, args...; kw...)
-# end
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
+    kw = from_onnx_conv(attrs) |> NamedTuple
+    return push_call!(tape, conv, args...; kw...)
+end
 
 
 # function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::AttrDict)
@@ -164,12 +139,12 @@ end
 Load an ONNX model as a Ghost.Tape. The way a particular ONNX node is deserialized is
 controlled by methods of [load_node!](@ref) dispatched by backend and node's op_type.
 
-`backends` can be used to customize the (in-order) choices for which backend libraries to use.
+`backends` parameter can be used to customize the loading process.
 
-`exec` parameter instructs the loader to execute every operation pushed onto the tape just after
-the push, making the debugging easier. Default is `true`.
+`exec` parameter instructs the loader to execute every added operation just after
+the addition, making the debugging easier. Default is `true`.
 
-See also: [save!](@ref)
+See also: [`save!`](@ref)
 """
 function load(io::IO, model_args...; backends=[:ONNX], exec::Bool=true)
     onnx_model = readproto(io, ModelProto());
