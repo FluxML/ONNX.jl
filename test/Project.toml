@@ -4,4 +4,4 @@ ONNXRunTime = "e034b28e-924e-41b2-b98f-d2bbeb830c6a"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-Ghost = "^0.2.1"
+Ghost = "0.2.1"
