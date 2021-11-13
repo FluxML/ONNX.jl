@@ -1,14 +1,13 @@
 using Test
-using PyCall
+import ONNXRunTime as OX
 import Ghost: play!, Tape, Input
 import ONNX: ONNXCtx, push_call!, from_nnlib, from_onnx, save, load
 
 
-function ort_run(path, args...)
-    onnxruntime = pyimport("onnxruntime")
-    ort_session = onnxruntime.InferenceSession(path)
-    ort_inputs = PyDict(Dict([ort_session.get_inputs()[i].name => args[i] for i=1:length(args)]))
-    return ort_session.run(nothing, ort_inputs)
+function ort_run(path, ort_args...)
+    model = OX.load_inference(OX.testdatapath(path))
+    ort_inputs = Dict([OX.input_names(model)[i] => ort_args[i] for i=1:length(ort_args)])
+    return model(ort_inputs)
 end
 
 
@@ -16,7 +15,7 @@ function ort_test(tape::Tape, args...)
     mktemp() do path, _
         r1 = play!(tape, args...)
         save(path, tape)
-        r2 = ort_run(path, from_nnlib.(args)...)[1] |> from_onnx
+        r2 = ort_run(path, from_nnlib.(args)...) |> values |> first |> from_onnx
         tape2 = load(path, args...; exec=true)
         r3 = tape2[tape2.result].val
         @test isapprox(r1, r2)

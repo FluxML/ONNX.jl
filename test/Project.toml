@@ -1,8 +1,7 @@
 [deps]
-PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 Ghost = "4f8f7498-1303-42e1-920c-5033445536df"
+ONNXRunTime = "e034b28e-924e-41b2-b98f-d2bbeb830c6a"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-PyCall = "^1.92"
 Ghost = "^0.2.1"
