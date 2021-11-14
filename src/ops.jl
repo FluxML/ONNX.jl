@@ -45,9 +45,9 @@ function onnx_flatten(x; axis=1)
 end
 
 add(xs...) = +(xs...)
-mul(xs...) = *(xs...)
+mul(xs...) = .*(xs...)
 relu(x) = NNlib.relu.(x)
-maxpool(x, k; pad, stride) = NNlib.maxpool(x, k; pad=pad, stride=stride)
+maxpool(x, k; pad=0, stride=k) = NNlib.maxpool(x, k; pad=pad, stride=stride)
 
 
 # mutable struct BatchNorm{F,V,N,W}

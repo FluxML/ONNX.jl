@@ -1,6 +1,6 @@
 using Test
 import ONNXRunTime as OX
-import Ghost: play!, Tape, Input
+import Ghost: play!, Tape, Input, Constant
 import ONNX: ONNXCtx, push_call!, from_nnlib, from_onnx, save, load
 
 
