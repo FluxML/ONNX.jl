@@ -69,7 +69,7 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::A
 end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs::AttrDict)
-    kw = from_onnx_conv(attrs) |> NamedTuple   # note: kernel_shape is dropped automatically
+    kw = from_onnx_conv(attrs) |> NamedTuple
     return push_call!(tape, maxpool, args[1]; kw...)
 end
 
