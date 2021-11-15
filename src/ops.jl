@@ -47,7 +47,7 @@ end
 add(xs...) = +(xs...)
 mul(xs...) = .*(xs...)
 relu(x) = NNlib.relu.(x)
-maxpool(x, k; pad=0, stride=k) = NNlib.maxpool(x, k; pad=pad, stride=stride)
+maxpool(x; kernel, pad=0, stride=1) = NNlib.maxpool(x, kernel; pad=pad, stride=stride)
 
 
 # mutable struct BatchNorm{F,V,N,W}

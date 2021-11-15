@@ -101,8 +101,11 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, maxpool), op::Ghost.Cal
     args = iskwfunc(op.fn) ? op.args[3:end] : op.args
     x = args[1]._op.val
     attrs = from_nnlib_conv(kwargs2dict(op), ndims(x) - 2)
-    kernel = args[2] isa V ? args[2]._op.val : args[2]
-    attrs[:kernel_shape] = kernel
+    # if !haskey(attrs, :stride)
+    #     # by default, NNlib uses stride=kernel, so we enrich ONNX attributes
+    #     # with this behavior as well
+    #     attrs[:strides] = attrs[:kernel_shape]
+    # end
     nd = NodeProto(
         input=[onnx_name(args[1])],
         output=[onnx_name(op)],
