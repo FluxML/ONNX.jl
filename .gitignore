@@ -3,3 +3,4 @@
 *.jl.mem
 test/models
 test/onnx/
+Manifest.toml
