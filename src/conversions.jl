@@ -83,6 +83,9 @@ function from_nnlib_conv(attrs::Dict, d::Int)
     if haskey(attrs, :dilation)
         out[:dilations] = from_nnlib_spatial(attrs[:dilation], d)
     end
+    if haskey(attrs, :kernel)
+        out[:kernel_shape] = from_nnlib_spatial(attrs[:kernel], d)
+    end
     if haskey(attrs, :groups)
         out[:group] = attrs[:groups]
     end
@@ -101,6 +104,9 @@ function from_onnx_conv(attrs::Dict)
     end
     if haskey(attrs, :dilations)
         out[:dilation] = from_onnx_spatial(attrs[:dilations])
+    end
+    if haskey(attrs, :kernel_shape)
+        out[:kernel] = from_onnx_spatial(attrs[:kernel_shape])
     end
     if haskey(attrs, :group)
         out[:groups] = attrs[:group]

@@ -2,6 +2,7 @@
     @testset "Basic ops" begin
         args = (rand(3, 4), rand(3, 4))
         ort_test(ONNX.add, args...)
+        ort_test(ONNX.mul, args...)
     end
 
     @testset "Conv" begin
@@ -32,4 +33,18 @@
         ort_test(ONNX.conv, args...)
         ort_test(ONNX.conv, args...; pad=(1, 2, 3))
     end
+
+    @testset "Pooling" begin
+        x = rand(Float32, 32, 32, 3, 1)
+        k = (2, 2)
+        ort_test(ONNX.maxpool, x; kernel=k)
+        ort_test(ONNX.maxpool, x; kernel=k, stride=(3, 3))
+        ort_test(ONNX.maxpool, x; kernel=k, stride=(3, 3), pad=1)
+    end
+
+    @testset "Activations" begin
+        x = rand(3, 4)
+        ort_test(ONNX.relu, x)
+    end
+
 end

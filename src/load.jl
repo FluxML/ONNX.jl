@@ -68,6 +68,11 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::A
     return push_call!(tape, conv, args...; kw...)
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs::AttrDict)
+    kw = from_onnx_conv(attrs) |> NamedTuple
+    return push_call!(tape, maxpool, args[1]; kw...)
+end
+
 
 # function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::AttrDict)
 #     kw = Dict(
@@ -90,20 +95,14 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Add}, args::VarVec, attrs::At
 end
 
 
-# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Mul}, args::VarVec, attrs::AttrDict)
-#     return push_call!(tape, mul, args...)
-# end
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Mul}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, mul, args...)
+end
 
 
-# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::AttrDict)
-#     return push_call!(tape, relu, args[1])
-# end
-
-
-# function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs::AttrDict)
-#     _,k,p,s,_ = akpsd(attrs)
-#     return push_call!(tape, maxpool, args[1], k; pad=p, stride=s)
-# end
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, relu, args[1])
+end
 
 
 # function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization}, args::VarVec, attrs::AttrDict)
