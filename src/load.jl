@@ -63,26 +63,37 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     end
 end
 
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::AttrDict)
+    if (length(args) == 2 && get(attrs, :alpha, 1) == 1 &&
+        get(attrs, :transA, 0) == 0 && get(attrs, :transB, 0) == 0)
+        # simplified version: just matrix multiplication
+        # note: arguments are swapped to account for row-major arrays
+        return push_call!(tape, *, args[2], args[1])
+    else
+        # complete GEMM version
+        kw = rename_keys(attrs, Dict(
+            :transA => :tA,
+            :transB => :tB,
+            :alpha => :α,
+            :beta => :β
+        ))
+        return push_call!(tape, onnx_gemm, args...; kw...)
+    end
+end
+
+
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
     kw = from_onnx_conv(attrs) |> NamedTuple
     return push_call!(tape, conv, args...; kw...)
 end
+
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs::AttrDict)
     kw = from_onnx_conv(attrs) |> NamedTuple
     return push_call!(tape, maxpool, args[1]; kw...)
 end
 
-
-# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::AttrDict)
-#     kw = Dict(
-#         :tA => get(attrs, :transA, 0),
-#         :tB => get(attrs, :transB, 0),
-#         :α => get(attrs, :alpha, 1),
-#         :β => get(attrs, :beta, 0)
-#     )
-#     return push_call!(tape, onnx_gemm, args...; kw...)
-# end
 
 
 # function load_node!(tape::Tape, ::OpConfig{:ONNX, :Flatten}, args::VarVec, attrs::AttrDict)

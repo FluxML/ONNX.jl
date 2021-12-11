@@ -85,6 +85,31 @@ function save_node!(g::GraphProto, op::Ghost.Call)
 end
 
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(*)}, op::Ghost.Call)
+    nd = NodeProto(
+        input=[onnx_name(v) for v in reverse(op.args)],
+        output=[onnx_name(op)],
+        name=onnx_name(op),
+        attribute=AttributeProto[],
+        op_type="Gemm"
+    )
+    push!(g.node, nd)
+end
+
+
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_gemm), op::Ghost.Call)
+    kw_dict = kwargs2dict(op)
+    attrs = rename_keys(kw_dict, Dict(
+        :tA => :transA,
+        :tB => :transB,
+        :α => :alpha,
+        :β => :beta
+    ))
+    nd = NodeProto("Gemm", op, attrs)
+    push!(g.node, nd)
+end
+
+
 function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, conv), op::Ghost.Call)
     args = iskwfunc(op.fn) ? op.args[3:end] : op.args
     w = args[2]._op.val
