@@ -63,4 +63,9 @@
         ort_test(ONNX.relu, x)
     end
 
+    @testset "Normalization" begin
+        x = rand(7, 7, 3, 5); γ = rand(3); β = rand(3); μ = rand(3); σ² = rand(3)
+        ort_test(ONNX.batch_norm, x, γ, β, μ, σ²)
+    end
+
 end

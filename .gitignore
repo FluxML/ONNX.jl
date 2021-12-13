@@ -4,3 +4,4 @@
 test/models
 test/onnx/
 Manifest.toml
+.vscode/

@@ -58,7 +58,7 @@ end
 
 ValueInfoProto(op::Ghost.AbstractOp) = ValueInfoProto(
     onnx_name(op),
-    # something down the road reverses the shape, so we don't do it here
+    # utils in write.jl reverse the shape, so we don't do it here
     # try the following for example:
     #     TypeProto_Tensor((4, 3), Float64).shape.dim[1].dim_value
     # which gives 3 instead of 4
@@ -145,6 +145,18 @@ end
 
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Ghost.Call)
     nd = NodeProto("Relu", op)
+    push!(g.node, nd)
+end
+
+
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, batch_norm), op::Ghost.Call)
+    kw_dict = kwargs2dict(op)
+    attrs = rename_keys(kw_dict, Dict(
+        :ϵ => :epsilon,
+        :mtm => :momentum,
+        :training => :training_mode
+    ))
+    nd = NodeProto("BatchNormalization", op, attrs)
     push!(g.node, nd)
 end
 

@@ -132,6 +132,18 @@ end
 # end
 
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
+    args::VarVec, attrs::AttrDict)
+    kw = rename_keys(attrs, Dict(
+        :epsilon => :ϵ,
+        :momentum => :mtm,
+        :training_mode => :training
+    ))
+    return push_call!(tape, batch_norm, args...; kw...)
+end
+
+
+
 # function load_node!(tape::Tape, ::OpConfig{:ONNX, :GlobalAveragePool}, args::VarVec, attrs::AttrDict)
 #     return push_call!(tape, global_average_pool, args...)
 # end
