@@ -3,6 +3,7 @@ module ONNX
   include("onnx_pb.jl")
   include("read.jl")
   include("write.jl")
+  include("utils.jl")
   include("conversions.jl")
   include("show.jl")
   include("ops.jl")

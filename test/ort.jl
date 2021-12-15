@@ -20,6 +20,8 @@ function ort_test(tape::Tape, args...)
         r3 = tape2[tape2.result].val
         @test isapprox(r1, r2)
         @test isapprox(r1, r3)
+        # for more flexibility we return the tape before saving and after loading
+        return tape, tape2
     end
 end
 
@@ -29,5 +31,5 @@ function ort_test(fn::Function, args...; kwargs...)
     inp = [push!(tape, Input(arg)) for arg in args]
     res = push_call!(tape, fn, inp...; kwargs...)
     tape.result = res
-    ort_test(tape, args...)
+    return ort_test(tape, args...)
 end

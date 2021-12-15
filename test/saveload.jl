@@ -5,6 +5,22 @@
         ort_test(ONNX.mul, args...)
     end
 
+    @testset "Gemm" begin
+        A, B, C = (rand(3, 4), rand(3, 4), rand(3, 3))
+        ort_test(ONNX.onnx_gemm, A, B')
+        ort_test(ONNX.onnx_gemm, A', B)
+        ort_test(ONNX.onnx_gemm, A', B, C)
+        ort_test(ONNX.onnx_gemm, A, B, C; tA=1)
+        ort_test(ONNX.onnx_gemm, A, B; tB=1)
+        ort_test(ONNX.onnx_gemm, A', B; α=2.0)
+        ort_test(ONNX.onnx_gemm, A', B, C; α=2.0, β=0.5)
+        # make sure Gemm with just 2 matrices and no keyword arguments
+        # is recorded as just *
+        before, after = ort_test(*, A', B)
+        @test before[V(3)].fn == after[V(3)].fn
+        @test before[V(3)].fn == *
+    end
+
     @testset "Conv" begin
         # 2D, keywords
         args = (rand(Float32, 32, 32, 3, 1), rand(Float32, 3, 3, 3, 6))
