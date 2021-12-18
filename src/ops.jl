@@ -2,6 +2,7 @@
 
 import NNlib
 import Flux
+import Statistics: mean
 
 
 flipweights(w::AbstractArray{T,N}) where {T,N} = w[(size(w, i):-1:1 for i = 1:(N-2))..., :, :]

@@ -96,7 +96,7 @@ function from_nnlib_conv(attrs::Dict, d::Int)
 end
 
 
-function from_onnx_conv(attrs::Dict)
+function from_onnx_conv(attrs::Dict; pooling=false)
     out = Dict{Symbol, Any}()
     haskey(attrs, :auto_pad) && error("auto_pad attribute is currently not supported")
     if haskey(attrs, :strides)
@@ -105,7 +105,8 @@ function from_onnx_conv(attrs::Dict)
     if haskey(attrs, :dilations)
         out[:dilation] = from_onnx_spatial(attrs[:dilations])
     end
-    if haskey(attrs, :kernel_shape)
+    # this attribute is only used for pooling, but not conv
+    if haskey(attrs, :kernel_shape) && pooling
         out[:kernel] = from_onnx_spatial(attrs[:kernel_shape])
     end
     if haskey(attrs, :group)

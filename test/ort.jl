@@ -15,11 +15,14 @@ function ort_test(tape::Tape, args...)
     mktemp() do path, _
         r1 = play!(tape, args...)
         save(path, tape)
-        r2 = ort_run(path, from_nnlib.(args)...) |> values |> first |> from_onnx
+        r2_onnx = ort_run(path, from_nnlib.(args)...)
+        r2 = r1 isa Tuple ?  # handle multi-output graphs as well
+            map(from_onnx, Tuple(values(r2_onnx))) :
+            from_onnx(first(values(r2_onnx)))
         tape2 = load(path, args...; exec=true)
         r3 = tape2[tape2.result].val
-        @test isapprox(r1, r2)
-        @test isapprox(r1, r3)
+        @test r1 isa Tuple ? isapprox.(r1, r2) : isapprox(r1, r2)
+        @test r1 isa Tuple ? isapprox.(r1, r3) : isapprox(r1, r3)
         # for more flexibility we return the tape before saving and after loading
         return tape, tape2
     end

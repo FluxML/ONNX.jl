@@ -66,6 +66,21 @@
     @testset "Normalization" begin
         x = rand(7, 7, 3, 5); γ = rand(3); β = rand(3); μ = rand(3); σ² = rand(3)
         ort_test(ONNX.batch_norm, x, γ, β, μ, σ²)
+        ort_test(ONNX.batch_norm, x, γ, β, μ, σ²; ϵ=1e-4)
+
+
+        x = rand(7, 7, 3, 5); γ = rand(3); β = rand(3); μ = rand(3); σ² = rand(3)
+        args = (x, γ, β, μ, σ²); model_args = args
+        tape = Tape(ONNXCtx())
+        inp = [push!(tape, Input(a)) for a in args]
+        bn = push_call!(tape, ONNX.batch_norm, inp...; training=true)
+        y = push_call!(tape, getfield, bn, 1)
+        mu = push_call!(tape, getfield, bn, 2)
+        s2 = push_call!(tape, getfield, bn, 3)
+        tape.result = bn
+
+        # at the moment next mean and variance differ in ONNX and our implementation
+        @test_broken ort_test(tape, args...)
     end
 
 end

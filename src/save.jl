@@ -85,6 +85,13 @@ function save_node!(g::GraphProto, op::Ghost.Call)
 end
 
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(getfield)}, op::Ghost.Call)
+    # Do nothing: getfield is only used to destructure multi-ouput nodes
+    # and doesn't need to be written to ONNX graph.
+    # Using getfield() for anything other then destructuring is thus a mistake.
+end
+
+
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(*)}, op::Ghost.Call)
     nd = NodeProto(
         input=[onnx_name(v) for v in reverse(op.args)],
@@ -155,8 +162,27 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, batch_norm), op::Ghost.
         :ϵ => :epsilon,
         :mtm => :momentum,
         :training => :training_mode
-    ))
-    nd = NodeProto("BatchNormalization", op, attrs)
+    )) |> Dict{Symbol, Any}
+    if haskey(attrs, :training_mode)
+        # true -> 1, false -> 0
+        attrs[:training_mode] = Int(attrs[:training_mode])
+    end
+    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
+    output = if Bool(get(attrs, :training_mode, 0))
+        vars = unpacked_vars(tape, op)
+        @assert(all([v isa V for v in vars]),
+            "Not all output vars of batch_norm are unpacked to the tape")
+        [onnx_name(v) for v in vars]
+    else
+        [onnx_name(op)]
+    end
+    nd = NodeProto(
+        input=[onnx_name(v) for v in args],
+        output=output,
+        name=onnx_name(op),
+        attribute=AttributeProto.(keys(attrs), values(attrs)),
+        op_type="BatchNormalization"
+    )
     push!(g.node, nd)
 end
 
@@ -193,7 +219,19 @@ function save(io::IO, tape::Tape{ONNXCtx})
             error("$(typeof(op)) is not yet supported in model export")
         end
     end
-    push!(g.output, ValueInfoProto(tape[tape.result]))
+    res = tape[tape.result]
+    if res.val isa Tuple
+        # if the last operation in the graph is multi-output, there must be
+        # unpacked elements of that var
+        vars = unpacked_vars(tape, res)
+        @assert(all(v isa V for v in vars), "Cannot save the tape because the result " *
+            "is multi-output, but its elements aren't destructured to the tape")
+        for v in vars
+            push!(g.output, ValueInfoProto(tape[v]))
+        end
+    else
+        push!(g.output, ValueInfoProto(tape[tape.result]))
+    end
     m = modelproto();
     m.graph = g;
     writeproto(io, m)
