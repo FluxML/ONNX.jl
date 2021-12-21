@@ -158,15 +158,7 @@ end
 
 function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, batch_norm), op::Ghost.Call)
     kw_dict = kwargs2dict(op)
-    attrs = rename_keys(kw_dict, Dict(
-        :ϵ => :epsilon,
-        :mtm => :momentum,
-        :training => :training_mode
-    )) |> Dict{Symbol, Any}
-    if haskey(attrs, :training_mode)
-        # true -> 1, false -> 0
-        attrs[:training_mode] = Int(attrs[:training_mode])
-    end
+    attrs = from_nnlib_norm(kw_dict)
     args = iskwfunc(op.fn) ? op.args[3:end] : op.args
     output = if Bool(get(attrs, :training_mode, 0))
         vars = unpacked_vars(tape, op)

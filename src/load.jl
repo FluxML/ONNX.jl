@@ -134,29 +134,10 @@ end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
         args::VarVec, attrs::AttrDict)
-    attrs = copy(attrs)
-    if haskey(attrs, :is_test)
-        attrs[:training_mode] = 1 - attrs[:is_test]
-        delete!(attrs, :is_test)
-    end
-    if haskey(attrs, :spatial)
-        # Reading the doc below, I assume `spatial` attribute has been removed in opset > 14
-        # and later versions always use `spatial=1`
-        # https://github.com/onnx/onnx/blob/master/docs/Changelog.md#BatchNormalization-14
-        @assert attrs[:spatial] == 1 "BatchNormalization with spatial != 1 is not supported"
-        delete!(attrs, :spatial)
-    end
-    kw = rename_keys(attrs, Dict(
-        :epsilon => :ϵ,
-        :momentum => :mtm,
-        :training_mode => :training
-    )) |> Dict{Symbol, Any}
-    if haskey(kw, :training)
-        kw[:training] = Bool(kw[:training])
-    end
+    kw = from_onnx_norm(attrs)
     bn = push_call!(tape, batch_norm, args...; kw...)
     if bn._op.val isa Tuple
-        # usual in training model
+        # usual in training mode
         # unpack tuples into calls to getfield
         y = push_call!(tape, getfield, bn, 1)
         μnext = push_call!(tape, getfield, bn, 2)
@@ -232,7 +213,7 @@ function load(io::IO, model_args...; backends=[:ONNX], exec::Bool=true)
     else
         # tuple output: we expect tape to contain these outputs as vars  destructured
         # from a multi-ouput op using a sequence of `getfield()` calls
-        vars = [tape.c.name2var[name] for name in nd.output]
+        vars = [tape.c.name2var[o.name] for o in g.output]
         @assert(all(tape[v] isa Call && tape[v].fn == getfield for v in vars),
             "Don't understand this multi-output result of the graph")
         tape.result = tape[vars[1]].args[1]

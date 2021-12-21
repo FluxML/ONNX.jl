@@ -21,8 +21,8 @@ function ort_test(tape::Tape, args...)
             from_onnx(first(values(r2_onnx)))
         tape2 = load(path, args...; exec=true)
         r3 = tape2[tape2.result].val
-        @test r1 isa Tuple ? isapprox.(r1, r2) : isapprox(r1, r2)
-        @test r1 isa Tuple ? isapprox.(r1, r3) : isapprox(r1, r3)
+        @test r1 isa Tuple ? all(isapprox.(r1, r2)) : isapprox(r1, r2)
+        @test r1 isa Tuple ? all(isapprox.(r1, r3)) : isapprox(r1, r3)
         # for more flexibility we return the tape before saving and after loading
         return tape, tape2
     end
