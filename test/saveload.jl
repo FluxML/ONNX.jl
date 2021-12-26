@@ -79,8 +79,7 @@
         s2 = push_call!(tape, getfield, bn, 3)
         tape.result = bn
 
-        # at the moment next mean and variance differ in ONNX and our implementation
-        @test_broken ort_test(tape, args...)
+        ort_test(tape, args...; atol=1e-4)
     end
 
 end

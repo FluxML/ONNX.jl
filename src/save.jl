@@ -161,7 +161,7 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, batch_norm), op::Ghost.
     attrs = from_nnlib_norm(kw_dict)
     args = iskwfunc(op.fn) ? op.args[3:end] : op.args
     output = if Bool(get(attrs, :training_mode, 0))
-        vars = unpacked_vars(tape, op)
+        vars = unpacked_vars(op)
         @assert(all([v isa V for v in vars]),
             "Not all output vars of batch_norm are unpacked to the tape")
         [onnx_name(v) for v in vars]
@@ -215,7 +215,7 @@ function save(io::IO, tape::Tape{ONNXCtx})
     if res.val isa Tuple
         # if the last operation in the graph is multi-output, there must be
         # unpacked elements of that var
-        vars = unpacked_vars(tape, res)
+        vars = unpacked_vars(res)
         @assert(all(v isa V for v in vars), "Cannot save the tape because the result " *
             "is multi-output, but its elements aren't destructured to the tape")
         for v in vars

@@ -17,11 +17,11 @@ import Ghost: Tape, Input, mkcall
     out = push!(tape, mkcall(make_tuple, x))
     y1 = push!(tape, mkcall(getfield, out, 1))
     y2 = push!(tape, mkcall(getfield, out, 2))
-    @test unpacked_vars(tape, tape[out]) == [y1, y2]
+    @test unpacked_vars(tape[out]) == [y1, y2]
 
     tape = Tape()
     x = push!(tape, Input(1.0))
     out = push!(tape, mkcall(make_tuple, x))
     y1 = push!(tape, mkcall(getfield, out, 1))
-    @test unpacked_vars(tape, tape[out]) == [y1, nothing]
+    @test unpacked_vars(tape[out]) == [y1, nothing]
 end

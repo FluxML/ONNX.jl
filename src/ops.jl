@@ -1,7 +1,6 @@
 # Default implementations of ONNX operators
 
 import NNlib
-import Flux
 import Statistics: mean
 
 
@@ -54,7 +53,7 @@ maxpool(x; kernel, pad = 0, stride = 1) = NNlib.maxpool(x, kernel; pad = pad, st
 # common functional implementation for batch and instance normalization based on
 # https://github.com/FluxML/Flux.jl/blob/06970a5fbbb1cb485c5d2cba597a78fb453fc713/src/layers/normalise.jl#L166-L197
 function normalization(x::AbstractArray{T,N}, γ, β, μ, σ², reduce_dims, affine_shape;
-        ϵ=1e-5f0, mtm=0.1f0, training=false) where {T, N}
+        ϵ=1f-5, mtm=0.1f0, training=false) where {T, N}
     # init variables in the function scope instead of the if's scope
     μnext = μ
     σ²next = σ²
@@ -88,7 +87,7 @@ end
 
 
 function batch_norm(x::AbstractArray{T,N}, γ, β, μ, σ²;
-        ϵ=1e-5, mtm=0.9, training=false) where {T,N}
+        ϵ=1f-5, mtm=0.1f0, training=false) where {T,N}
     reduce_dims = [1:N-2; N]
     affine_shape = ntuple(i -> i == N-1 ? size(x, N-1) : 1, N)
     return normalization(x, γ, β, μ, σ², reduce_dims, affine_shape;
@@ -97,7 +96,7 @@ end
 
 
 function instance_norm(x::AbstractArray{T,N}, γ, β, μ, σ²;
-        ϵ=1e-5, mtm=0.9, training=false) where {T,N}
+        ϵ=1f-5, mtm=0.1f0, training=false) where {T,N}
     reduce_dims = 1:N-2
     affine_shape = ntuple(i -> i == N-1 ? size(x, N-1) : 1, N)
     return normalization(x, γ, β, μ, σ², reduce_dims, affine_shape;
@@ -105,6 +104,6 @@ function instance_norm(x::AbstractArray{T,N}, γ, β, μ, σ²;
 end
 
 
-function global_average_pool(x)
-    return Flux.GlobalMeanPool()(x)
-end
+# function global_average_pool(x)
+#     return Flux.GlobalMeanPool()(x)
+# end

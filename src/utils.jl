@@ -28,8 +28,9 @@ Example:
     @assert unpacked_vars(tape, tape[out]) == [y1, y2]
 
 """
-function unpacked_vars(tape::Tape, op::Call)
+function unpacked_vars(op::Call)
     @assert op.val isa Tuple "Can't unpack non-tuple output"
+    tape = op.tape
     # out = V(op)
     vars = Any[nothing for _=1:length(op.val)]
     found = 0
