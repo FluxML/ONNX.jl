@@ -58,7 +58,7 @@ end
 
 ValueInfoProto(op::Ghost.AbstractOp) = ValueInfoProto(
     onnx_name(op),
-    # something down the road reverses the shape, so we don't do it here
+    # utils in write.jl reverse the shape, so we don't do it here
     # try the following for example:
     #     TypeProto_Tensor((4, 3), Float64).shape.dim[1].dim_value
     # which gives 3 instead of 4
@@ -82,6 +82,13 @@ Serialize a single operation from a tape to graph.
 """
 function save_node!(g::GraphProto, op::Ghost.Call)
     save_node!(g, OpConfig{:ONNX, typeof(op.fn)}(), op)
+end
+
+
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(getfield)}, op::Ghost.Call)
+    # Do nothing: getfield is only used to destructure multi-ouput nodes
+    # and doesn't need to be written to ONNX graph.
+    # Using getfield() for anything other then destructuring is thus a mistake.
 end
 
 
@@ -149,6 +156,29 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Ghost.Ca
 end
 
 
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, batch_norm), op::Ghost.Call)
+    kw_dict = kwargs2dict(op)
+    attrs = from_nnlib_norm(kw_dict)
+    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
+    output = if Bool(get(attrs, :training_mode, 0))
+        vars = unpacked_vars(op)
+        @assert(all([v isa V for v in vars]),
+            "Not all output vars of batch_norm are unpacked to the tape")
+        [onnx_name(v) for v in vars]
+    else
+        [onnx_name(op)]
+    end
+    nd = NodeProto(
+        input=[onnx_name(v) for v in args],
+        output=output,
+        name=onnx_name(op),
+        attribute=AttributeProto.(keys(attrs), values(attrs)),
+        op_type="BatchNormalization"
+    )
+    push!(g.node, nd)
+end
+
+
 ##############################################################################
 #                                    API                                     #
 ##############################################################################
@@ -181,7 +211,19 @@ function save(io::IO, tape::Tape{ONNXCtx})
             error("$(typeof(op)) is not yet supported in model export")
         end
     end
-    push!(g.output, ValueInfoProto(tape[tape.result]))
+    res = tape[tape.result]
+    if res.val isa Tuple
+        # if the last operation in the graph is multi-output, there must be
+        # unpacked elements of that var
+        vars = unpacked_vars(res)
+        @assert(all(v isa V for v in vars), "Cannot save the tape because the result " *
+            "is multi-output, but its elements aren't destructured to the tape")
+        for v in vars
+            push!(g.output, ValueInfoProto(tape[v]))
+        end
+    else
+        push!(g.output, ValueInfoProto(tape[tape.result]))
+    end
     m = modelproto();
     m.graph = g;
     writeproto(io, m)

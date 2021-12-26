@@ -96,7 +96,7 @@ function from_nnlib_conv(attrs::Dict, d::Int)
 end
 
 
-function from_onnx_conv(attrs::Dict)
+function from_onnx_conv(attrs::Dict; pooling=false)
     out = Dict{Symbol, Any}()
     haskey(attrs, :auto_pad) && error("auto_pad attribute is currently not supported")
     if haskey(attrs, :strides)
@@ -105,7 +105,8 @@ function from_onnx_conv(attrs::Dict)
     if haskey(attrs, :dilations)
         out[:dilation] = from_onnx_spatial(attrs[:dilations])
     end
-    if haskey(attrs, :kernel_shape)
+    # this attribute is only used for pooling, but not conv
+    if haskey(attrs, :kernel_shape) && pooling
         out[:kernel] = from_onnx_spatial(attrs[:kernel_shape])
     end
     if haskey(attrs, :group)
@@ -113,6 +114,50 @@ function from_onnx_conv(attrs::Dict)
     end
     if haskey(attrs, :pads)
         out[:pad] = from_onnx_pad(attrs[:pads])
+    end
+    return out
+end
+
+
+function from_nnlib_norm(attrs::Dict{K,V}) where {K,V}
+    out = Dict{Symbol, Any}()
+    if haskey(attrs, :training)
+        out[:training_mode] = Int(attrs[:training])
+    end
+    if haskey(attrs, :mtm)
+        # ONNX calculates new running mean as `mtm * input_mean + (1 - mtm) * current_mean`
+        # NNlib/Flux does the opposite, i.e.  `(1 - mtm) * input_mean + mtm * current_mean`
+        # thus we reverse the value here
+        out[:momentum] = 1f0 - attrs[:mtm]
+    end
+    if haskey(attrs, :ϵ)
+        out[:epsilon] = attrs[:ϵ]
+    end
+    return out
+end
+
+
+function from_onnx_norm(attrs::Dict{K,V}) where {K,V}
+    out = Dict{Symbol, Any}()
+    if haskey(attrs, :is_test)
+        out[:training] = Bool(1 - attrs[:is_test])
+    end
+    if haskey(attrs, :training_mode)
+        out[:training] = Bool(attrs[:training_mode])
+    end
+    if haskey(attrs, :spatial) && attrs[:spatial] != 1
+        # deprecated attribute, e.g. see
+        # https://github.com/onnx/onnx/blob/master/docs/Changelog.md#BatchNormalization-14
+        error("BatchNormalization with spatial != 1 is not supported")
+    end
+    if haskey(attrs, :momentum)
+        # ONNX calculates new running mean as `mtm * input_mean + (1 - mtm) * current_mean`
+        # NNlib/Flux does the opposite, i.e.  `(1 - mtm) * input_mean + mtm * current_mean`
+        # thus we reverse the value here
+        out[:mtm] = 1f0 - attrs[:momentum]
+    end
+    if haskey(attrs, :epsilon)
+        out[:ϵ] = attrs[:epsilon]
     end
     return out
 end

@@ -90,7 +90,7 @@ end
 
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs::AttrDict)
-    kw = from_onnx_conv(attrs) |> NamedTuple
+    kw = from_onnx_conv(attrs; pooling=true) |> NamedTuple
     return push_call!(tape, maxpool, args[1]; kw...)
 end
 
@@ -130,6 +130,24 @@ end
 #         return res
 #     end
 # end
+
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
+        args::VarVec, attrs::AttrDict)
+    kw = from_onnx_norm(attrs)
+    bn = push_call!(tape, batch_norm, args...; kw...)
+    if bn._op.val isa Tuple
+        # usual in training mode
+        # unpack tuples into calls to getfield
+        y = push_call!(tape, getfield, bn, 1)
+        μnext = push_call!(tape, getfield, bn, 2)
+        σ²next = push_call!(tape, getfield, bn, 3)
+        return y, μnext, σ²next
+    else
+        return bn
+    end
+end
+
 
 
 # function load_node!(tape::Tape, ::OpConfig{:ONNX, :GlobalAveragePool}, args::VarVec, attrs::AttrDict)
@@ -190,7 +208,16 @@ function load(io::IO, model_args...; backends=[:ONNX], exec::Bool=true)
         success || error("Couldn't load node for $(nd.op_type), " *
                          "tried the following backends: $(tape.c.backends)")
     end
-    tape.result = Ghost.bound(tape, V(length(tape)))
+    if length(g.output) == 1
+        tape.result = Ghost.bound(tape, V(length(tape)))
+    else
+        # tuple output: we expect tape to contain these outputs as vars  destructured
+        # from a multi-ouput op using a sequence of `getfield()` calls
+        vars = [tape.c.name2var[o.name] for o in g.output]
+        @assert(all(tape[v] isa Call && tape[v].fn == getfield for v in vars),
+            "Don't understand this multi-output result of the graph")
+        tape.result = tape[vars[1]].args[1]
+    end
     return tape
 end
 
