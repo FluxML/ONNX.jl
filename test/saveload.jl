@@ -60,6 +60,11 @@
         ort_test(ONNX.global_average_pool, x)
     end
 
+    @testset "Flatten" begin
+        x = rand(Float32, 32, 32, 3, 1)
+        ort_test(ONNX.onnx_flatten, x)
+    end
+
     @testset "Activations" begin
         x = rand(3, 4)
         ort_test(ONNX.relu, x)

@@ -95,10 +95,14 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs
 end
 
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :GlobalAveragePool}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, global_average_pool, args...)
+end
 
-# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Flatten}, args::VarVec, attrs::AttrDict)
-#     return push_call!(tape, onnx_flatten, args...; attrs...)
-# end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Flatten}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, onnx_flatten, args...; attrs...)
+end
 
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Add}, args::VarVec, attrs::AttrDict)
@@ -130,11 +134,6 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
     else
         return bn
     end
-end
-
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :GlobalAveragePool}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, global_average_pool, args...)
 end
 
 

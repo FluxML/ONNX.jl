@@ -41,7 +41,6 @@ end
 function onnx_flatten(x; axis = 1)
     dim = axis >= 0 ? ndims(x) - axis + 1 : axis + 1
     return flatten(x; dim = dim)
-
 end
 
 add(xs...) = +(xs...)
