@@ -179,6 +179,12 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, batch_norm), op::Ghost.
 end
 
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(global_average_pool)}, op::Ghost.Call)
+    nd = NodeProto("GlobalAveragePool", op)
+    push!(g.node, nd)
+end
+
+
 ##############################################################################
 #                                    API                                     #
 ##############################################################################

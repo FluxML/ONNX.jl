@@ -56,6 +56,8 @@
         ort_test(ONNX.maxpool, x; kernel=k)
         ort_test(ONNX.maxpool, x; kernel=k, stride=(3, 3))
         ort_test(ONNX.maxpool, x; kernel=k, stride=(3, 3), pad=1)
+
+        ort_test(ONNX.global_average_pool, x)
     end
 
     @testset "Activations" begin

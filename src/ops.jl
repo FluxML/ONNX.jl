@@ -104,6 +104,15 @@ function instance_norm(x::AbstractArray{T,N}, γ, β, μ, σ²;
 end
 
 
-# function global_average_pool(x)
-#     return Flux.GlobalMeanPool()(x)
-# end
+# implementation from
+# https://github.com/FluxML/Flux.jl/blob/f66be896d3d2698ce77ce8b7788b4317285bf0b2/src/layers/conv.jl#L605-L614
+function global_average_pool(x)
+    # Input size
+    x_size = size(x)
+    # Kernel size
+    k = x_size[1:end-2]
+    # Pooling dimensions
+    pdims = NNlib.PoolDims(x, k)
+    return NNlib.meanpool(x, pdims)
+end
+
