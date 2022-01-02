@@ -95,10 +95,14 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs
 end
 
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :GlobalAveragePool}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, global_average_pool, args...)
+end
 
-# function load_node!(tape::Tape, ::OpConfig{:ONNX, :Flatten}, args::VarVec, attrs::AttrDict)
-#     return push_call!(tape, onnx_flatten, args...; attrs...)
-# end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Flatten}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, onnx_flatten, args...; attrs...)
+end
 
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Add}, args::VarVec, attrs::AttrDict)
@@ -116,22 +120,6 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::A
 end
 
 
-# function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization}, args::VarVec, attrs::AttrDict)
-#     ϵ = get(attrs, :epsilon, 1f-5)
-#     momentum = get(attrs, :momentum, 9f-1)
-#     training_mode = Bool(get(attrs, :training_mode, 0))
-#     res = push_call!(tape, batch_norm, args..., ϵ, momentum, training_mode)
-#     if training_mode
-#         y = push_call!(tape, getfield, 1)
-#         μ_new = push_call!(tape, getfield, 2)
-#         σ²_new = push_call!(tape, getfield, 3)
-#         return y, μ_new, σ²_new
-#     else
-#         return res
-#     end
-# end
-
-
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
         args::VarVec, attrs::AttrDict)
     kw = from_onnx_norm(attrs)
@@ -147,12 +135,6 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
         return bn
     end
 end
-
-
-
-# function load_node!(tape::Tape, ::OpConfig{:ONNX, :GlobalAveragePool}, args::VarVec, attrs::AttrDict)
-#     return push_call!(tape, global_average_pool, args...)
-# end
 
 
 ###############################################################################

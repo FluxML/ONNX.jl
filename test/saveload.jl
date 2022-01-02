@@ -56,6 +56,13 @@
         ort_test(ONNX.maxpool, x; kernel=k)
         ort_test(ONNX.maxpool, x; kernel=k, stride=(3, 3))
         ort_test(ONNX.maxpool, x; kernel=k, stride=(3, 3), pad=1)
+
+        ort_test(ONNX.global_average_pool, x)
+    end
+
+    @testset "Flatten" begin
+        x = rand(Float32, 32, 32, 3, 1)
+        ort_test(ONNX.onnx_flatten, x)
     end
 
     @testset "Activations" begin
