@@ -14,7 +14,7 @@ end
 function ort_test(tape::Tape, args...; atol=0)
     mktemp() do path, _
         r1 = play!(tape, args...)
-        save(path, tape)
+        save(path, tape, length(args))
         r2_onnx = ort_run(path, from_nnlib.(args)...)
         r2 = r1 isa Tuple ?  # handle multi-output graphs as well
             map(from_onnx, Tuple(values(r2_onnx))) :

@@ -166,7 +166,9 @@ function load(io::IO, model_args...; backends=[:ONNX], exec::Bool=true)
         # TODO: consider non-array inputs
         init_vals[init.name] = array(init)
     end
-    # load inputs
+    # load inputs (arguments + parameters / constants)
+    # TODO: load() parameters (inputs with known initializers)
+    # as Ghost.Constant instead; treat it the same way in save()
     arg_idx = 1
     for inp in g.input
         val = get(init_vals, inp.name, missing)

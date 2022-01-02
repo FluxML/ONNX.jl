@@ -204,19 +204,15 @@ controlled by methods of [save_node!](@ref).
 
 See also: [`load!`](@ref)
 """
-function save(io::IO, tape::Tape{ONNXCtx})
+function save(io::IO, tape::Tape{ONNXCtx}, nargs=typemax(Int))
     g = graphproto()
     g.name = "generated_model"
-    for op in tape
+    for (i, op) in enumerate(tape)
         if op isa Ghost.Input
-            # Ghost.Tape represents both - arguments and model parameters
-            # as Input ops. In ONNX, parameters (and constants) must be added
-            # to .initializer, so will we have to do when we understand how to
-            # handle parameters (and complex structs) in general.
-            # For reference, the following commented line shows how to add Input
-            # to the .initializer:
-            # add!(g, TensorProto(op.val, onnx_name(op)))
             push!(g.input, ValueInfoProto(op))
+            if i > nargs
+                push!(g.initializer, TensorProto(op.val, onnx_name(op)))
+            end
         elseif op isa Ghost.Call
             save_node!(g, op)
         else
@@ -242,8 +238,8 @@ function save(io::IO, tape::Tape{ONNXCtx})
 end
 
 
-function save(filename::String, tape::Tape{ONNXCtx})
+function save(filename::String, tape::Tape{ONNXCtx}, nargs=typemax(Int))
     open(filename, "w") do io
-        save(io, tape)
+        save(io, tape, nargs)
     end
 end
