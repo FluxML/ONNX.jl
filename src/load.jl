@@ -1,5 +1,5 @@
 using Ghost
-using Ghost: Tape, Input, mkcall, Variable, V
+using Ghost: Tape, Input, Constant, mkcall, Variable, V
 
 
 struct ONNXCtx
@@ -169,16 +169,24 @@ function load(io::IO, args...; backends=[:ONNX], exec::Bool=true)
     used_init_names = Set([])
     for inp in g.input
         val = get(init_vals, inp.name, missing)
+        v = V(0)   # will be overwritten
         if val === missing && exec == true
+            @assert(
+                arg_idx <= length(args),
+                "Neither initializer, nor argument is provided for input $(inp.name)"
+            )
             val = args[arg_idx]
             arg_idx += 1
+            v = push!(tape, Input(val))
+        else
+            # convert inputs that also have initializers to constants
+            # these are usually model parameters, but may
+            v = push!(tape, Constant(val))
         end
-        v = push!(tape, Input(val))
         tape.c.name2var[inp.name] = v
         push!(used_init_names, inp.name)
     end
-    # load constants, i.e. initializers that are not inputs
-    # usually these are model parameters or other constants
+    # load the rest of initilizers as constants
     for init in g.initializer
         name = init.name
         if !in(name, used_init_names)

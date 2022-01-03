@@ -213,7 +213,7 @@ function save(io::IO, tape::Tape{ONNXCtx})
             push!(g.input, ValueInfoProto(op))
         elseif op isa Ghost.Constant
             # add constant to g.initializer, but not to g.input
-            # some models out their also put constants & parameters
+            # some models out there also put constants & parameters
             # to g.init, but it seems to be an outdated practise
             push!(g.initializer, TensorProto(op.val, onnx_name(op)))
         elseif op isa Ghost.Call
