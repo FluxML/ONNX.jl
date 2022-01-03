@@ -204,15 +204,18 @@ controlled by methods of [save_node!](@ref).
 
 See also: [`load!`](@ref)
 """
-function save(io::IO, tape::Tape{ONNXCtx}, nargs=typemax(Int))
+function save(io::IO, tape::Tape{ONNXCtx})
     g = graphproto()
     g.name = "generated_model"
     for (i, op) in enumerate(tape)
         if op isa Ghost.Input
+            # add input to g.input, but not to g.initializer
             push!(g.input, ValueInfoProto(op))
-            if i > nargs
-                push!(g.initializer, TensorProto(op.val, onnx_name(op)))
-            end
+        elseif op isa Ghost.Constant
+            # add constant to g.initializer, but not to g.input
+            # some models out their also put constants & parameters
+            # to g.init, but it seems to be an outdated practise
+            push!(g.initializer, TensorProto(op.val, onnx_name(op)))
         elseif op isa Ghost.Call
             save_node!(g, op)
         else
@@ -238,8 +241,8 @@ function save(io::IO, tape::Tape{ONNXCtx}, nargs=typemax(Int))
 end
 
 
-function save(filename::String, tape::Tape{ONNXCtx}, nargs=typemax(Int))
+function save(filename::String, tape::Tape{ONNXCtx})
     open(filename, "w") do io
-        save(io, tape, nargs)
+        save(io, tape)
     end
 end

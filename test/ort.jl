@@ -5,7 +5,7 @@ import ONNX: ONNXCtx, push_call!, from_nnlib, from_onnx, save, load
 
 
 function ort_run(path, ort_args...)
-    model = OX.load_inference(OX.testdatapath(path))
+    model = OX.load_inference(path)
     ort_inputs = Dict([OX.input_names(model)[i] => ort_args[i] for i=1:length(ort_args)])
     return model(ort_inputs)
 end
@@ -14,7 +14,7 @@ end
 function ort_test(tape::Tape, args...; atol=0)
     mktemp() do path, _
         r1 = play!(tape, args...)
-        save(path, tape, length(args))
+        save(path, tape)
         r2_onnx = ort_run(path, from_nnlib.(args)...)
         r2 = r1 isa Tuple ?  # handle multi-output graphs as well
             map(from_onnx, Tuple(values(r2_onnx))) :
