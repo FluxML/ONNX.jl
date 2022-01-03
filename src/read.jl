@@ -1,48 +1,36 @@
 
+const ONNX2JULIA_TYPES = Dict(
+    TensorProto_DataType.INT64 => Int64,
+    TensorProto_DataType.INT32 => Int32,
+    TensorProto_DataType.INT8 => Int8,
+    TensorProto_DataType.DOUBLE => Float64,
+    TensorProto_DataType.FLOAT => Float32,
+    TensorProto_DataType.FLOAT16 => Float16,
+)
+
+const ONNX2JULIA_DATA_FIELDS = Dict(
+    TensorProto_DataType.INT64 => :int64_data,
+    TensorProto_DataType.INT32 => :int32_data,
+    # TensorProto_DataType.INT8 => no special field
+    TensorProto_DataType.DOUBLE => :double_data,
+    TensorProto_DataType.FLOAT => :float_data,
+    # TensorProto_DataType.FLOAT16 => no special field
+)
+
 """
     array(p::TensorProto)
 
 Return `p` as an `Array` of the correct type. Second argument can be used to change type of the returned array
 """
 function array(p::TensorProto, wrap=Array)
-    # Copy pasted from jl
-    # Can probably be cleaned up a bit
-    # TODO: Add missing datatypes...
-    if p.data_type === TensorProto_DataType.INT64
-        if hasproperty(p, :int64_data) && !isempty(p.int64_data)
-            return reshape(reinterpret(Int64, p.int64_data), p.dims...) |> wrap |> from_onnx
-        end
-        return reshape(reinterpret(Int64, p.raw_data), p.dims...) |> wrap |> from_onnx
-    end
-
-    if p.data_type === TensorProto_DataType.INT32
-        if hasproperty(p, :int32_data) && !isempty(p.int32_data)
-            return reshape(p.int32_data , p.dims...) |> wrap |> from_onnx
-        end
-        return reshape(reinterpret(Int32, p.raw_data), p.dims...) |> wrap |> from_onnx
-    end
-
-    if p.data_type === TensorProto_DataType.INT8
-        return reshape(reinterpret(Int8, p.raw_data), p.dims...) |> wrap |> from_onnx
-    end
-
-    if p.data_type === TensorProto_DataType.DOUBLE
-        if hasproperty(p, :double_data) && !isempty(p.double_data)
-            return reshape(p.double_data , p.dims...) |> wrap |> from_onnx
-        end
-        return reshape(reinterpret(Float64, p.raw_data), p.dims...) |> wrap |> from_onnx
-    end
-
-    if p.data_type === TensorProto_DataType.FLOAT
-        if hasproperty(p,:float_data) && !isempty(p.float_data)
-            return reshape(reinterpret(Float32, p.float_data), p.dims...) |> wrap |> from_onnx
-        end
-        return reshape(reinterpret(Float32, p.raw_data), p.dims...) |> wrap |> from_onnx
-    end
-
-    if p.data_type === TensorProto_DataType.FLOAT16
-        return reshape(reinterpret(Float16, p.raw_data), p.dims...) |> wrap |> from_onnx
-    end
+    T = ONNX2JULIA_TYPES[p.data_type]
+    fld = get(ONNX2JULIA_DATA_FIELDS, p.data_type, :raw_data)
+    bytes = getproperty(p, fld)
+    data = !isempty(bytes) ? reinterpret(T, bytes) : reinterpret(T, p.raw_data)
+    # note that we don't permute dimensions here, only reshape the data
+    # see "Row-/Columns-major" in test/readwrite.jl for an example
+    # why we don't need permutedims here
+    return reshape(wrap(data), reverse(p.dims)...)
 end
 
 Base.size(vip::ValueInfoProto) = size(vip._type)

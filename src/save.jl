@@ -207,16 +207,15 @@ See also: [`load!`](@ref)
 function save(io::IO, tape::Tape{ONNXCtx})
     g = graphproto()
     g.name = "generated_model"
-    for op in tape
+    for (i, op) in enumerate(tape)
         if op isa Ghost.Input
-            # Ghost.Tape represents both - arguments and model parameters
-            # as Input ops. In ONNX, parameters (and constants) must be added
-            # to .initializer, so will we have to do when we understand how to
-            # handle parameters (and complex structs) in general.
-            # For reference, the following commented line shows how to add Input
-            # to the .initializer:
-            # add!(g, TensorProto(op.val, onnx_name(op)))
+            # add input to g.input, but not to g.initializer
             push!(g.input, ValueInfoProto(op))
+        elseif op isa Ghost.Constant
+            # add constant to g.initializer, but not to g.input
+            # some models out there also put constants & parameters
+            # to g.init, but it seems to be an outdated practise
+            push!(g.initializer, TensorProto(op.val, onnx_name(op)))
         elseif op isa Ghost.Call
             save_node!(g, op)
         else

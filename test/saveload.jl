@@ -27,9 +27,11 @@
         ort_test(ONNX.conv, args...)
         ort_test(ONNX.conv, args...; pad=1, stride=(1, 1), dilation=(1, 1), groups=1)
         ort_test(ONNX.conv, args...; pad=1, stride=(1, 2), dilation=(2, 1), groups=1)
+        ort_test(ONNX.conv, args...; pad=(3, 3, 3, 3), groups=1, stride=(2, 2), dilation=(1, 1))
         ort_test(ONNX.conv, args...; stride=1, dilation=1)
         ort_test(ONNX.conv, args...; pad=(1, 2))
         ort_test(ONNX.conv, args...; pad=(1, 2, 3, 4))
+
 
         # 2D, with bias
         ort_test(ONNX.conv, args..., rand(Float32, 6))

@@ -1,5 +1,5 @@
 using Ghost
-using Ghost: Tape, Input, mkcall, Variable, V
+using Ghost: Tape, Input, Constant, mkcall, Variable, V
 
 
 struct ONNXCtx
@@ -156,26 +156,44 @@ the addition, making the debugging easier. Default is `true`.
 
 See also: [`save!`](@ref)
 """
-function load(io::IO, model_args...; backends=[:ONNX], exec::Bool=true)
+function load(io::IO, args...; backends=[:ONNX], exec::Bool=true)
     onnx_model = readproto(io, ModelProto());
     g = onnx_model.graph;
     tape = Tape(ONNXCtx(backends; exec=exec))
     # create map of initializers
-    init_vals = Dict{String, Any}()
-    for init in g.initializer
-        # TODO: consider non-array inputs
-        init_vals[init.name] = array(init)
-    end
-    # load inputs
+    init_vals = Dict{String, Any}(init.name => array(init)
+        for init in g.initializer)
+    # load inputs; if input has init value, take it
+    # otherwise take the next available argument value
     arg_idx = 1
+    used_init_names = Set([])
     for inp in g.input
         val = get(init_vals, inp.name, missing)
+        v = V(0)   # will be overwritten
         if val === missing && exec == true
-            val = model_args[arg_idx]
+            @assert(
+                arg_idx <= length(args),
+                "Neither initializer, nor argument is provided for input $(inp.name)"
+            )
+            val = args[arg_idx]
             arg_idx += 1
+            v = push!(tape, Input(val))
+        else
+            # convert inputs that also have initializers to constants
+            # these are usually model parameters, but may
+            v = push!(tape, Constant(val))
         end
-        v = push!(tape, Input(val))
         tape.c.name2var[inp.name] = v
+        push!(used_init_names, inp.name)
+    end
+    # load the rest of initilizers as constants
+    for init in g.initializer
+        name = init.name
+        if !in(name, used_init_names)
+            val = init_vals[name]
+            v = push!(tape, Ghost.Constant(val))
+            tape.c.name2var[name] = v
+        end
     end
     # load nodes
     for nd in g.node
@@ -203,8 +221,8 @@ function load(io::IO, model_args...; backends=[:ONNX], exec::Bool=true)
     return tape
 end
 
-function load(filename::String, model_args...; backends=[:ONNX], exec::Bool=true)
+function load(filename::String, args...; backends=[:ONNX], exec::Bool=true)
     return open(filename) do io
-        load(io, model_args...; backends=backends, exec=exec)
+        load(io, args...; backends=backends, exec=exec)
     end
 end

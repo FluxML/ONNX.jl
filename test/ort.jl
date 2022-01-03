@@ -5,7 +5,7 @@ import ONNX: ONNXCtx, push_call!, from_nnlib, from_onnx, save, load
 
 
 function ort_run(path, ort_args...)
-    model = OX.load_inference(OX.testdatapath(path))
+    model = OX.load_inference(path)
     ort_inputs = Dict([OX.input_names(model)[i] => ort_args[i] for i=1:length(ort_args)])
     return model(ort_inputs)
 end
