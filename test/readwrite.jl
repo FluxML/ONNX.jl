@@ -7,6 +7,26 @@
         return ONNX.readproto(iob, T())
     end
 
+    @testset "Row-/Columns-major" begin
+        import ONNX: TensorProto, array
+
+        # column-major, internally - [1, 2, 3, 4, 5, 6]
+        x = Float32[1 4;
+                    2 5;
+                    3 6]
+
+        p = TensorProto(x)
+        # row-major, will be read in e.g. python as
+        # [[1 2 3],
+        #  [4 5 6]]
+        @test p.dims == [2, 3]
+        @test p.float_data == Float32[1, 2, 3, 4, 5, 6]
+
+        # column-major again
+        x_ = array(p)
+        @test x == x_
+    end
+
     @testset "TensorProto" begin
         import ONNX: TensorProto, array
 
