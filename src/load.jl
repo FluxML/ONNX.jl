@@ -125,6 +125,24 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::A
 end
 
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :MatMul}, args::VarVec, attrs::AttrDict)
+    A_ndims = ndims(args[1]._op.val)
+    B_ndims = ndims(args[2]._op.val)
+    if A_ndims == 2 && B_ndims == 2
+        return push_call!(tape, *, args[2], args[1])
+    elseif A_ndims in (2, 3) && B_ndims in (2, 3)
+        return push_call!(tape, NNlib.batched_mul, args[2], args[1])
+    else
+        error("MatMul with arrays of $A_ndims and $B_ndims is not implemented yet")
+    end
+end
+
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sigmoid}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, Broadcast.broadcast, NNlib.sigmoid, args...)
+end
+
+
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
         args::VarVec, attrs::AttrDict)
     kw = from_onnx_norm(attrs)

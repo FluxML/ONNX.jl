@@ -21,6 +21,12 @@
         @test before[V(3)].fn == *
     end
 
+    @testset "MatMul" begin
+        ort_test(NNlib.batched_mul, rand(3, 4, 5), rand(4, 3))
+        ort_test(NNlib.batched_mul, rand(3, 4), rand(4, 3, 5))
+        ort_test(NNlib.batched_mul, rand(3, 4, 5), rand(4, 3, 5))
+    end
+
     @testset "Conv" begin
         # 2D, keywords
         args = (rand(Float32, 32, 32, 3, 1), rand(Float32, 3, 3, 3, 6))
