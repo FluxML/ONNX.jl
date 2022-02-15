@@ -2,7 +2,7 @@
 
 import NNlib
 import Statistics: mean
-
+using LinearAlgebra
 
 flipweights(w::AbstractArray{T,N}) where {T,N} = w[(size(w, i):-1:1 for i = 1:(N-2))..., :, :]
 
@@ -48,6 +48,7 @@ mul(xs...) = .*(xs...)
 relu(x) = NNlib.relu.(x)
 maxpool(x; kernel, pad = 0, stride = 1) = NNlib.maxpool(x, kernel; pad = pad, stride = stride)
 matmul(xs...) = LinearAlgebra.dot(xs...)
+# matmul(xs...) = .*(xs...)
 σ(x::Real) = one(x) / (one(x) + exp(-x))
 sigmoid(x) = σ.(x...)
 
