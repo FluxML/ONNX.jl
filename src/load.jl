@@ -120,6 +120,16 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::A
 end
 
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :MatMul}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, matmul, args...)
+end
+
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sigmoid}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, sigmoid, args...)
+end
+
+
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
         args::VarVec, attrs::AttrDict)
     kw = from_onnx_norm(attrs)
