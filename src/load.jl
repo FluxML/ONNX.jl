@@ -121,12 +121,12 @@ end
 
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :MatMul}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, matmul, args...)
+    return push_call!(tape, *, args[2], args[1])
 end
 
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sigmoid}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, sigmoid, args...)
+    return push_call!(tape, Broadcast.broadcast, NNlib.sigmoid, args...)
 end
 
 

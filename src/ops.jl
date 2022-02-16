@@ -47,10 +47,6 @@ add(xs...) = .+(xs...)
 mul(xs...) = .*(xs...)
 relu(x) = NNlib.relu.(x)
 maxpool(x; kernel, pad = 0, stride = 1) = NNlib.maxpool(x, kernel; pad = pad, stride = stride)
-matmul(xs...) = LinearAlgebra.dot(xs...)
-# matmul(xs...) = .*(xs...)
-σ(x::Real) = one(x) / (one(x) + exp(-x))
-sigmoid(x) = σ.(x...)
 
 
 # common functional implementation for batch and instance normalization based on
