@@ -40,7 +40,7 @@ end
 function main()
     path = "resnet18.onnx"
     if !isfile(path)
-        download("https://github.com/onnx/models/blob/master/vision/classification/resnet/model/resnet18-v1-7.onnx?raw=true", path)
+        download("https://github.com/onnx/models/raw/main/vision/classification/resnet/model/resnet18-v1-7.onnx", path)
     end
     # dummy input
     img = rand(Float32, 224, 224, 3, 1)
