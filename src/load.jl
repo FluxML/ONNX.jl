@@ -137,6 +137,24 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
 end
 
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Shape}, args::VarVec, attrs::AttrDict)
+    # TODO: handle start and end attributes
+    return push_call!(tape, size, args[1])
+end
+
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Constant}, args::VarVec, attrs::AttrDict)
+    val_attr = first(keys(attrs))
+    # TODO: should we convert zero-dimensional arrays to scalars?
+    val = if val_attr == :value
+        array(attrs[val_attr])
+    else
+        error("Don't know how to load constant value from attribute $val_attr")
+    end
+    return push!(tape, Constant(val))
+end
+
+
 ###############################################################################
 #                                    API                                      #
 ###############################################################################

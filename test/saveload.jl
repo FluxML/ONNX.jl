@@ -91,4 +91,9 @@
         ort_test(tape, args...; atol=1e-4)
     end
 
+    @testset "Shape" begin
+        # TODO
+
+    end
+
 end

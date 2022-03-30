@@ -115,3 +115,25 @@ function global_average_pool(x)
     return NNlib.meanpool(x, pdims)
 end
 
+
+function onnx_gather(
+        data::AbstractArray{T, N}, idxs::AbstractArray{Int, M};
+        dim=ndims(data)) where {T, N, M}
+    # we will take slices of data of this size
+    data_size_except_dim = (size(data)[1:dim-1..., dim+1:ndims(data)...]...,)
+    # and put them into output array at out[:, :, ..., idxs[i, j, ...]]
+    out = similar(data, (data_size_except_dim..., size(idxs)...))
+    # iteration over idxs doesn't depend on data or dimension
+    # we iterate over the last index purely due to memory layout
+    for i=1:size(idxs, ndims(idxs))
+        # R - slice of idxs (not slice of data!)
+        R = [[(:) for _=1:ndims(idxs)-1]..., i]
+        # ensure I = idxs[R...] is itself an array and not a scalar
+        I = [idxs[R...]...,]
+        slice = data[[(:) for _=1:dim-1]..., I, [(:) for _=dim+1:ndims(data)]...]
+        # move target dimension to the end to confo
+        slice = permutedims(slice, [(1:dim-1)..., (dim+1:ndims(data))..., dim])
+        out[:, R...] = slice
+    end
+    return out
+end

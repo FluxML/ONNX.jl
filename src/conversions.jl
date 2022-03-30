@@ -22,6 +22,28 @@ from_onnx(x::AbstractArray) = permutedims(x, ndims(x):-1:1)
 
 
 ##############################################################################
+#                                  Indices                                   #
+##############################################################################
+
+function from_onnx_indices(data_len::Integer, i::Integer)
+    if i < 0
+        i = data_len + i
+    end
+    return i + 1
+end
+
+function from_onnx_indices(idxs::AbstractArray{<:Integer, N}) where N
+    out = from_onnx(idxs)               # permute dims as with data
+    out = map(from_onnx_indices, idxs)  # conv
+end
+
+
+from_nnlib_indices(data_len::Integer, i::Integer) = i - 1
+
+
+
+
+##############################################################################
 #                             Conv Attributes                                #
 ##############################################################################
 
