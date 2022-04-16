@@ -91,4 +91,28 @@
         ort_test(tape, args...; atol=1e-4)
     end
 
+    @testset "Shape" begin
+        # TODO
+
+    end
+
+    @testset "Gather" begin
+        data = [1.0 2.3 4.5;
+                1.2 3.4 5.7]
+        idxs = [1 2 1;
+                2 3 3] .- 1
+        ort_test(ONNX.onnx_gather, data, idxs)
+
+        idxs = [1 1 2;
+                1 2 2] .- 1
+        ort_test(ONNX.onnx_gather, data, idxs; dim=1)
+
+        idxs = [1, 2, 1] .- 1
+        ort_test(ONNX.onnx_gather, data, idxs)
+
+        data = [3, 4]   # e.g. size of array
+        idxs = [2] .- 1
+        ort_test(ONNX.onnx_gather, data, idxs)
+    end
+
 end

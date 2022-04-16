@@ -137,6 +137,31 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
 end
 
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Shape}, args::VarVec, attrs::AttrDict)
+    # TODO: handle start and end attributes
+    return push_call!(tape, size_vector, args[1])
+end
+
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Constant}, args::VarVec, attrs::AttrDict)
+    val_attr = first(keys(attrs))
+    val = if val_attr == :value
+        array(attrs[val_attr])
+    else
+        error("Don't know how to load constant value from attribute $val_attr")
+    end
+    return push!(tape, Constant(val))
+end
+
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gather}, args::VarVec, attrs::AttrDict)
+    axis = get(attrs, :axis, 0)
+    data = tape[args[1]].val
+    dim = ndims(data) - axis
+    return push_call!(tape, onnx_gather, args...; dim=dim)
+end
+
+
 ###############################################################################
 #                                    API                                      #
 ###############################################################################

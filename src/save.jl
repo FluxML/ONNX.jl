@@ -191,6 +191,40 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, batch_norm), op::Ghost.
 end
 
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(size)}, op::Ghost.Call)
+    nd = NodeProto("Shape", op)
+    push!(g.node, nd)
+end
+
+
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, <:Any}, op::Ghost.Constant)
+    @assert(
+        op.val isa AbstractArray,
+        "ONNX.jl currently doesn't support saving constants of type $(typeof(op.val))"
+    )
+    attr_name = :value
+    attr_value = from_nnlib(op.val)
+    nd = NodeProto(
+        input=[],
+        output=[onnx_name(op)],
+        name=onnx_name(op),
+        attribute=AttributeProto.([attr_name], [attr_value]),
+        op_type=op_type
+    )
+    push!(g.node, nd)
+end
+
+
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_gather), op::Ghost.Call)
+    data = iskwfunc(op.fn) ? op.args[3]._op.val : op.args[1]._op.val
+    kw_dict = kwargs2dict(op)
+    dim = get(kw_dict, :dim, ndims(data))
+    axis = ndims(data) - dim
+    nd = NodeProto("Gather", op, Dict(:axis => axis))
+    push!(g.node, nd)
+end
+
+
 ##############################################################################
 #                                    API                                     #
 ##############################################################################

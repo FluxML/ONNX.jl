@@ -24,6 +24,8 @@ tsp_d(s::Symbol) = tsp_d(string(s))
 
 tp_tensor_elemtype(i::Integer) = i
 tp_tensor_elemtype(::Missing) = TensorProto_DataType.UNDEFINED
+tp_tensor_elemtype(::Type{Int32}) = TensorProto_DataType.INT32
+tp_tensor_elemtype(::Type{Int64}) = TensorProto_DataType.INT64
 tp_tensor_elemtype(::Type{Float32}) = TensorProto_DataType.FLOAT
 tp_tensor_elemtype(::Type{Float64}) = TensorProto_DataType.DOUBLE
 
