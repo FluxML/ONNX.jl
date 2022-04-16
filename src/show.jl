@@ -2,8 +2,10 @@ function Base.show(io::IO, nd::NodeProto)
     out = (nd.output...,)
     inp = (nd.input...,)
     println(io, "$out = $(nd.op_type)$inp")
-    for (k, v) in Dict(nd.attribute)
-        println(io, "    $k => $v")
+    if nd.op_type != "Constant"  # constants are too verbose
+        for (k, v) in Dict(nd.attribute)
+            println(io, "    $k => $v")
+        end
     end
 end
 

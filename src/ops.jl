@@ -116,13 +116,38 @@ function global_average_pool(x)
 end
 
 
-function onnx_gather(
+size_vector(x) = collect(size(x))
+
+
+"""
+    take(data, idxs; dim=ndims(data))
+
+Take elements from an array along an axis. For example, for a 4D data
+and dim=3, it is roughly equivalent to `data[:, :, idxs, :]`, but allows
+multidimensional idxs. See `numpy.take` for a more detailed explanation
+of the concept.
+
+In the context of ONNX, `take` is used to implement Gather operation.
+We do NOT record this function directly to the tape during loading though,
+but instead use a more ONNX-friendly wrapper `onnx_gather()`.
+
+Note: in ONNX, Gather is different from GatherElements, GatherND and
+Julia's `NNlib.gather()`.
+"""
+function take(
         data::AbstractArray{T, N}, idxs::AbstractArray{Int, M};
         dim=ndims(data)) where {T, N, M}
+    if length(idxs) == 1
+        # special case, works as getindex
+        return data[idxs]
+    end
     # we will take slices of data of this size
-    data_size_except_dim = (size(data)[1:dim-1..., dim+1:ndims(data)...]...,)
+    size_before = (size(data)[1:dim-1]...,)
+    size_after = (size(data)[dim+1:ndims(data)]...,)
     # and put them into output array at out[:, :, ..., idxs[i, j, ...]]
-    out = similar(data, (data_size_except_dim..., size(idxs)...))
+    out = similar(data, (size_before..., size(idxs)..., size_after...))
+    colons_before = [(:) for _=1:dim-1]
+    colons_after = [(:) for _=dim+1:ndims(data)]
     # iteration over idxs doesn't depend on data or dimension
     # we iterate over the last index purely due to memory layout
     for i=1:size(idxs, ndims(idxs))
@@ -130,10 +155,26 @@ function onnx_gather(
         R = [[(:) for _=1:ndims(idxs)-1]..., i]
         # ensure I = idxs[R...] is itself an array and not a scalar
         I = [idxs[R...]...,]
-        slice = data[[(:) for _=1:dim-1]..., I, [(:) for _=dim+1:ndims(data)]...]
-        # move target dimension to the end to confo
-        slice = permutedims(slice, [(1:dim-1)..., (dim+1:ndims(data))..., dim])
-        out[:, R...] = slice
+        slice = data[colons_before..., I, colons_after...]
+        out[colons_before..., R..., colons_after...] = slice
     end
     return out
+end
+
+take(data::AbstractArray, idxs::Integer; dim=ndims(data)) =
+    take(data, [idxs]; dim=dim)
+
+
+"""
+    onnx_gather(data::AbstractArray, idxs::AbstractArray{Int}; dim=ndims(data))
+
+Implemntation of ONNX's Gather operation with 0-based indices.
+For a Julia-friendly version, see `take`.
+"""
+function onnx_gather(
+        data::AbstractArray{T, N}, idxs::AbstractArray{Int, M};
+        dim=ndims(data)) where {T, N, M}
+    @assert all(idxs .>= 0) "Gather on negative indices is not implemented yet"
+    idxs_adjusted = idxs .+ 1
+    return take(data, idxs_adjusted; dim=dim)
 end

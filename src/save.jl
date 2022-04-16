@@ -215,6 +215,15 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, <:Any}, op::Ghost.Constant)
 end
 
 
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_gather), op::Ghost.Call)
+    data = iskwfunc(op.fn) ? op.args[3]._op.val : op.args[1]._op.val
+    kw_dict = kwargs2dict(op)
+    dim = get(kw_dict, :dim, ndims(data))
+    axis = ndims(data) - dim
+    nd = NodeProto("Gather", op, Dict(:axis => axis))
+    push!(g.node, nd)
+end
+
 
 ##############################################################################
 #                                    API                                     #
