@@ -178,3 +178,24 @@ function onnx_gather(
     idxs_adjusted = idxs .+ 1
     return take(data, idxs_adjusted; dim=dim)
 end
+
+
+# julia-friendly
+function NNlib.unsqueeze(x::AbstractArray, dims)
+    new_shape = collect(size(x))
+    for d in sort(collect(dims))
+        insert!(new_shape, d, 1)
+    end
+    return reshape(x, new_shape...)
+end
+
+
+# ONNX-friendly, e.g. axes is 0-based, row-major
+function onnx_unsqueeze(x::AbstractArray, axes::Vector)
+    # ndims(data) + length(axes) => size of the array after unsqueezing
+    # .- axes                    => to reverse dimensions
+    # .+ 1                       => to convert to 1-based indexing
+    # .- 1                       => correction by 1
+    dims = ndims(x) + length(axes) .- axes
+    return NNlib.unsqueeze(x, dims)
+end

@@ -162,6 +162,20 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gather}, args::VarVec, attrs:
 end
 
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Unsqueeze}, args::VarVec, attrs::AttrDict)
+    if length(args) == 2
+        # ONNX >= v13
+        return push_call!(tape, onnx_unsqueeze, args...)
+    elseif length(args) == 1
+        # ONNX < v13
+        axes = attrs[:axes]
+        v_axes = push!(tape, Constant(axes))
+        return push_call!(tape, onnx_unsqueeze, args[1], v_axes)
+    else
+        throw(ArgumentError("Cannot load node from Unsqueeze with $(length(args)) arguments"))
+    end
+end
+
 ###############################################################################
 #                                    API                                      #
 ###############################################################################

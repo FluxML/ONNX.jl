@@ -1,6 +1,7 @@
 using ONNX
 using Test
 import Ghost: V
+import ONNX.NNlib as NNlib
 
 include("ops.jl")
 include("readwrite.jl")

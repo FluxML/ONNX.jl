@@ -115,4 +115,11 @@
         ort_test(ONNX.onnx_gather, data, idxs)
     end
 
+
+    @testset "Unsqueeze" begin
+        ort_test(ONNX.onnx_unsqueeze, rand(2, 3, 4), [0, 4])
+        ort_test(ONNX.onnx_unsqueeze, rand(2, 3, 4), [0, 3])
+        ort_test(ONNX.onnx_unsqueeze, [4.0], [0])
+    end
+
 end

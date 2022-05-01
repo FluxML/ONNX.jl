@@ -209,7 +209,7 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, <:Any}, op::Ghost.Constant)
         output=[onnx_name(op)],
         name=onnx_name(op),
         attribute=AttributeProto.([attr_name], [attr_value]),
-        op_type=op_type
+        op_type="Constant"
     )
     push!(g.node, nd)
 end
@@ -221,6 +221,12 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_gather), op::Ghost
     dim = get(kw_dict, :dim, ndims(data))
     axis = ndims(data) - dim
     nd = NodeProto("Gather", op, Dict(:axis => axis))
+    push!(g.node, nd)
+end
+
+
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_unsqueeze), op::Ghost.Call)
+    nd = NodeProto("Unsqueeze", op)
     push!(g.node, nd)
 end
 
