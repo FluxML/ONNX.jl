@@ -176,6 +176,12 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Unsqueeze}, args::VarVec, att
     end
 end
 
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Slice}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, onnx_slice, args...)
+end
+
+
 ###############################################################################
 #                                    API                                      #
 ###############################################################################

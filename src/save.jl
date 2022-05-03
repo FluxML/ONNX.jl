@@ -231,6 +231,12 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_unsqueeze), op::Gh
 end
 
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(onnx_slice)}, op::Ghost.Call)
+    nd = NodeProto("Slice", op)
+    push!(g.node, nd)
+end
+
+
 ##############################################################################
 #                                    API                                     #
 ##############################################################################
