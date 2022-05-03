@@ -199,3 +199,22 @@ function onnx_unsqueeze(x::AbstractArray, axes::Vector)
     dims = ndims(x) + length(axes) .- axes
     return NNlib.unsqueeze(x, dims)
 end
+
+
+function onnx_slice(
+        data::AbstractArray,
+        starts::VecOrMat{Int}, ends::VecOrMat{Int},
+        axes::Vector{Int}=Int[], steps::Vector{Int}=Int[])
+    axes = isempty(axes) ? collect(0:ndims(data)-1) : axes
+    steps = isempty(steps) ? [1 for i=1:ndims(data)] : steps
+    @assert all(starts .>= 0) "Negative indices are not supported yet"
+    @assert all(ends .>= 0) "Negative indices are not supported yet"
+    # construct ranges, adjusting starts to 1-based indexing
+    ranges = [s+1 : st : e for (s, st, e) in zip(starts, steps, ends)]
+    # reversed, 1-based dimensions
+    dims = ndims(data) .- axes
+    # dimension => range mapping
+    d2r = Dict(zip(dims, ranges))
+    I = [get(d2r, i, (:)) for i=1:ndims(data)]
+    return data[I...]
+end

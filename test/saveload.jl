@@ -122,4 +122,10 @@
         ort_test(ONNX.onnx_unsqueeze, [4.0], [0])
     end
 
+
+    @testset "Slice" begin
+        ort_test(ONNX.onnx_slice, rand(5, 10, 20), [0, 0], [3, 10], [0, 1], [1, 1])
+        ort_test(ONNX.onnx_slice, rand(5, 10, 20), [0, 0, 0], [3, 10, 5])
+        ort_test(ONNX.onnx_slice, rand(5, 10, 20), [3, 0], [0, 10], [0, 1], [1, -1])
+    end
 end
