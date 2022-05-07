@@ -2,6 +2,7 @@
 
 import NNlib
 import Statistics: mean
+import StaticArrays: SVector
 
 
 flipweights(w::AbstractArray{T,N}) where {T,N} = w[(size(w, i):-1:1 for i = 1:(N-2))..., :, :]
@@ -43,7 +44,7 @@ function onnx_flatten(x; axis = 1)
     return flatten(x; dim = dim)
 end
 
-add(xs...) = +(xs...)
+add(xs...) = .+(xs...)
 mul(xs...) = .*(xs...)
 relu(x) = NNlib.relu.(x)
 maxpool(x; kernel, pad = 0, stride = 1) = NNlib.maxpool(x, kernel; pad = pad, stride = stride)
@@ -116,7 +117,7 @@ function global_average_pool(x)
 end
 
 
-size_vector(x) = collect(size(x))
+size_vector(x) = SVector(size(x))
 
 
 """
@@ -137,6 +138,13 @@ Julia's `NNlib.gather()`.
 function take(
         data::AbstractArray{T, N}, idxs::AbstractArray{Int, M};
         dim=ndims(data)) where {T, N, M}
+    if length(idxs) == 1 && data isa SVector
+        # we use SVector to represent array size, Gather(arr_sz, idx)
+        # works as size(arr, idx); but since dimensions are reversed,
+        # we need to reverse the index as well
+        # see https://github.com/FluxML/ONNX.jl/issues/62 for details
+        return data[length(data) .- idxs .+ 1]
+    end
     if length(idxs) == 1
         # special case, works as getindex
         return data[idxs]
