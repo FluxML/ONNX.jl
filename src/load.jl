@@ -52,14 +52,19 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     args = [tape.c.name2var[name] for name in nd.input]
     attrs = convert(Dict{Symbol, Any}, Dict(nd.attribute))
     conf = OpConfig{backend, Symbol(nd.op_type)}()
-    out = load_node!(tape, conf, args, attrs)
-    ismissing(out) && return out
-    if out isa Tuple
-        for i=1:length(nd.output)
-            tape.c.name2var[nd.output[i]] = out[i]
+    try
+        out = load_node!(tape, conf, args, attrs)
+        ismissing(out) && return out
+        if out isa Tuple
+            for i=1:length(nd.output)
+                tape.c.name2var[nd.output[i]] = out[i]
+            end
+        else
+            tape.c.name2var[nd.output[1]] = out
         end
-    else
-        tape.c.name2var[nd.output[1]] = out
+    catch
+        @error "Error while loading node $nd"
+        rethrow()
     end
 end
 
