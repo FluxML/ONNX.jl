@@ -55,8 +55,8 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
             seek(io, 0)
             r2_onnx = ort_run(path, from_nnlib(a.val), from_nnlib(b.val))
             r2 = from_onnx(first(values(r2_onnx)))
-            @test c.val == r2
-            @test c.val == load(path, a.val, b.val)[V(3)].val
+            @test c.val ≈ r2
+            @test c.val ≈ load(path, a.val, b.val)[V(3)].val
         end
     end
 
