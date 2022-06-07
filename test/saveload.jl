@@ -1,3 +1,7 @@
+import ONNX: graphproto, modelproto, writeproto
+import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
+
+
 @testset "Save and Load" begin
     @testset "Basic ops" begin
         args = (rand(3, 4), rand(3, 4))
@@ -19,6 +23,41 @@
         before, after = ort_test(*, A', B)
         @test before[V(3)].fn == after[V(3)].fn
         @test before[V(3)].fn == *
+    end
+
+    @testset "MatMul" begin
+        ort_test(NNlib.batched_mul, rand(3, 4, 5), rand(4, 3))
+        ort_test(NNlib.batched_mul, rand(3, 4), rand(4, 3, 5))
+        ort_test(NNlib.batched_mul, rand(3, 4, 5), rand(4, 3, 5))
+
+        # 2D*2D case; since it's already covered by Gemm, we have to
+        # manually construct the graph
+        g = graphproto()
+        g.name = "generated_model"
+        a = Input(rand(3, 4)); a.id = 1
+        push!(g.input, ValueInfoProto(a))
+        b = Input(rand(4, 5)); b.id = 2
+        push!(g.input, ValueInfoProto(b))
+        c = mkcall(*, V(a), V(b)); c.id = 3
+        nd = NodeProto(
+            input=[onnx_name(b), onnx_name(a)],
+            output=[onnx_name(c)],
+            name=onnx_name(c),
+            attribute=AttributeProto[],
+            op_type="MatMul"
+        )
+        push!(g.node, nd)
+        push!(g.output, ValueInfoProto(c))
+        m = modelproto();
+        m.graph = g;
+        mktemp() do path, io
+            writeproto(io, m)
+            seek(io, 0)
+            r2_onnx = ort_run(path, from_nnlib(a.val), from_nnlib(b.val))
+            r2 = from_onnx(first(values(r2_onnx)))
+            @test c.val ≈ r2
+            @test c.val ≈ load(path, a.val, b.val)[V(3)].val
+        end
     end
 
     @testset "Conv" begin

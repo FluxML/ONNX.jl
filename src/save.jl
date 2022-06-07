@@ -168,6 +168,18 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Ghost.Ca
 end
 
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(NNlib.batched_mul)}, op::Ghost.Call)
+    nd = NodeProto(
+        input=[onnx_name(v) for v in reverse(op.args)],
+        output=[onnx_name(op)],
+        name=onnx_name(op),
+        attribute=AttributeProto[],
+        op_type="MatMul"
+    )
+    push!(g.node, nd)
+end
+
+
 function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, batch_norm), op::Ghost.Call)
     kw_dict = kwargs2dict(op)
     attrs = from_nnlib_norm(kw_dict)
