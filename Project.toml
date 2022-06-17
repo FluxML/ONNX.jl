@@ -1,6 +1,6 @@
 name = "ONNX"
 uuid = "d0dd6a25-fac6-55c0-abf7-829e0c774d20"
-version = "0.3.0"
+version = "0.2.0"
 
 [deps]
 Ghost = "4f8f7498-1303-42e1-920c-5033445536df"
