@@ -1,6 +1,5 @@
 # ONNX
 
-ONNX.jl is currently in the process of a total reconstruction and doesn't have a user friendly API yet. You may want to see:
+ONNX.jl is in the process of a total reconstruction and currently supports saving & loading graphs as a [`Ghost.Tape`](https://dfdx.github.io/Ghost.jl/dev/reference/#Ghost.Tape). When possible, functions from `NNlib` or standard library are used, but no conversion to Flux is implemented yet. See [resnet18.jl](examples/resnet18.jl) for a practical example of graph loading.
 
- * [old version of this README](https://github.com/FluxML/ONNX.jl/blob/b7c3d0b48036947257e439c31e00430b0a94690a/README.md)
- * [RFC for the new implementation](https://github.com/FluxML/ML-Coordination-Tracker/discussions/24)
+Not all ONNX operators are implemented. See [How to contribute](CONTRIBUTE.md) for details of adding new operators.
