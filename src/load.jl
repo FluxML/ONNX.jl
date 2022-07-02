@@ -114,16 +114,25 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Add}, args::VarVec, attrs::At
     return push_call!(tape, add, args...)
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sub}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, sub, args...)
+end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Mul}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, mul, args...)
 end
 
-
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, relu, args[1])
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Elu}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, elu, args[1])
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Tanh}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, tanh, args[1])
+end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :MatMul}, args::VarVec, attrs::AttrDict)
     A_ndims = ndims(args[1]._op.val)
@@ -166,6 +175,7 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Shape}, args::VarVec, attrs::
 end
 
 
+
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Constant}, args::VarVec, attrs::AttrDict)
     val_attr = first(keys(attrs))
     val = if val_attr == :value
@@ -204,6 +214,28 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Slice}, args::VarVec, attrs::
     return push_call!(tape, onnx_slice, args...)
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Split}, inputs::VarVec, attrs::AttrDict)
+    axis = get(attrs, :axis, 0)
+    split = if haskey(attrs, :split) # Version 1, 2, 11
+        attrs[:split]
+    elseif length(args) == 2
+        inputs[2]
+    else
+        # the results cannot be split in multiple outputs on the tape
+        # if the output size is not known during tracing.
+        error("Unhandled case where split is not provided")
+    end
+    out = push_call!(tape, onnx_split, first(inputs), split; axis)
+    return Tuple(
+        push_call!(tape, getfield, out, i)
+        for i in eachindex(split)
+    )
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Concat}, args::VarVec, attrs::AttrDict)
+    axis = get(attrs, :axis, 1)
+    return push_call!(tape, onnx_concat, args...; axis)
+end
 
 ###############################################################################
 #                                    API                                      #

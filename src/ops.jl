@@ -18,7 +18,7 @@ function conv(x, w, b; kw...)
 end
 
 
-function onnx_gemm(A, B, C; tA = 0, tB = false, α = 1, β = 1)
+function onnx_gemm(A, B, C; tA = 0, tB = 0, α = 1, β = 1)
     A = Bool(tA) ? A' : A
     B = Bool(tB) ? B' : B
     # note: order of arguments reversed due to row-major layout
@@ -46,8 +46,11 @@ function onnx_flatten(x; axis = 1)
 end
 
 add(xs...) = .+(xs...)
+sub(xs...) = .-(xs...)
 mul(xs...) = .*(xs...)
 relu(x) = NNlib.relu.(x)
+elu(x) = NNlib.elu.(x)
+tanh(x) = NNlib.tanh.(x)
 maxpool(x; kernel, pad = 0, stride = 1) = NNlib.maxpool(x, kernel; pad = pad, stride = stride)
 
 
@@ -226,4 +229,29 @@ function onnx_slice(
     d2r = Dict(zip(dims, ranges))
     I = [get(d2r, i, (:)) for i=1:ndims(data)]
     return data[I...]
+end
+
+# ONNX version of concat, axis is zero-based
+function onnx_concat(arrays...; axis)
+    @assert length(arrays) >= 1
+    dims = axis >= 0 ? ndims(first(arrays)) - axis : -axis 
+    return cat(arrays...; dims)
+end
+
+function onnx_split(input::AbstractArray; axis)
+    dims = axis >= 0 ? ndims(input) - axis  : -axis 
+    return onnx_split(input, ones(Int, size(input, dims)); axis)
+end
+
+# ONNX version of split, axis is zero-based
+function onnx_split(input::AbstractArray, split::Vector{Int}; axis)
+    dims = axis >= 0 ? ndims(input) - axis : -axis
+    @assert sum(split) == size(input, dims)
+    before = Tuple((:) for _ in 1:dims-1)
+    after = Tuple((:) for _ in dims+1:ndims(input))
+    cumsplit = cumsum(split)
+    return Tuple(
+        getindex(input, before..., c-s+1:c, after...)
+        for (s, c) in zip(split, cumsplit)
+    )
 end

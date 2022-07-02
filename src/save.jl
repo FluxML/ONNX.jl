@@ -167,6 +167,15 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Ghost.Ca
     push!(g.node, nd)
 end
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(elu)}, op::Ghost.Call)
+    nd = NodeProto("Elu", op)
+    push!(g.node, nd)
+end
+
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(tanh)}, op::Ghost.Call)
+    nd = NodeProto("Tanh", op)
+    push!(g.node, nd)
+end
 
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(NNlib.batched_mul)}, op::Ghost.Call)
     nd = NodeProto(
@@ -248,6 +257,27 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(onnx_slice)}, op::Gh
     push!(g.node, nd)
 end
 
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_split), op::Ghost.Call)
+    attrs = kwargs2dict(op)
+    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
+    vars = unpacked_vars(op)
+    @assert(all([v isa V for v in vars]),
+        "Not all output vars of split are unpacked to the tape")
+    output = [onnx_name(v) for v in vars]
+    nd = NodeProto(
+        input=[onnx_name(v) for v in args],
+        output=output,
+        name=onnx_name(op),
+        attribute=AttributeProto.(keys(attrs), values(attrs)),
+        op_type="Split"
+    )
+    push!(g.node, nd)
+end
+
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_concat), op::Ghost.Call)
+    nd = NodeProto("Concat", op, kwargs2dict(op))
+    push!(g.node, nd)
+end
 
 ##############################################################################
 #                                    API                                     #

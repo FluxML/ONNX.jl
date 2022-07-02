@@ -109,6 +109,8 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
     @testset "Activations" begin
         x = rand(3, 4)
         ort_test(ONNX.relu, x)
+        # ort_test(ONNX.elu, x) # TODO: Elu is not implemented in ONNXRuntime.jl
+        ort_test(ONNX.tanh, x)
     end
 
     @testset "Normalization" begin
@@ -167,4 +169,26 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(ONNX.onnx_slice, rand(5, 10, 20), [0, 0, 0], [3, 10, 5])
         ort_test(ONNX.onnx_slice, rand(5, 10, 20), [3, 0], [0, 10], [0, 1], [1, -1])
     end
+
+    @testset "Concat" begin
+        ort_test(ONNX.onnx_concat, [1, 2, 3], [4, 5, 6]; axis=0)
+        ort_test(ONNX.onnx_concat, [1, 2, 3], [4, 5, 6]; axis=-1)
+
+        ort_test(ONNX.onnx_concat, [1 2 3; 1 2 3], [4  5; 4 5]; axis=0)
+    end
+
+    # TODO: Split is not implemented in ONNXRuntime.jl
+    # @testset "Split" begin
+    #     x = rand(3, 20, 10); split = [5, 10, 5];
+    #     args = (x, split)
+    #     tape = Tape(ONNXCtx())
+    #     inp = [push!(tape, Input(a)) for a in args]
+    #     out = push_call!(tape, ONNX.onnx_split, inp...; axis=1)
+    #     push_call!(tape, getfield, out, 1)
+    #     push_call!(tape, getfield, out, 2)
+    #     push_call!(tape, getfield, out, 3)
+    #     tape.result = out
+
+    #     ort_test(tape, args...)
+    # end
 end
