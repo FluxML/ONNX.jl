@@ -50,7 +50,7 @@ sub(xs...) = .-(xs...)
 mul(xs...) = .*(xs...)
 relu(x) = NNlib.relu.(x)
 elu(x) = NNlib.elu.(x)
-tanh(x) = NNlib.tanh.(x)
+tanh(x) = Base.tanh.(x)
 maxpool(x; kernel, pad = 0, stride = 1) = NNlib.maxpool(x, kernel; pad = pad, stride = stride)
 
 
