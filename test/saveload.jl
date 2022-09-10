@@ -1,4 +1,4 @@
-import ONNX: graphproto, modelproto, writeproto
+import ONNX: graphproto, modelproto, encode
 import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
 
 
@@ -32,8 +32,7 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
 
         # 2D*2D case; since it's already covered by Gemm, we have to
         # manually construct the graph
-        g = graphproto()
-        g.name = "generated_model"
+        g = graphproto("generated_model")
         a = Input(rand(3, 4)); a.id = 1
         push!(g.input, ValueInfoProto(a))
         b = Input(rand(4, 5)); b.id = 2
@@ -48,10 +47,9 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         )
         push!(g.node, nd)
         push!(g.output, ValueInfoProto(c))
-        m = modelproto();
-        m.graph = g;
+        m = modelproto(g);
         mktemp() do path, io
-            writeproto(io, m)
+            encode(ProtoEncoder(io), m)
             seek(io, 0)
             r2_onnx = ort_run(path, from_nnlib(a.val), from_nnlib(b.val))
             r2 = from_onnx(first(values(r2_onnx)))

@@ -257,7 +257,7 @@ the addition, making the debugging easier. Default is `true`.
 See also: [`save!`](@ref)
 """
 function load(io::IO, args...; backends=[:ONNX], exec::Bool=true)
-    onnx_model = readproto(io, ModelProto());
+    onnx_model = decode(ProtoDecoder(io), ModelProto);
     g = onnx_model.graph;
     tape = Tape(ONNXCtx(backends; exec=exec))
     # create map of initializers

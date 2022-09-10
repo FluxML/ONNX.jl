@@ -1,10 +1,11 @@
 import Pkg
 
-modelproto(;kwargs...) = ModelProto(;
+modelproto(graph;kwargs...) = ModelProto(;
     ir_version=7,
     opset_import=[OperatorSetIdProto(version=14)],
     producer_name="ONNX.jl",
     producer_version=string(Pkg.Types.Context().env.project.version), # TODO: Ugh....
+    graph=graph,
     kwargs...)
 
 
@@ -12,12 +13,13 @@ modelproto(;kwargs...) = ModelProto(;
     graphproto()
 Return an [`ONNX.GraphProto`](@ref) with all fields initialized to empty arrays.
 """
-graphproto(;kwargs...) = GraphProto(;
+graphproto(name; kwargs...) = GraphProto(;
     node = NodeProto[],
     initializer = TensorProto[],
     input = ValueInfoProto[],
     output = ValueInfoProto[],
     value_info = ValueInfoProto[],
+    name = name,
     kwargs...
 )
 
@@ -51,7 +53,7 @@ function NodeProto(op_type::String, op::Ghost.Call, attrs::Dict=Dict())
         input=[onnx_name(v) for v in args],
         output=[onnx_name(op)],
         name=onnx_name(op),
-        attribute=AttributeProto.(keys(attrs), values(attrs)),
+        attribute=AttributeProto[AttributeProto(k, v) for (k, v) in attrs],
         op_type=op_type
     )
 end
@@ -293,8 +295,7 @@ controlled by methods of [save_node!](@ref).
 See also: [`load!`](@ref)
 """
 function save(io::IO, tape::Tape{ONNXCtx})
-    g = graphproto()
-    g.name = "generated_model"
+    g = graphproto("generated_model")
     for (i, op) in enumerate(tape)
         if op isa Ghost.Input
             # add input to g.input, but not to g.initializer
@@ -323,9 +324,8 @@ function save(io::IO, tape::Tape{ONNXCtx})
     else
         push!(g.output, ValueInfoProto(tape[tape.result]))
     end
-    m = modelproto();
-    m.graph = g;
-    writeproto(io, m)
+    m = modelproto(g);
+    PB.encode(ProtoEncoder(io), m)
 end
 
 

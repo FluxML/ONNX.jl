@@ -1,10 +1,11 @@
 @testset "Read and write" begin
     import ONNX
+    import ONNX.ProtoBuf: encode, decode, ProtoEncoder, ProtoDecoder
 
     function serdeser(p::T) where T
         iob = PipeBuffer();
-        ONNX.writeproto(iob, p)
-        return ONNX.readproto(iob, T())
+        encode(ProtoEncoder(iob), p)
+        return decode(ProtoDecoder(iob), T)
     end
 
     @testset "Row-/Columns-major" begin
