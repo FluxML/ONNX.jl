@@ -7,7 +7,7 @@ import ONNX.NNlib as NNlib
 import ONNXRunTime as OX
 
 
-path = "test.onnx"
+path = joinpath(@__DIR__, "test.onnx")
 
 A = [1.0 4.0;
      2.0 5.0;
