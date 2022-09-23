@@ -1,5 +1,5 @@
 import ONNX: rename_keys, unpacked_vars
-import Ghost: Tape, Input, mkcall
+import Umlaut: Tape, Input, mkcall
 
 
 @testset "Utils" begin

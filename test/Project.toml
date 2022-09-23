@@ -1,7 +1,7 @@
 [deps]
-Ghost = "4f8f7498-1303-42e1-920c-5033445536df"
+Umlaut = "92992a2b-8ce5-4a9c-bb9d-58be9a7dc841"
 ONNXRunTime = "e034b28e-924e-41b2-b98f-d2bbeb830c6a"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-Ghost = "0.3"
+Umlaut = "0.4"

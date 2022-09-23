@@ -1,6 +1,6 @@
 using ONNX
 using Test
-import Ghost: V
+import Umlaut: V
 import ONNX.NNlib as NNlib
 
 include("ops.jl")
