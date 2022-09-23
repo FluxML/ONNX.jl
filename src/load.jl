@@ -1,5 +1,5 @@
-using Ghost
-using Ghost: Tape, Input, Constant, mkcall, Variable, V
+using Umlaut
+using Umlaut: Tape, Input, Constant, mkcall, Variable, V
 
 
 struct ONNXCtx
@@ -44,7 +44,7 @@ end
 
 # A few constants to keep function signatures concise
 struct OpConfig{BE, Op} end
-const VarVec = Vector{Ghost.Variable}
+const VarVec = Vector{Umlaut.Variable}
 const AttrDict = Dict{Symbol, Any}
 
 
@@ -246,7 +246,7 @@ end
     load(io::IO, model_args...; backends=[:ONNX], exec::Bool=true)
     load(filename::String, model_args...; backends=[:ONNX], exec::Bool=true)
 
-Load an ONNX model as a Ghost.Tape. The way a particular ONNX node is deserialized is
+Load an ONNX model as a Umlaut.Tape. The way a particular ONNX node is deserialized is
 controlled by methods of [load_node!](@ref) dispatched by backend and node's op_type.
 
 `backends` parameter can be used to customize the loading process.
@@ -291,7 +291,7 @@ function load(io::IO, args...; backends=[:ONNX], exec::Bool=true)
         name = init.name
         if !in(name, used_init_names)
             val = init_vals[name]
-            v = push!(tape, Ghost.Constant(val))
+            v = push!(tape, Umlaut.Constant(val))
             tape.c.name2var[name] = v
         end
     end
@@ -309,7 +309,7 @@ function load(io::IO, args...; backends=[:ONNX], exec::Bool=true)
                          "tried the following backends: $(tape.c.backends)")
     end
     if length(g.output) == 1
-        tape.result = Ghost.bound(tape, V(length(tape)))
+        tape.result = Umlaut.bound(tape, V(length(tape)))
     else
         # tuple output: we expect tape to contain these outputs as vars  destructured
         # from a multi-ouput op using a sequence of `getfield()` calls

@@ -1,4 +1,4 @@
-import Ghost: Tape, Input, Call, mkcall, V
+import Umlaut: Tape, Input, Call, mkcall, V
 
 
 """
@@ -10,12 +10,12 @@ rename_keys(dct::Dict, subs::Dict) = Dict(get(subs, k, k) => v for (k, v) in pai
 
 
 """
-    unpacked_vars(tape::Ghost.Tape, op::Ghost.Call)
+    unpacked_vars(tape::Umlaut.Tape, op::Umlaut.Call)
 
 For a multi-output call, find variables on the tape referring to elements of the output.
 Example:
 
-    import Ghost: Tape, Input, mkcall
+    import Umlaut: Tape, Input, mkcall
 
     make_tuple(x) = (x, x + 1)
 

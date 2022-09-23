@@ -1,6 +1,6 @@
 using ONNX
 using Images
-import Ghost: Tape, play!
+import Umlaut: Tape, play!
 
 
 include("imagenet_classes.jl")
@@ -44,7 +44,7 @@ function main()
     end
     # dummy input
     img = rand(Float32, 224, 224, 3, 1)
-    # load the model as a Ghost.Tape
+    # load the model as a Umlaut.Tape
     println("Loading the model")
     resnet = ONNX.load(path, img)
     # test a few images

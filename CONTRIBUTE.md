@@ -9,7 +9,7 @@ The easiest way to contribute to this package is to add a new [ONNX operator](ht
 
 ## Adding a new method to `load_node()`
 
-`load_node()` loads a single ONNX operator from a graph onto a `Ghost.Tape`. It has the following signture:
+`load_node()` loads a single ONNX operator from a graph onto a `Umlaut.Tape`. It has the following signture:
 
 ```julia
 load_node!(tape::Tape, ::OpConfig{BE, Op}, args::VarVec, attrs::AttrDict)
@@ -17,9 +17,9 @@ load_node!(tape::Tape, ::OpConfig{BE, Op}, args::VarVec, attrs::AttrDict)
 
 Where:
 
-* `Ghost.Tape` represents computational graph in Julia
+* `Umlaut.Tape` represents computational graph in Julia
 * `OpConfig{BE, Op}` is used for dispatching on backend `BE` and operator `Op`
-* `VarVec` (alias to `Vector{Ghost.Variable}`) is a list of input variables to this operator
+* `VarVec` (alias to `Vector{Umlaut.Variable}`) is a list of input variables to this operator
 * `AttrDict` (alias to `Dict{Symbol, Any}`) is a dict of ONNX operator attributes
 
 
@@ -31,7 +31,7 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::A
 end
 ```
 
-Here we translate [Relu](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Relu) operator to a single call to `NNlib.relu`. Both implementations - in ONNX and in NNlib - take a single argument, which we pass to the call. Note that `args[1]` refers to a [variable](https://dfdx.github.io/Ghost.jl/dev/tape/#Variables) on the tape in Julia (column-major) format.
+Here we translate [Relu](https://github.com/onnx/onnx/blob/main/docs/Operators.md#Relu) operator to a single call to `NNlib.relu`. Both implementations - in ONNX and in NNlib - take a single argument, which we pass to the call. Note that `args[1]` refers to a [variable](https://dfdx.github.io/Umlaut.jl/dev/tape/#Variables) on the tape in Julia (column-major) format.
 
 A more involved example is [Gemm](https://github.com/onnx/onnx/blob/main/docs/Operators.md#gemm) operator:
 
@@ -61,33 +61,33 @@ Find more examples in [save.jl](src/save.jl)
 
 ## Adding a new method to `save_node!()`
 
-`save_node!()` is the opposite of `load_node()`.`save_node` takes a `Ghost.Call` and adds the corresponding operator(s) to the ONNX graph. Its signature looks like this:
+`save_node!()` is the opposite of `load_node()`.`save_node` takes a `Umlaut.Call` and adds the corresponding operator(s) to the ONNX graph. Its signature looks like this:
 
 ```julia
-save_node!(g::GraphProto, ::OpConfig{BE, Fn}, op::Ghost.Call)
+save_node!(g::GraphProto, ::OpConfig{BE, Fn}, op::Umlaut.Call)
 ```
 
 Where:
 
 * `GraphProto` is ONNX's data structure representing actual computational graph
 * `OpConfig{BE, Fn}` is used for dispatching on beckend `BE` and Julia function type `Fn`
-* `Ghost.Call` represents a single call to `f::Fn` on a `Tape`
+* `Umlaut.Call` represents a single call to `f::Fn` on a `Tape`
 
 Example:
 
 ```julia
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Ghost.Call)
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Umlaut.Call)
     nd = NodeProto("Relu", op)
     push!(g.node, nd)
 end
 ```
 
-`NodeProto(op_type::String, op::Ghost.Call, attrs::Dict=Dict())` is a convenient constructor that creates an ONNX node of the provided type and maps Julia function arguments (of type `Ghost.Variable`) to names of the corresponding arguments in the already built ONNX graph. This is enough for a large portion of operators.
+`NodeProto(op_type::String, op::Umlaut.Call, attrs::Dict=Dict())` is a convenient constructor that creates an ONNX node of the provided type and maps Julia function arguments (of type `Umlaut.Variable`) to names of the corresponding arguments in the already built ONNX graph. This is enough for a large portion of operators.
 
 Let's now see a more example:
 
 ```julia
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(*)}, op::Ghost.Call)
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(*)}, op::Umlaut.Call)
     nd = NodeProto(
         input=[onnx_name(v) for v in reverse(op.args)],
         output=[onnx_name(op)],
@@ -104,7 +104,7 @@ In the `load_node()` above we reversed the order of the arguments. When saving t
 Here's also `save_node!()` for `onnx_gemm` version:
 
 ```julia
-function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_gather), op::Ghost.Call)
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_gather), op::Umlaut.Call)
     data = iskwfunc(op.fn) ? op.args[3]._op.val : op.args[1]._op.val
     kw_dict = kwargs2dict(op)
     dim = get(kw_dict, :dim, ndims(data))
