@@ -311,12 +311,19 @@ function load(io::IO, args...; backends=[:ONNX], exec::Bool=true)
     if length(g.output) == 1
         tape.result = Umlaut.bound(tape, V(length(tape)))
     else
-        # tuple output: we expect tape to contain these outputs as vars  destructured
-        # from a multi-ouput op using a sequence of `getfield()` calls
         vars = [tape.c.name2var[o.name] for o in g.output]
-        @assert(all(tape[v] isa Call && tape[v].fn == getfield for v in vars),
-            "Don't understand this multi-output result of the graph")
-        tape.result = tape[vars[1]].args[1]
+        is_unpacked_tuple = all(
+            tape[v] isa Call && tape[v].fn == getfield && tape[v].args[1] === tuple
+            for v in vars
+        )
+        if is_unpacked_tuple
+            # tuple output: we expect tape to contain these outputs as vars  destructured
+            # from a multi-ouput op using a sequence of `getfield()` calls
+            tape.result = tape[vars[1]].args[1]
+        else
+            # independent vars in the ouput - create a new tuple var
+            tape.result = push!(tape, mkcall(tuple, vars...))
+        end
     end
     return tape
 end
