@@ -281,6 +281,17 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_concat), op::Umlau
     push!(g.node, nd)
 end
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(tuple)}, op::Umlaut.Call)
+    @assert(
+        op.id == op.tape.result.id,
+        "tuple() doesn't have a corresponding ONNX op and is only allowed as " *
+        "the result of the tape, in which case it represents multiple outputs " *
+        "of the graph"
+    )
+    # do nothing
+end
+
+
 ##############################################################################
 #                                    API                                     #
 ##############################################################################
@@ -315,7 +326,7 @@ function save(io::IO, tape::Tape{ONNXCtx})
     if res.val isa Tuple
         # if the last operation in the graph is multi-output, there must be
         # unpacked elements of that var
-        vars = unpacked_vars(res)
+        vars = res.fn === tuple ? res.args : unpacked_vars(res)
         @assert(all(v isa V for v in vars), "Cannot save the tape because the result " *
             "is multi-output, but its elements aren't destructured to the tape")
         for v in vars

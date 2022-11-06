@@ -3,6 +3,17 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
 
 
 @testset "Save and Load" begin
+    @testset "Multioutput" begin
+        args = rand(3, 4), rand(3, 4)
+        tape = Tape(ONNXCtx())
+        inp = [push!(tape, Input(arg)) for arg in args]
+        out1 = push_call!(tape, ONNX.add, inp...)
+        out2 = push_call!(tape, ONNX.mul, inp...)
+        res = push_call!(tape, tuple, out1, out2)
+        tape.result = res
+        ort_test(tape, args...)
+    end
+
     @testset "Basic ops" begin
         args = (rand(3, 4), rand(3, 4))
         ort_test(ONNX.add, args...)
