@@ -1,11 +1,21 @@
 
 const ONNX2JULIA_TYPES = Dict(
-    Integer(var"TensorProto.DataType".INT64) => Int64,
-    Integer(var"TensorProto.DataType".INT32) => Int32,
-    Integer(var"TensorProto.DataType".INT8) => Int8,
-    Integer(var"TensorProto.DataType".DOUBLE) => Float64,
     Integer(var"TensorProto.DataType".FLOAT) => Float32,
+    Integer(var"TensorProto.DataType".UINT8) => UInt8,
+    Integer(var"TensorProto.DataType".INT8) => Int8,
+    Integer(var"TensorProto.DataType".UINT16) => UInt16,
+    Integer(var"TensorProto.DataType".INT16) => Int16,
+    Integer(var"TensorProto.DataType".INT32) => Int32,
+    Integer(var"TensorProto.DataType".INT64) => Int64,
+    Integer(var"TensorProto.DataType".STRING) => String,
+    Integer(var"TensorProto.DataType".BOOL) => Bool,
     Integer(var"TensorProto.DataType".FLOAT16) => Float16,
+    Integer(var"TensorProto.DataType".DOUBLE) => Float64,
+    Integer(var"TensorProto.DataType".UINT32) => UInt32,
+    Integer(var"TensorProto.DataType".UINT64) => UInt64,
+    Integer(var"TensorProto.DataType".COMPLEX64) => Complex{Float32},
+    Integer(var"TensorProto.DataType".COMPLEX128) => Complex{Float64},
+    Integer(var"TensorProto.DataType".BFLOAT16) => Float16,
 )
 
 const ONNX2JULIA_DATA_FIELDS = Dict(
