@@ -34,10 +34,21 @@ end
 
 
 elem_type_code(::Missing) = Integer(var"TensorProto.DataType".UNDEFINED)
+elem_type_code(::Type{Float32}) = Integer(var"TensorProto.DataType".FLOAT)
+elem_type_code(::Type{UInt8}) = Integer(var"TensorProto.DataType".UINT8)
+elem_type_code(::Type{Int8}) = Integer(var"TensorProto.DataType".INT8)
+elem_type_code(::Type{UInt16}) = Integer(var"TensorProto.DataType".UINT16)
+elem_type_code(::Type{Int16}) = Integer(var"TensorProto.DataType".INT16)
 elem_type_code(::Type{Int32}) = Integer(var"TensorProto.DataType".INT32)
 elem_type_code(::Type{Int64}) = Integer(var"TensorProto.DataType".INT64)
-elem_type_code(::Type{Float32}) = Integer(var"TensorProto.DataType".FLOAT)
+elem_type_code(::Type{String}) = Integer(var"TensorProto.DataType".STRING)
+elem_type_code(::Type{Bool}) = Integer(var"TensorProto.DataType".BOOL)
+elem_type_code(::Type{Float16}) = Integer(var"TensorProto.DataType".FLOAT16)
 elem_type_code(::Type{Float64}) = Integer(var"TensorProto.DataType".DOUBLE)
+elem_type_code(::Type{UInt32}) = Integer(var"TensorProto.DataType".UINT32)
+elem_type_code(::Type{UInt64}) = Integer(var"TensorProto.DataType".UINT64)
+#elem_type_code(::Type{Complex{Float32}}) = Integer(var"TensorProto.DataType".COMPLEX64)
+#elem_type_code(::Type{Complex{Float64}}) = Integer(var"TensorProto.DataType".COMPLEX128)
 
 
 function ValueInfoProto(name::String, shape::JLShape, jltyp=Float32)
@@ -94,31 +105,31 @@ TensorProto(x::Number, name ="") = TensorProto([x], name)
 
 TensorProto(t::AbstractArray{Float64,N}, name ="") where N = TensorProto(
     dims=collect(reverse(size(t))),
-    data_type=var"TensorProto.DataType".DOUBLE |> Integer,
+    data_type = elem_type_code(Float64),
     double_data = reshape(t, :),
     name=name)
 
 TensorProto(t::AbstractArray{Float32,N}, name ="") where N = TensorProto(
     dims=collect(reverse(size(t))),
-    data_type=var"TensorProto.DataType".FLOAT |> Integer,
+    data_type=elem_type_code(Float32),
     float_data = reshape(t, :),
     name=name)
 
-TensorProto(t::AbstractArray{Float16,N}, name ="") where N = TensorProto(t, var"TensorProto.DataType".FLOAT16 |> Integer, name)
+TensorProto(t::AbstractArray{Float16,N}, name ="") where N = TensorProto(t, elem_type_code(Float16), name)
 
 TensorProto(t::AbstractArray{Int64,N}, name ="") where N = TensorProto(
     dims=collect(reverse(size(t))),
-    data_type=var"TensorProto.DataType".INT64 |> Integer,
+    data_type=elem_type_code(Int64),
     int64_data = reshape(t, :),
     name=name)
 
 TensorProto(t::AbstractArray{Int32,N}, name ="") where N = TensorProto(
     dims=collect(reverse(size(t))),
-    data_type=var"TensorProto.DataType".INT32 |> Integer,
+    data_type=elem_type_code(Int32),
     int32_data = reshape(t, :),
     name=name)
 
-TensorProto(t::AbstractArray{Int8,N}, name ="") where N = TensorProto(t, var"TensorProto.DataType".INT8 |> Integer, name)
+TensorProto(t::AbstractArray{Int8,N}, name ="") where N = TensorProto(t, elem_type_code(Int8), name)
 
 TensorProto(t::AbstractArray, data_type::Int32, name) = TensorProto(
     dims=collect(reverse(size(t))),
