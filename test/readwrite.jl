@@ -37,7 +37,6 @@
         (1, 2, 3, 4),
         (1, 2, 3, 4, 5))
             exp = reshape(collect(T, 1:prod(s)), s...)
-            TensorProto(exp)  |> array # delete me
             @test TensorProto(exp) |> serdeser |> array == exp
         end
     end
