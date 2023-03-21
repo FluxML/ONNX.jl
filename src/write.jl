@@ -101,35 +101,31 @@ end
 # tp_tensor_elemtype(::Type{Float32}) = Integer(var"TensorProto.DataType".FLOAT)
 # tp_tensor_elemtype(::Type{Float64}) = Integer(var"TensorProto.DataType".DOUBLE)
 
+# TensorProto interface
+# TensorProto(t::AbstractArray{T,N}, name ="")
+# should follow onnx.proto3 (v1.13.1) 
+for (T, field) in [(Float32, :float_data)
+                   (UInt8, :int32_data)
+                   (Int8 , :raw_data) #should be :int32_data
+                   (UInt16, :int32_data)
+                   (Int16, :int32_data)
+                   (Int32, :int32_data)
+                   (Int64, :int64_data)
+                   (String, :string_data)
+                   (Bool , :int32_data)
+                   #(Float16, :raw_data) #should be :int32_data; reinterpret 
+                   (Float64, :double_data)
+                   (UInt32, :uint64_data)
+                   (UInt64, :uint64_data)]
+    @eval TensorProto(t::AbstractArray{$T,N}, name ="") where N = TensorProto(
+          dims=collect(reverse(size(t))),
+          data_type=elem_type_code($T),
+          $(field) = reshape(t, :),
+          name=name)
+end
+TensorProto(t::AbstractArray{Float16,N}, name ="") where N = TensorProto(t, elem_type_code(Float16), name) 
+
 TensorProto(x::Number, name ="") = TensorProto([x], name)
-
-TensorProto(t::AbstractArray{Float64,N}, name ="") where N = TensorProto(
-    dims=collect(reverse(size(t))),
-    data_type = elem_type_code(Float64),
-    double_data = reshape(t, :),
-    name=name)
-
-TensorProto(t::AbstractArray{Float32,N}, name ="") where N = TensorProto(
-    dims=collect(reverse(size(t))),
-    data_type=elem_type_code(Float32),
-    float_data = reshape(t, :),
-    name=name)
-
-TensorProto(t::AbstractArray{Float16,N}, name ="") where N = TensorProto(t, elem_type_code(Float16), name)
-
-TensorProto(t::AbstractArray{Int64,N}, name ="") where N = TensorProto(
-    dims=collect(reverse(size(t))),
-    data_type=elem_type_code(Int64),
-    int64_data = reshape(t, :),
-    name=name)
-
-TensorProto(t::AbstractArray{Int32,N}, name ="") where N = TensorProto(
-    dims=collect(reverse(size(t))),
-    data_type=elem_type_code(Int32),
-    int32_data = reshape(t, :),
-    name=name)
-
-TensorProto(t::AbstractArray{Int8,N}, name ="") where N = TensorProto(t, elem_type_code(Int8), name)
 
 TensorProto(t::AbstractArray, data_type::Int32, name) = TensorProto(
     dims=collect(reverse(size(t))),
