@@ -30,12 +30,24 @@
 
     @testset "TensorProto" begin
         import ONNX: TensorProto, array
-
-        @testset "Tensor type $T size $s" for T in (Int8, Int32, Int64, Float16, Float32, Float64), s in ((1,),
-        (1, 2),
-        (1, 2, 3),
-        (1, 2, 3, 4),
-        (1, 2, 3, 4, 5))
+        @testset "Tensor type $T size $s" for T in (Float32,
+                                                    UInt8,
+                                                    Int8,
+                                                    UInt16,
+                                                    Int16,
+                                                    Int32,
+                                                    Int64,
+                                                    #String,
+                                                    #Bool,
+                                                    Float16,
+                                                    Float64,
+                                                    UInt32,
+                                                    UInt64),
+            s in ((1,),
+                  (1, 2),
+                  (1, 2, 3),
+                  (1, 2, 3, 4),
+                  (1, 2, 3, 4, 5))
             exp = reshape(collect(T, 1:prod(s)), s...)
             @test TensorProto(exp) |> serdeser |> array == exp
         end

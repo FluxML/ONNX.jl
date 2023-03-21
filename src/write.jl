@@ -105,17 +105,12 @@ end
 # TensorProto(t::AbstractArray{T,N}, name ="")
 # should follow onnx.proto3 (v1.13.1) 
 for (T, field) in [(Float32, :float_data)
-                   (UInt8, :int32_data)
-                   (Int8 , :raw_data) #should be :int32_data
-                   (UInt16, :int32_data)
-                   (Int16, :int32_data)
+                   (UInt8, :raw_data)
                    (Int32, :int32_data)
                    (Int64, :int64_data)
                    (String, :string_data)
                    (Bool , :int32_data)
-                   #(Float16, :raw_data) #should be :int32_data; reinterpret 
                    (Float64, :double_data)
-                   (UInt32, :uint64_data)
                    (UInt64, :uint64_data)]
     @eval TensorProto(t::AbstractArray{$T,N}, name ="") where N = TensorProto(
           dims=collect(reverse(size(t))),
@@ -123,7 +118,14 @@ for (T, field) in [(Float32, :float_data)
           $(field) = reshape(t, :),
           name=name)
 end
-TensorProto(t::AbstractArray{Float16,N}, name ="") where N = TensorProto(t, elem_type_code(Float16), name) 
+
+for T in [Int8, UInt16, Int16, Float16, UInt32]#, Bool,
+    @eval TensorProto(t::AbstractArray{$T,N}, name ="") where N = TensorProto(
+          dims=collect(reverse(size(t))),
+          data_type=elem_type_code($T),
+          raw_data = reinterpret(UInt8, reshape(t, :)),
+          name=name)
+end
 
 TensorProto(x::Number, name ="") = TensorProto([x], name)
 
