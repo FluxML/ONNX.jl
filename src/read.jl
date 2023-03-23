@@ -17,7 +17,7 @@ onnx2julia_types(::Val{Integer(var"TensorProto.DataType".UINT32)}) = UInt32
 onnx2julia_types(::Val{Integer(var"TensorProto.DataType".UINT64)}) = UInt64
 onnx2julia_types(::Val{Integer(var"TensorProto.DataType".COMPLEX64)}) = Complex{Float32}
 onnx2julia_types(::Val{Integer(var"TensorProto.DataType".COMPLEX128)}) = Complex{Float64}
-onnx2julia_types(::Val{Integer(var"TensorProto.DataType".BFLOAT16)}) = @error "BFloat16 is support yet"
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".BFLOAT16)}) = @error "BFloat16 isn't supported yet"
 
 
 onnx2julia_data_fields(x::T) where T =
