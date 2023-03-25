@@ -109,7 +109,6 @@ for (T, field) in [(Float32, :float_data)
                    (Int32, :int32_data)
                    (Int64, :int64_data)
                    (String, :string_data)
-                   (Bool , :int32_data)
                    (Float64, :double_data)
                    (UInt64, :uint64_data)]
     @eval TensorProto(t::AbstractArray{$T,N}, name ="") where N = TensorProto(
@@ -119,7 +118,7 @@ for (T, field) in [(Float32, :float_data)
           name=name)
 end
 
-for T in [Int8, UInt16, Int16, Float16, UInt32]#, Bool,
+for T in [Int8, UInt16, Int16, Float16, UInt32, Bool]
     @eval TensorProto(t::AbstractArray{$T,N}, name ="") where N = TensorProto(
           dims=collect(reverse(size(t))),
           data_type=elem_type_code($T),

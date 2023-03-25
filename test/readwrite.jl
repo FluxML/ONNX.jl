@@ -37,8 +37,8 @@
                                                     Int16,
                                                     Int32,
                                                     Int64,
-                                                    #String,
-                                                    #Bool,
+                                                    String,
+                                                    Bool,
                                                     Float16,
                                                     Float64,
                                                     UInt32,
@@ -48,7 +48,8 @@
                   (1, 2, 3),
                   (1, 2, 3, 4),
                   (1, 2, 3, 4, 5))
-            exp = reshape(collect(T, 1:prod(s)), s...)
+            #exp = reshape(collect(T, 1:prod(s)), s...)
+            exp = rand(T,s)
             @test TensorProto(exp) |> serdeser |> array == exp
         end
     end
