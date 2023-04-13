@@ -49,7 +49,11 @@ function array(p::TensorProto, wrap=Array)
     T = onnx2julia_types(p.data_type)
     fld = onnx2julia_data_fields(p.data_type)
     bytes = getproperty(p, fld)
-    data = !isempty(bytes) ? reinterpret(T, bytes) : reinterpret(T, p.raw_data)
+    if fld==:string_data
+        data = String.(copy(bytes))
+    else
+        data = !isempty(bytes) ? reinterpret(T, bytes) : reinterpret(T, p.raw_data)
+    end
     # note that we don't permute dimensions here, only reshape the data
     # see "Row-/Columns-major" in test/readwrite.jl for an example
     # why we don't need permutedims here

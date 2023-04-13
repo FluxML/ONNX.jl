@@ -108,7 +108,6 @@ for (T, field) in [(Float32, :float_data)
                    (UInt8, :raw_data)
                    (Int32, :int32_data)
                    (Int64, :int64_data)
-                   (String, :string_data)
                    (Float64, :double_data)
                    (UInt64, :uint64_data)]
     @eval TensorProto(t::AbstractArray{$T,N}, name ="") where N = TensorProto(
@@ -133,6 +132,14 @@ TensorProto(t::AbstractArray, data_type::Int32, name) = TensorProto(
     data_type=data_type,
     raw_data = reinterpret(UInt8, reshape(t, :)),
     name=name)
+
+TensorProto(t::AbstractArray{String,N}, name="") where N = TensorProto(
+    dims=collect(reverse(size(t))),
+    data_type=elem_type_code(String),
+    string_data = codeunits.(reshape(t, :)),
+    name=name)
+
+TensorProto(x::String, name ="") = TensorProto([x], name)
 
 
 function Base.show(io::IO, a::AttributeProto)
