@@ -1,21 +1,44 @@
 
-const ONNX2JULIA_TYPES = Dict(
-    Integer(var"TensorProto.DataType".INT64) => Int64,
-    Integer(var"TensorProto.DataType".INT32) => Int32,
-    Integer(var"TensorProto.DataType".INT8) => Int8,
-    Integer(var"TensorProto.DataType".DOUBLE) => Float64,
-    Integer(var"TensorProto.DataType".FLOAT) => Float32,
-    Integer(var"TensorProto.DataType".FLOAT16) => Float16,
-)
+onnx2julia_types(x::T) where T =
+    @error "Unknown type $(x), check at onnx.proto3 (message TensorProto)"
+onnx2julia_types(data_type::Integer) = onnx2julia_types(Val(Int32(data_type)))
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".FLOAT)}) = Float32
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".UINT8)}) = UInt8
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".INT8)}) = Int8
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".UINT16)}) = UInt16
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".INT16)}) = Int16
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".INT32)}) = Int32
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".INT64)}) = Int64
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".STRING)}) = String
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".BOOL)}) = Bool
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".FLOAT16)}) = Float16
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".DOUBLE)}) = Float64
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".UINT32)}) = UInt32
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".UINT64)}) = UInt64
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".COMPLEX64)}) = Complex{Float32}
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".COMPLEX128)}) = Complex{Float64}
+onnx2julia_types(::Val{Integer(var"TensorProto.DataType".BFLOAT16)}) = @error "BFloat16 isn't supported yet"
 
-const ONNX2JULIA_DATA_FIELDS = Dict(
-    Integer(var"TensorProto.DataType".INT64) => :int64_data,
-    Integer(var"TensorProto.DataType".INT32) => :int32_data,
-    # Integer(var"TensorProto.DataType".INT8) => no special field
-    Integer(var"TensorProto.DataType".DOUBLE) => :double_data,
-    Integer(var"TensorProto.DataType".FLOAT) => :float_data,
-    # Integer(var"TensorProto.DataType".FLOAT16) => no special field
-)
+
+onnx2julia_data_fields(x::T) where T =
+    @error "Unknown type $(x), check at onnx.proto3 (message TensorProto)"
+onnx2julia_data_fields(data_type::Integer) = onnx2julia_data_fields(Val(Int32(data_type)))
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".FLOAT)}) = :float_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".UINT8)}) = :raw_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".INT8)}) = :raw_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".UINT16)}) = :raw_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".INT16)}) = :raw_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".INT32)}) = :int32_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".INT64)}) = :int64_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".STRING)}) = :string_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".BOOL)}) = :raw_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".FLOAT16)}) = :raw_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".DOUBLE)}) = :double_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".UINT32)}) = :uint64_data
+onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".UINT64)}) = :uint64_data
+#onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".COMPLEX64)}) = 
+#onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".COMPLEX128)}) = 
+#onnx2julia_data_fields(::Val{Integer(var"TensorProto.DataType".BFLOAT16)}) = @error "BFloat16 is support yet"
 
 """
     array(p::TensorProto, wrap=Array)
@@ -23,10 +46,14 @@ const ONNX2JULIA_DATA_FIELDS = Dict(
 Return `p` as an `Array` of the correct type. Second argument can be used to change type of the returned array
 """
 function array(p::TensorProto, wrap=Array)
-    T = ONNX2JULIA_TYPES[p.data_type]
-    fld = get(ONNX2JULIA_DATA_FIELDS, p.data_type, :raw_data)
+    T = onnx2julia_types(p.data_type)
+    fld = onnx2julia_data_fields(p.data_type)
     bytes = getproperty(p, fld)
-    data = !isempty(bytes) ? reinterpret(T, bytes) : reinterpret(T, p.raw_data)
+    if fld==:string_data
+        data = String.(copy(bytes))
+    else
+        data = !isempty(bytes) ? reinterpret(T, bytes) : reinterpret(T, p.raw_data)
+    end
     # note that we don't permute dimensions here, only reshape the data
     # see "Row-/Columns-major" in test/readwrite.jl for an example
     # why we don't need permutedims here

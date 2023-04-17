@@ -1,6 +1,7 @@
 @testset "Read and write" begin
     import ONNX
     import ONNX.ProtoBuf: encode, decode, ProtoEncoder, ProtoDecoder
+    import Random: MersenneTwister
 
     function serdeser(p::T) where T
         iob = PipeBuffer();
@@ -30,14 +31,32 @@
 
     @testset "TensorProto" begin
         import ONNX: TensorProto, array
+        @testset "Tensor type $T size $s" for T in (Float32,
+                                                    UInt8,
+                                                    Int8,
+                                                    UInt16,
+                                                    Int16,
+                                                    Int32,
+                                                    Int64,
+                                                    Bool,
+                                                    Float16,
+                                                    Float64,
+                                                    UInt32,
+                                                    UInt64),
+            s in ((1,),
+                  (1, 2),
+                  (1, 2, 3),
+                  (1, 2, 3, 4),
+                  (1, 2, 3, 4, 5))
+            #exp = reshape(collect(T, 1:prod(s)), s...)
+            exp = rand(MersenneTwister(0),T,s)
+            @test TensorProto(exp) |> serdeser |> array == exp
+        end
+    end
 
-        @testset "Tensor type $T size $s" for T in (Int8, Int32, Int64, Float16, Float32, Float64), s in ((1,),
-        (1, 2),
-        (1, 2, 3),
-        (1, 2, 3, 4),
-        (1, 2, 3, 4, 5))
-            exp = reshape(collect(T, 1:prod(s)), s...)
-            TensorProto(exp)  |> array # delete me
+    @testset "TensorProto(String)" begin
+        for exp in (["ONNX"],
+                    ["Julia1","Julia2","Julia3"])
             @test TensorProto(exp) |> serdeser |> array == exp
         end
     end

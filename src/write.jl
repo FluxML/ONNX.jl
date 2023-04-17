@@ -34,10 +34,21 @@ end
 
 
 elem_type_code(::Missing) = Integer(var"TensorProto.DataType".UNDEFINED)
+elem_type_code(::Type{Float32}) = Integer(var"TensorProto.DataType".FLOAT)
+elem_type_code(::Type{UInt8}) = Integer(var"TensorProto.DataType".UINT8)
+elem_type_code(::Type{Int8}) = Integer(var"TensorProto.DataType".INT8)
+elem_type_code(::Type{UInt16}) = Integer(var"TensorProto.DataType".UINT16)
+elem_type_code(::Type{Int16}) = Integer(var"TensorProto.DataType".INT16)
 elem_type_code(::Type{Int32}) = Integer(var"TensorProto.DataType".INT32)
 elem_type_code(::Type{Int64}) = Integer(var"TensorProto.DataType".INT64)
-elem_type_code(::Type{Float32}) = Integer(var"TensorProto.DataType".FLOAT)
+elem_type_code(::Type{String}) = Integer(var"TensorProto.DataType".STRING)
+elem_type_code(::Type{Bool}) = Integer(var"TensorProto.DataType".BOOL)
+elem_type_code(::Type{Float16}) = Integer(var"TensorProto.DataType".FLOAT16)
 elem_type_code(::Type{Float64}) = Integer(var"TensorProto.DataType".DOUBLE)
+elem_type_code(::Type{UInt32}) = Integer(var"TensorProto.DataType".UINT32)
+elem_type_code(::Type{UInt64}) = Integer(var"TensorProto.DataType".UINT64)
+#elem_type_code(::Type{Complex{Float32}}) = Integer(var"TensorProto.DataType".COMPLEX64)
+#elem_type_code(::Type{Complex{Float64}}) = Integer(var"TensorProto.DataType".COMPLEX128)
 
 
 function ValueInfoProto(name::String, shape::JLShape, jltyp=Float32)
@@ -90,41 +101,45 @@ end
 # tp_tensor_elemtype(::Type{Float32}) = Integer(var"TensorProto.DataType".FLOAT)
 # tp_tensor_elemtype(::Type{Float64}) = Integer(var"TensorProto.DataType".DOUBLE)
 
+# TensorProto interface
+# TensorProto(t::AbstractArray{T,N}, name ="")
+# should follow onnx.proto3 (v1.13.1) 
+for (T, field) in [(Float32, :float_data)
+                   (UInt8, :raw_data)
+                   (Int32, :int32_data)
+                   (Int64, :int64_data)
+                   (Float64, :double_data)
+                   (UInt64, :uint64_data)]
+    @eval TensorProto(t::AbstractArray{$T,N}, name ="") where N = TensorProto(
+          dims=collect(reverse(size(t))),
+          data_type=elem_type_code($T),
+          $(field) = reshape(t, :),
+          name=name)
+end
+
+for T in [Int8, UInt16, Int16, Float16, UInt32, Bool]
+    @eval TensorProto(t::AbstractArray{$T,N}, name ="") where N = TensorProto(
+          dims=collect(reverse(size(t))),
+          data_type=elem_type_code($T),
+          raw_data = reinterpret(UInt8, reshape(t, :)),
+          name=name)
+end
+
 TensorProto(x::Number, name ="") = TensorProto([x], name)
-
-TensorProto(t::AbstractArray{Float64,N}, name ="") where N = TensorProto(
-    dims=collect(reverse(size(t))),
-    data_type=var"TensorProto.DataType".DOUBLE |> Integer,
-    double_data = reshape(t, :),
-    name=name)
-
-TensorProto(t::AbstractArray{Float32,N}, name ="") where N = TensorProto(
-    dims=collect(reverse(size(t))),
-    data_type=var"TensorProto.DataType".FLOAT |> Integer,
-    float_data = reshape(t, :),
-    name=name)
-
-TensorProto(t::AbstractArray{Float16,N}, name ="") where N = TensorProto(t, var"TensorProto.DataType".FLOAT16 |> Integer, name)
-
-TensorProto(t::AbstractArray{Int64,N}, name ="") where N = TensorProto(
-    dims=collect(reverse(size(t))),
-    data_type=var"TensorProto.DataType".INT64 |> Integer,
-    int64_data = reshape(t, :),
-    name=name)
-
-TensorProto(t::AbstractArray{Int32,N}, name ="") where N = TensorProto(
-    dims=collect(reverse(size(t))),
-    data_type=var"TensorProto.DataType".INT32 |> Integer,
-    int32_data = reshape(t, :),
-    name=name)
-
-TensorProto(t::AbstractArray{Int8,N}, name ="") where N = TensorProto(t, var"TensorProto.DataType".INT8 |> Integer, name)
 
 TensorProto(t::AbstractArray, data_type::Int32, name) = TensorProto(
     dims=collect(reverse(size(t))),
     data_type=data_type,
     raw_data = reinterpret(UInt8, reshape(t, :)),
     name=name)
+
+TensorProto(t::AbstractArray{String,N}, name="") where N = TensorProto(
+    dims=collect(reverse(size(t))),
+    data_type=elem_type_code(String),
+    string_data = codeunits.(reshape(t, :)),
+    name=name)
+
+TensorProto(x::String, name ="") = TensorProto([x], name)
 
 
 function Base.show(io::IO, a::AttributeProto)
