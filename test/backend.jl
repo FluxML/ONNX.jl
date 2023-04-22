@@ -35,11 +35,11 @@
     end
 
     @testset "Nodes" begin
-        cd("backend/data/node/")
+        prefix = "backend/data/node/"
         for dir in ["test_add"]
             onnx_output = pb_to_array(
-                dir*"/test_data_set_0/output_0.pb")
-            julia_output = eval_model(dir)
+                prefix*dir*"/test_data_set_0/output_0.pb")
+            julia_output = eval_model(prefix*dir)
             @test onnx_output==julia_output
         end
     end
