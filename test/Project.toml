@@ -1,6 +1,7 @@
 [deps]
 ONNXRunTime = "e034b28e-924e-41b2-b98f-d2bbeb830c6a"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Umlaut = "92992a2b-8ce5-4a9c-bb9d-58be9a7dc841"
 
