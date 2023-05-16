@@ -1,9 +1,20 @@
+const ONNX_RELEASE_URL = "https://github.com/ordicker/ONNXBackendTests.jl/releases/download/v1.13.1/backend_data.tar" # TODO: find a better solution
+
 @testset "Backend" begin
     import ONNX.ProtoBuf: encode, decode, ProtoEncoder, ProtoDecoder
     import ONNX: load, array
     import Tar: extract
     import Umlaut: Tape, play!
-    
+    import Downloads: download
+
+    onnx_release_path = dirname(@__DIR__) * "/test/backend_tests/"
+    if !isdir(onnx_release_path)
+        mkpath(onnx_release_path)
+        onnx_release_tar_path = download(ONNX_RELEASE_URL)
+        extract(onnx_release_tar_path, onnx_release_path)
+        rm(onnx_release_tar_path)
+    end
+
     "filename.pb to julia array"
     function pb_to_array(filename::String)
         pb = decode(ProtoDecoder(open(filename)), TensorProto)
@@ -57,7 +68,7 @@
     end
 
     @testset "Nodes" begin
-        prefix = extract("backend_data.tar")*"/data/node/"
+        prefix = onnx_release_path * "/data/node/"
         #for dir in readdir(prefix) # TODO: pass all the tests :)
         for dirname in ["test_add"]
             onnx_output = outputs(prefix*dirname)[1] # TODO: some tests have more than 1 output

@@ -6,3 +6,4 @@ test/onnx/
 Manifest.toml
 .vscode/
 *.onnx
+/test/backend_tests/
