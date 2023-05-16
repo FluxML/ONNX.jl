@@ -1,4 +1,5 @@
 [deps]
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 ONNXRunTime = "e034b28e-924e-41b2-b98f-d2bbeb830c6a"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
