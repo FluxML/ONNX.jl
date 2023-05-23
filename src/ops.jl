@@ -52,7 +52,8 @@ relu(x) = NNlib.relu.(x)
 elu(x) = NNlib.elu.(x)
 tanh(x) = Base.tanh.(x)
 maxpool(x; kernel, pad = 0, stride = 1) = NNlib.maxpool(x, kernel; pad = pad, stride = stride)
-
+_min(xs...) = min.(xs...)
+_max(xs...) = max.(xs...)
 
 # common functional implementation for batch and instance normalization based on
 # https://github.com/FluxML/Flux.jl/blob/06970a5fbbb1cb485c5d2cba597a78fb453fc713/src/layers/normalise.jl#L166-L197
