@@ -39,7 +39,7 @@ const ONNX_RELEASE_URL = "https://github.com/ordicker/ONNXBackendTests.jl/releas
     """
     function outputs(dirname::String)
         readdir(dirname*"/test_data_set_0",join=true)|>
-            f->filter(contains("output"),f).|>
+            f->filter(contains(r"\/output.*\.pb"),f).|>
             pb_to_array
     end
     """
@@ -59,7 +59,7 @@ const ONNX_RELEASE_URL = "https://github.com/ordicker/ONNXBackendTests.jl/releas
     function eval_model(dirname::String)
         ## load inputs
         inputs = readdir(dirname*"/test_data_set_0",join=true)|>
-            f->filter(contains("input"),f).|>
+            f->filter(contains(r"\/input.*\.pb"),f).|>
             pb_to_array
         ## load the model
         model = load(dirname*"/model.onnx",inputs...)
@@ -70,7 +70,35 @@ const ONNX_RELEASE_URL = "https://github.com/ordicker/ONNXBackendTests.jl/releas
     @testset "Nodes" begin
         prefix = onnx_release_path * "/data/node/"
         #for dir in readdir(prefix) # TODO: pass all the tests :)
-        for dirname in ["test_add"]
+        for dirname in ["test_add",
+                        "test_min_example",
+                        #"test_min_float16",
+                        "test_min_float32",
+                        "test_min_float64",
+                        "test_min_int16",
+                        "test_min_int32",
+                        "test_min_int64",
+                        "test_min_int8",
+                        "test_min_one_input",
+                        "test_min_two_inputs",
+                        "test_min_uint16",
+                        "test_min_uint32",
+                        "test_min_uint64",
+                        "test_min_uint8",
+                        "test_max_example",
+                        #"test_max_float16",
+                        "test_max_float32",
+                        "test_max_float64",
+                        "test_max_int16",
+                        "test_max_int32",
+                        "test_max_int64",
+                        "test_max_int8",
+                        "test_max_one_input",
+                        "test_max_two_inputs",
+                        "test_max_uint16",
+                        "test_max_uint32",
+                        "test_max_uint64",
+                        "test_max_uint8"]
             onnx_output = outputs(prefix*dirname)[1] # TODO: some tests have more than 1 output
             julia_output = eval_model(prefix*dirname)
             @test onnx_output==julia_output

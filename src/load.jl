@@ -122,6 +122,14 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Mul}, args::VarVec, attrs::At
     return push_call!(tape, mul, args...)
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Max}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _max, args...)
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Min}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _min, args...)
+end
+
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, relu, args[1])
 end

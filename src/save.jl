@@ -163,6 +163,16 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(mul)}, op::Umlaut.Ca
     push!(g.node, nd)
 end
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_min)}, op::Umlaut.Call)
+    nd = NodeProto("Max", op)
+    push!(g.node, nd)
+end
+
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_max)}, op::Umlaut.Call)
+    nd = NodeProto("Min", op)
+    push!(g.node, nd)
+end
+
 
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Umlaut.Call)
     nd = NodeProto("Relu", op)
