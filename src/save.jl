@@ -33,17 +33,29 @@ add!(gp::GraphProto, tp::TensorProto) = push!(gp.initializer, tp)
 #                                 Utils                                    #
 ##############################################################################
 
-# can we make it more robust?
-iskwfunc(f) = endswith(string(f), "##kw")
+if VERSION < v"1.9"
+    # can we make it more robust?
+    iskwfunc(f) = endswith(string(f), "##kw")
+else
+    iskwfunc(f) = (f === Core.kwcall)
+end
 
 function kwargs2dict(op::Umlaut.Call)
     kw = iskwfunc(op.fn) ? op.args[1] : (;)
     return Dict(zip(keys(kw), values(kw)))
 end
 
-macro opconfig_kw(backend, fn)
-    return quote
-        $OpConfig{$backend, <:Union{typeof($fn), typeof(Core.kwfunc($fn))}}
+if VERSION < v"1.9.0"
+    macro opconfig_kw(backend, fn)
+        return quote
+            $OpConfig{$backend, <:Union{typeof($fn), typeof(Core.kwfunc($fn))}}
+        end
+    end
+else
+    macro opconfig_kw(backend, fn)
+        return quote
+            $OpConfig{$backend, <:Union{typeof($fn)}}
+        end
     end
 end
 
@@ -83,7 +95,13 @@ onnx_name(op::Umlaut.AbstractOp) = "x$(op.id)"
 Serialize a single operation from a tape to graph.
 """
 function save_node!(g::GraphProto, op::Umlaut.Call)
-    save_node!(g, OpConfig{:ONNX, typeof(op.fn)}(), op)
+    if VERSION >= v"1.9" && op.fn == Core.kwcall
+        v_fn = op.args[2]
+        fn = v_fn isa V ? op.tape[v_fn].val : v_fn
+        save_node!(g, OpConfig{:ONNX, typeof(fn)}(), op)
+    else
+        save_node!(g, OpConfig{:ONNX, typeof(op.fn)}(), op)
+    end
 end
 
 
