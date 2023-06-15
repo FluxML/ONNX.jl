@@ -15,7 +15,7 @@ Umlaut = "92992a2b-8ce5-4a9c-bb9d-58be9a7dc841"
 
 [compat]
 EnumX = "1"
-NNlib = "0.8"
+NNlib = "0.8, 0.9"
 ProtoBuf = "1.0"
 StaticArrays = "1"
 Umlaut = "0.4, 0.5"
