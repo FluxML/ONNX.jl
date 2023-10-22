@@ -186,18 +186,17 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(ONNX.onnx_concat, [1 2 3; 1 2 3], [4  5; 4 5]; axis=0)
     end
 
-    # TODO: Split is not implemented in ONNXRuntime.jl
-    # @testset "Split" begin
-    #     x = rand(3, 20, 10); split = [5, 10, 5];
-    #     args = (x, split)
-    #     tape = Tape(ONNXCtx())
-    #     inp = [push!(tape, Input(a)) for a in args]
-    #     out = push_call!(tape, ONNX.onnx_split, inp...; axis=1)
-    #     push_call!(tape, getfield, out, 1)
-    #     push_call!(tape, getfield, out, 2)
-    #     push_call!(tape, getfield, out, 3)
-    #     tape.result = out
+    @testset "Split" begin
+        x = rand(3, 20, 10); split = [5, 10, 5];
+        args = (x, split)
+        tape = Tape(ONNXCtx())
+        inp = [push!(tape, Input(a)) for a in args]
+        out = push_call!(tape, ONNX.onnx_split, inp...; axis=1)
+        push_call!(tape, getfield, out, 1)
+        push_call!(tape, getfield, out, 2)
+        push_call!(tape, getfield, out, 3)
+        tape.result = out
 
-    #     ort_test(tape, args...)
-    # end
+        ort_test(tape, args...)
+    end
 end

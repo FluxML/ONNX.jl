@@ -222,21 +222,21 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Slice}, args::VarVec, attrs::
     return push_call!(tape, onnx_slice, args...)
 end
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Split}, inputs::VarVec, attrs::AttrDict)
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Split}, args::VarVec, attrs::AttrDict)
     axis = get(attrs, :axis, 0)
     split = if haskey(attrs, :split) # Version 1, 2, 11
         attrs[:split]
     elseif length(args) == 2
-        inputs[2]
+        args[2]
     else
         # the results cannot be split in multiple outputs on the tape
         # if the output size is not known during tracing.
         error("Unhandled case where split is not provided")
     end
-    out = push_call!(tape, onnx_split, first(inputs), split; axis)
+    out = push_call!(tape, onnx_split, first(args), split; axis)
     return Tuple(
         push_call!(tape, getfield, out, i)
-        for i in eachindex(split)
+        for i in eachindex(split.op.val)
     )
 end
 
