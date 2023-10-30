@@ -99,7 +99,8 @@ const ONNX_RELEASE_URL = "https://github.com/ordicker/ONNXBackendTests.jl/releas
                         "test_max_uint32",
                         "test_max_uint64",
                         #"test_max_uint8",
-                        "test_basic_conv_without_padding"]
+                        "test_basic_conv_without_padding",
+                        "test_conv_with_autopad_same"]
             onnx_output = outputs(prefix*dirname)[1] # TODO: some tests have more than 1 output
             model, inputs = load_model_and_inputs(prefix*dirname)
             julia_output = play!(model, inputs...)
