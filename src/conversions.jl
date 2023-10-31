@@ -98,7 +98,25 @@ end
 
 function from_onnx_conv(attrs::Dict; pooling=false)
     out = Dict{Symbol, Any}()
-    haskey(attrs, :auto_pad) && error("auto_pad attribute is currently not supported")
+    # manually calculating the padding for :autopad
+    if haskey(attrs, :auto_pad)
+        if !(attrs[:auto_pad] in ["SAME_LOWER", "SAME_UPPER", "VALID","NOTSET"])
+        error("auto_pad $(attrs[:auto_pad]) isn't supported;{SAME_LOWER, SAME_UPPER, VALID, NOTSET}")
+        end
+
+        if attrs[:auto_pad]=="SAME_LOWER"||attrs[:auto_pad]=="SAME_UPPER"
+            pad = div.(attrs[:kernel_shape].-1,2)
+            r = (attrs[:kernel_shape].-1).%2
+            if attrs[:auto_pad]=="SAME_LOWER"
+                out[:pad] = from_onnx_pad([pad;pad]+[r;zero(r)])
+            end
+            if attrs[:auto_pad]=="SAME_UPPER"
+                out[:pad] = from_onnx_pad([pad;pad]+[zero(r);r])
+            end
+        end
+        #if attrs[:auto_pad]=="VALID" end #pad=0 by default
+        #if attrs[:auto_pad]=="NOTSET" end ## TODO: check if :pads is set
+    end
     if haskey(attrs, :strides)
         out[:stride] = from_onnx_spatial(attrs[:strides])
     end

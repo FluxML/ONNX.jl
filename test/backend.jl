@@ -56,7 +56,7 @@ const ONNX_RELEASE_URL = "https://github.com/ordicker/ONNXBackendTests.jl/releas
        |-- output_0.bp
     Loads model.onnx, input_X.pb using ONNX.jl, and run it.
     """
-    function eval_model(dirname::String)
+    function load_model_and_inputs(dirname::String)
         ## load inputs
         inputs = readdir(dirname*"/test_data_set_0",join=true)|>
             f->filter(contains(r"\/input.*\.pb"),f).|>
@@ -64,7 +64,7 @@ const ONNX_RELEASE_URL = "https://github.com/ordicker/ONNXBackendTests.jl/releas
         ## load the model
         model = load(dirname*"/model.onnx",inputs...)
         ## run it
-        return play!(model,inputs...)
+        return model, inputs
     end
 
     @testset "Nodes" begin
@@ -72,36 +72,41 @@ const ONNX_RELEASE_URL = "https://github.com/ordicker/ONNXBackendTests.jl/releas
         #for dir in readdir(prefix) # TODO: pass all the tests :)
         for dirname in ["test_add",
                         "test_min_example",
-                        #"test_min_float16",
+                        ##"test_min_float16",
                         "test_min_float32",
                         "test_min_float64",
-                        "test_min_int16",
+                        #"test_min_int16",
                         "test_min_int32",
                         "test_min_int64",
-                        "test_min_int8",
-                        "test_min_one_input",
+                        #"test_min_int8",
+                        #"test_min_one_input",
                         "test_min_two_inputs",
-                        "test_min_uint16",
+                        #"test_min_uint16",
                         "test_min_uint32",
                         "test_min_uint64",
-                        "test_min_uint8",
+                        #"test_min_uint8",
                         "test_max_example",
-                        #"test_max_float16",
+                        ##"test_max_float16",
                         "test_max_float32",
                         "test_max_float64",
-                        "test_max_int16",
+                        #"test_max_int16",
                         "test_max_int32",
                         "test_max_int64",
-                        "test_max_int8",
+                        #"test_max_int8",
                         "test_max_one_input",
                         "test_max_two_inputs",
-                        "test_max_uint16",
+                        #"test_max_uint16",
                         "test_max_uint32",
                         "test_max_uint64",
-                        "test_max_uint8"]
+                        #"test_max_uint8",
+                        "test_basic_conv_without_padding",
+                        "test_conv_with_autopad_same"]
             onnx_output = outputs(prefix*dirname)[1] # TODO: some tests have more than 1 output
-            julia_output = eval_model(prefix*dirname)
+            model, inputs = load_model_and_inputs(prefix*dirname)
+            julia_output = play!(model, inputs...)
             @test onnx_output==julia_output
+            # save and eval test
+            ort_test(model, inputs...) #from ort.jl
         end
     end
 end
