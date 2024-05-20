@@ -101,7 +101,7 @@ function from_onnx_conv(attrs::Dict; pooling=false)
     # manually calculating the padding for :autopad
     if haskey(attrs, :auto_pad)
         if !(attrs[:auto_pad] in ["SAME_LOWER", "SAME_UPPER", "VALID","NOTSET"])
-        error("auto_pad $(attrs[:auto_pad]) isn't supported;{SAME_LOWER, SAME_UPPER, VALID, NOTSET}")
+            error("auto_pad $(attrs[:auto_pad]) isn't supported;{SAME_LOWER, SAME_UPPER, VALID, NOTSET}")
         end
 
         if attrs[:auto_pad]=="SAME_LOWER"||attrs[:auto_pad]=="SAME_UPPER"

@@ -134,6 +134,11 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::A
     return push_call!(tape, relu, args[1])
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :LeakyRelu}, args::VarVec, attrs::AttrDict)
+    haskey
+    return push_call!(tape, leakyrelu, args[1]; (;a = get(attrs,:alpha, 0.01))...) #default value 
+end
+
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Elu}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, elu, args[1])
 end

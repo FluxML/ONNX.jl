@@ -197,6 +197,12 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Umlaut.C
     push!(g.node, nd)
 end
 
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, leakyrelu), op::Umlaut.Call)
+    kw_dict = kwargs2dict(op)
+    nd = NodeProto("LeakyRelu", op, Dict(:alpha=>kw_dict[:a]))
+    push!(g.node, nd)
+end
+
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(elu)}, op::Umlaut.Call)
     nd = NodeProto("Elu", op)
     push!(g.node, nd)

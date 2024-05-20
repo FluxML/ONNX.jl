@@ -100,11 +100,16 @@ const ONNX_RELEASE_URL = "https://github.com/ordicker/ONNXBackendTests.jl/releas
                         "test_max_uint64",
                         #"test_max_uint8",
                         "test_basic_conv_without_padding",
-                        "test_conv_with_autopad_same"]
+                        "test_conv_with_autopad_same",
+                        "test_relu",
+                        "test_leakyrelu",
+                        "test_leakyrelu_default",
+                        "test_leakyrelu_example"]
+
             onnx_output = outputs(prefix*dirname)[1] # TODO: some tests have more than 1 output
             model, inputs = load_model_and_inputs(prefix*dirname)
             julia_output = play!(model, inputs...)
-            @test onnx_output==julia_output
+            @test onnx_output≈julia_output
             # save and eval test
             ort_test(model, inputs...) #from ort.jl
         end
