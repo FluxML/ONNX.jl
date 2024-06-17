@@ -114,12 +114,32 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Add}, args::VarVec, attrs::At
     return push_call!(tape, add, args...)
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Equal}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, equal, args...)
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Where}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, onnx_where, args...)
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Expand}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, expand, args...)
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Transpose}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, onnx_transpose, args...; attrs...)
+end
+
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sub}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, sub, args...)
 end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Mul}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, mul, args...)
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Pow}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, pow, args...)
 end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Max}, args::VarVec, attrs::AttrDict)
@@ -144,7 +164,19 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Elu}, args::VarVec, attrs::At
 end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Tanh}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, tanh, args[1])
+    return push_call!(tape, _tanh, args[1])
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sin}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _sin, args[1])
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Cos}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _cos, args[1])
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Neg}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, neg, args[1])
 end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :MatMul}, args::VarVec, attrs::AttrDict)
@@ -199,6 +231,10 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Constant}, args::VarVec, attr
     return push!(tape, Constant(val))
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :ConstantOfShape}, args::VarVec, attrs::AttrDict)
+    kw = from_onnx_norm(attrs)
+    return push_call!(tape, constant_of_shape, args[1]; kw...)
+end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gather}, args::VarVec, attrs::AttrDict)
     axis = get(attrs, :axis, 0)

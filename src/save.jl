@@ -169,6 +169,25 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_flatten), op::Umla
     push!(g.node, nd)
 end
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(equal)}, op::Umlaut.Call)
+    nd = NodeProto("Equal", op)
+    push!(g.node, nd)
+end
+
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(onnx_where)}, op::Umlaut.Call)
+    nd = NodeProto("Where", op)
+    push!(g.node, nd)
+end
+
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(expand)}, op::Umlaut.Call)
+    nd = NodeProto("Expand", op)
+    push!(g.node, nd)
+end 
+
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(onnx_transpose)}, op::Umlaut.Call)
+    nd = NodeProto("Transpose", op)
+    push!(g.node, nd)
+end 
 
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(add)}, op::Umlaut.Call)
     nd = NodeProto("Add", op)
@@ -178,6 +197,11 @@ end
 
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(mul)}, op::Umlaut.Call)
     nd = NodeProto("Mul", op)
+    push!(g.node, nd)
+end
+
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(pow)}, op::Umlaut.Call)
+    nd = NodeProto("Pow", op)
     push!(g.node, nd)
 end
 
@@ -191,6 +215,10 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_max)}, op::Umlaut.C
     push!(g.node, nd)
 end
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(neg)}, op::Umlaut.Call)
+    nd = NodeProto("Neg", op)
+    push!(g.node, nd)
+end
 
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Umlaut.Call)
     nd = NodeProto("Relu", op)
@@ -208,8 +236,18 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(elu)}, op::Umlaut.Ca
     push!(g.node, nd)
 end
 
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(tanh)}, op::Umlaut.Call)
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_tanh)}, op::Umlaut.Call)
     nd = NodeProto("Tanh", op)
+    push!(g.node, nd)
+end
+
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_sin)}, op::Umlaut.Call)
+    nd = NodeProto("Sin", op)
+    push!(g.node, nd)
+end
+
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_cos)}, op::Umlaut.Call)
+    nd = NodeProto("Cos", op)
     push!(g.node, nd)
 end
 

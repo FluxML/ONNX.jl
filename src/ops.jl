@@ -32,6 +32,31 @@ function onnx_gemm(A, B; tA = 0, tB = 0, α = 1)
     return α * B * A
 end
 
+function constant_of_shape(shape::AbstractVector; kw...)
+    if length(shape) < 2
+        dims = shape
+    else
+        dims = copy(shape)
+        dims[1], dims[2] = shape[2], shape[1]
+    end
+    # note: order of arguments reversed due to row-major layout
+    output = zeros(Float32, dims...)
+    fill!(output, kw...)
+    return output
+end
+
+function constant_of_shape(shape::AbstractVector)
+    if length(shape) < 2
+        dims = shape
+    else
+        dims = copy(shape)
+        dims[1], dims[2] = shape[2], shape[1]
+    end
+    # note: order of arguments reversed due to row-major layout
+    output = zeros(Float32, dims...)
+    return output
+end
+
 # Julia-friendly flatten
 function flatten(x; dim = ndims(x) - 1)
     sz = size(x)
@@ -48,10 +73,15 @@ end
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 mul(xs...) = .*(xs...)
+pow(xs...) = .^(xs...)
+equal(xs...) = .==(xs...)
 relu(x) = NNlib.relu.(x)
 leakyrelu(x;a = 0.01) = NNlib.leakyrelu.(x,a)
 elu(x) = NNlib.elu.(x)
-tanh(x) = Base.tanh.(x)
+_sin(x) = Base.sin.(x)
+_cos(x) = Base.cos.(x)
+neg(x) = -1 .* x
+_tanh(x) = Base.tanh.(x)
 maxpool(x; kernel, pad = 0, stride = 1) = NNlib.maxpool(x, kernel; pad = pad, stride = stride)
 _min(xs...) = min.(xs...)
 _max(xs...) = max.(xs...)
@@ -221,6 +251,11 @@ function onnx_slice(
         axes::Vector{Int}=Int[], steps::Vector{Int}=Int[])
     axes = isempty(axes) ? collect(0:ndims(data)-1) : axes
     steps = isempty(steps) ? [1 for i=1:ndims(data)] : steps
+    for i in eachindex(ends)
+        if ends[i] > length(data)
+            ends[i] = length(data)
+        end
+    end
     @assert all(starts .>= 0) "Negative indices are not supported yet"
     @assert all(ends .>= 0) "Negative indices are not supported yet"
     # construct ranges, adjusting starts to 1-based indexing
@@ -256,4 +291,57 @@ function onnx_split(input::AbstractArray, split::Vector{Int}; axis)
         getindex(input, before..., c-s+1:c, after...)
         for (s, c) in zip(split, cumsplit)
     )
+end
+
+function onnx_where(condition::AbstractArray, x::AbstractArray, y::AbstractArray)
+    if (size(condition) != size(x) || size(x) != size(y))
+        throw(ArgumentError("All input arrays must have the same shape"))
+    end
+    result = zeros(Number, size(condition))
+    for i in eachindex(condition)
+        result[i] = condition[i] ? x[i] : y[i]
+    end
+    return result
+end
+
+function expand(input::AbstractArray, shape::AbstractArray)
+    original_shape = size(input)
+
+    shrink = Bool(0)
+    if length(input) > length(shape)
+        shrink = Bool(1)
+    end
+
+    if shrink 
+        padded = ones(Float32, length(input))
+        expanded = broadcast(*, input, padded)
+    else
+        expanded = input
+        
+        pad_input = (ones(Int, length(shape) - length(original_shape))..., input_shape...)
+
+        for (idim, edim) in zip(pad_input, shape)
+            if idim != 1 && idim != edim
+                throw(ArgumentError("Input tensor cannot broadcast to expected shape"))
+            end
+        end
+
+        for (odim, edim) in zip(pad_input, shape)
+            if edim == 1
+                expanded = reshape(repeat(expanded, edim), shape...)
+            end
+        end
+    end
+    return expanded
+end
+
+function onnx_transpose(input::AbstractArray; perm)
+    # Julia index starts at 1
+    mutate = perm .+ 1
+    start_size = size(input)
+    if (length(start_size) != length(perm))
+        throw(ArgumentError("Size of array does not match permutation"))
+    end
+    output = permutedims(input, mutate)
+    return output
 end
