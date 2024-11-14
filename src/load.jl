@@ -93,6 +93,10 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::A
     return push_call!(tape, conv, args...; kw...)
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Div}, args::VarVec, attrs::AttrDict)
+    kw = from_onnx_conv(attrs) |> NamedTuple
+    return push_call!(tape, div, args...)
+end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs::AttrDict)
     kw = from_onnx_conv(attrs; pooling=true) |> NamedTuple

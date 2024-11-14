@@ -205,6 +205,11 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(pow)}, op::Umlaut.Ca
     push!(g.node, nd)
 end
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(div)}, op::Umlaut.Call)
+    nd = NodeProto("Div", op)
+    push!(g.node, nd)
+end
+
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_min)}, op::Umlaut.Call)
     nd = NodeProto("Min", op)
     push!(g.node, nd)
