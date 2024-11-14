@@ -67,141 +67,16 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
         rethrow()
     end
 end
+#########################################################
 
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::AttrDict)
-    if (length(args) == 2 && get(attrs, :alpha, 1) == 1 &&
-        get(attrs, :transA, 0) == 0 && get(attrs, :transB, 0) == 0)
-        # simplified version: just matrix multiplication
-        # note: arguments are swapped to account for row-major arrays
-        return push_call!(tape, mul, args[2], args[1])
-    else
-        # complete GEMM version
-        kw = rename_keys(attrs, Dict(
-            :transA => :tA,
-            :transB => :tB,
-            :alpha => :α,
-            :beta => :β
-        ))
-        return push_call!(tape, onnx_gemm, args...; kw...)
-    end
-end
-
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
-    kw = from_onnx_conv(attrs) |> NamedTuple
-    return push_call!(tape, conv, args...; kw...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Div}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, div, args...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs::AttrDict)
-    kw = from_onnx_conv(attrs; pooling=true) |> NamedTuple
-    return push_call!(tape, maxpool, args[1]; kw...)
-end
-
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :GlobalAveragePool}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, global_average_pool, args...)
-end
-
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Flatten}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, onnx_flatten, args...; attrs...)
-end
-
-
+# Add
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Add}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, add, args...)
 end
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Equal}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, equal, args...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Where}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, onnx_where, args...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Expand}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, expand, args...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Transpose}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, onnx_transpose, args...; attrs...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sub}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, sub, args...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Mul}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, mul, args...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Pow}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, pow, args...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Max}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, _max, args...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Min}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, _min, args...)
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, relu, args[1])
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :LeakyRelu}, args::VarVec, attrs::AttrDict)
-    haskey
-    return push_call!(tape, leakyrelu, args[1]; (;a = get(attrs,:alpha, 0.01))...) #default value 
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Elu}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, elu, args[1])
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Tanh}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, _tanh, args[1])
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sin}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, _sin, args[1])
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Cos}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, _cos, args[1])
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Neg}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, neg, args[1])
-end
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :MatMul}, args::VarVec, attrs::AttrDict)
-    A_ndims = ndims(args[1]._op.val)
-    B_ndims = ndims(args[2]._op.val)
-    if A_ndims == 2 && B_ndims == 2
-        return push_call!(tape, *, args[2], args[1])
-    elseif A_ndims in (2, 3) && B_ndims in (2, 3)
-        return push_call!(tape, NNlib.batched_mul, args[2], args[1])
-    else
-        error("MatMul with arrays of $A_ndims and $B_ndims is not implemented yet")
-    end
-end
-
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sigmoid}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, Broadcast.broadcast, NNlib.sigmoid, args...)
-end
-
-
+# BatchNormalization
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
-        args::VarVec, attrs::AttrDict)
+args::VarVec, attrs::AttrDict)
     kw = from_onnx_norm(attrs)
     bn = push_call!(tape, batch_norm, args...; kw...)
     if bn._op.val isa Tuple
@@ -216,14 +91,18 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :BatchNormalization},
     end
 end
 
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Shape}, args::VarVec, attrs::AttrDict)
-    # TODO: handle start and end attributes
-    return push_call!(tape, size_vector, args[1])
+# Cos
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Cos}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _cos, args[1])
 end
 
+# Concat
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Concat}, args::VarVec, attrs::AttrDict)
+    axis = get(attrs, :axis, 1)
+    return push_call!(tape, onnx_concat, args...; axis)
+end
 
-
+# Constant
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Constant}, args::VarVec, attrs::AttrDict)
     val_attr = first(keys(attrs))
     val = if val_attr == :value
@@ -234,11 +113,44 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Constant}, args::VarVec, attr
     return push!(tape, Constant(val))
 end
 
+# ConstantOfShape 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :ConstantOfShape}, args::VarVec, attrs::AttrDict)
     kw = from_onnx_norm(attrs)
     return push_call!(tape, constant_of_shape, args[1]; kw...)
 end
 
+# Conv
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Conv}, args::VarVec, attrs::AttrDict)
+    kw = from_onnx_conv(attrs) |> NamedTuple
+    return push_call!(tape, conv, args...; kw...)
+end
+
+# Div
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Div}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, div, args...)
+end
+
+# Elu
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Elu}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, elu, args[1])
+end
+
+# Equal
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Equal}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, equal, args...)
+end
+
+# Expand
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Expand}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, expand, args...)
+end
+
+# Flatten
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Flatten}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, onnx_flatten, args...; attrs...)
+end
+
+# Gather
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gather}, args::VarVec, attrs::AttrDict)
     axis = get(attrs, :axis, 0)
     data = tape[args[1]].val
@@ -246,21 +158,98 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gather}, args::VarVec, attrs:
     return push_call!(tape, onnx_gather, args...; dim=dim)
 end
 
-
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Unsqueeze}, args::VarVec, attrs::AttrDict)
-    if length(args) == 2
-        # ONNX >= v13
-        return push_call!(tape, onnx_unsqueeze, args...)
-    elseif length(args) == 1
-        # ONNX < v13
-        axes = attrs[:axes]
-        v_axes = push!(tape, Constant(axes))
-        return push_call!(tape, onnx_unsqueeze, args[1], v_axes)
+# Gemm
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::AttrDict)
+    if (length(args) == 2 && get(attrs, :alpha, 1) == 1 &&
+        get(attrs, :transA, 0) == 0 && get(attrs, :transB, 0) == 0)
+        # simplified version: just matrix multiplication
+        # note: arguments are swapped to account for row-major arrays
+        return push_call!(tape, *, args[2], args[1])
     else
-        throw(ArgumentError("Cannot load node from Unsqueeze with $(length(args)) arguments"))
+        # complete GEMM version
+        kw = rename_keys(attrs, Dict(
+            :transA => :tA,
+            :transB => :tB,
+            :alpha => :α,
+            :beta => :β
+        ))
+        return push_call!(tape, onnx_gemm, args...; kw...)
     end
 end
 
+# GlobalAveragePool
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :GlobalAveragePool}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, global_average_pool, args...)
+end
+
+# LeakyRelu
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :LeakyRelu}, args::VarVec, attrs::AttrDict)
+    haskey
+    return push_call!(tape, leakyrelu, args[1]; (;a = get(attrs,:alpha, 0.01))...) #default value 
+end
+
+# MatMul
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :MatMul}, args::VarVec, attrs::AttrDict)
+    A_ndims = ndims(args[1]._op.val)
+    B_ndims = ndims(args[2]._op.val)
+    if A_ndims == 2 && B_ndims == 2
+        return push_call!(tape, *, args[2], args[1])
+    elseif A_ndims in (2, 3) && B_ndims in (2, 3)
+        return push_call!(tape, NNlib.batched_mul, args[2], args[1])
+    else
+        error("MatMul with arrays of $A_ndims and $B_ndims is not implemented yet")
+    end
+end
+
+# Max
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Max}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _max, args...)
+end
+
+# Maxpool
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :MaxPool}, args::VarVec, attrs::AttrDict)
+    kw = from_onnx_conv(attrs; pooling=true) |> NamedTuple
+    return push_call!(tape, maxpool, args[1]; kw...)
+end
+
+# Min
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Min}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _min, args...)
+end
+
+# Mul
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Mul}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, mul, args...)
+end
+
+# Neg
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Neg}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, neg, args[1])
+end
+
+# Pow
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Pow}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, pow, args...)
+end
+
+# Relu
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Relu}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, relu, args[1])
+end
+
+# Shape
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Shape}, args::VarVec, attrs::AttrDict)
+    # TODO: handle start and end attributes
+    return push_call!(tape, size_vector, args[1])
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sigmoid}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, Broadcast.broadcast, sigmoid, args...)
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sin}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _sin, args[1])
+end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Slice}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, onnx_slice, args...)
@@ -284,9 +273,35 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Split}, args::VarVec, attrs::
     )
 end
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Concat}, args::VarVec, attrs::AttrDict)
-    axis = get(attrs, :axis, 1)
-    return push_call!(tape, onnx_concat, args...; axis)
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sub}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, sub, args...)
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Tanh}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _tanh, args[1])
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Transpose}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, onnx_transpose, args...)
+end
+
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Unsqueeze}, args::VarVec, attrs::AttrDict)
+    if length(args) == 2
+        # ONNX >= v13
+        return push_call!(tape, onnx_unsqueeze, args...)
+    elseif length(args) == 1
+        # ONNX < v13
+        axes = attrs[:axes]
+        v_axes = push!(tape, Constant(axes))
+        return push_call!(tape, onnx_unsqueeze, args[1], v_axes)
+    else
+        throw(ArgumentError("Cannot load node from Unsqueeze with $(length(args)) arguments"))
+    end
+end
+
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Where}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, onnx_where, args...)
 end
 
 ###############################################################################

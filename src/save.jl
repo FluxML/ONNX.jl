@@ -80,10 +80,6 @@ ValueInfoProto(op::Umlaut.AbstractOp) = ValueInfoProto(
     eltype(op.val)
 )
 
-##############################################################################
-#                                 Methods                                    #
-##############################################################################
-
 onnx_name(v::Variable) = "x$(v.id)"
 onnx_name(op::Umlaut.AbstractOp) = "x$(op.id)"
 
@@ -111,7 +107,137 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(getfield)}, op::Umla
     # Using getfield() for anything other then destructuring is thus a mistake.
 end
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(tuple)}, op::Umlaut.Call)
+    @assert(
+        op.id == op.tape.result.id,
+        "tuple() doesn't have a corresponding ONNX op and is only allowed as " *
+        "the result of the tape, in which case it represents multiple outputs " *
+        "of the graph"
+    )
+    # do nothing
+end
 
+##############################################################################
+#                                 Methods                                    #
+##############################################################################
+
+# Add
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(add)}, op::Umlaut.Call)
+    nd = NodeProto("Add", op)
+    push!(g.node, nd)
+end
+
+# BatchNormalization
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, batch_norm), op::Umlaut.Call)
+    kw_dict = kwargs2dict(op)
+    attrs = from_nnlib_norm(kw_dict)
+    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
+    output = if Bool(get(attrs, :training_mode, 0))
+        vars = unpacked_vars(op)
+        @assert(all([v isa V for v in vars]),
+            "Not all output vars of batch_norm are unpacked to the tape")
+        [onnx_name(v) for v in vars]
+    else
+        [onnx_name(op)]
+    end
+    nd = NodeProto(
+        input=[onnx_name(v) for v in args],
+        output=output,
+        name=onnx_name(op),
+        attribute=AttributeProto[AttributeProto(k, v) for (k, v) in attrs],
+        op_type="BatchNormalization"
+    )
+    push!(g.node, nd)
+end
+
+# Cos
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_cos)}, op::Umlaut.Call)
+    nd = NodeProto("Cos", op)
+    push!(g.node, nd)
+end
+
+# Concat
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_concat), op::Umlaut.Call)
+    nd = NodeProto("Concat", op, kwargs2dict(op))
+    push!(g.node, nd)
+end
+
+# Constant
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, <:Any}, op::Umlaut.Constant)
+    @assert(
+        op.val isa AbstractArray,
+        "ONNX.jl currently doesn't support saving constants of type $(typeof(op.val))"
+    )
+    attr_name = :value
+    attr_value = from_nnlib(op.val)
+    nd = NodeProto(
+        input=[],
+        output=[onnx_name(op)],
+        name=onnx_name(op),
+        attribute=AttributeProto.([attr_name], [attr_value]),
+        op_type="Constant"
+    )
+    push!(g.node, nd)
+end
+
+# ConstantOfShape
+function save_node!(g::GraphProto, ::@opconfig_kw{:ONNX, typeof(constant_of_shape)}, op::Umlaut.Constant)
+    nd = NodeProto("ConstantOfShape", op, kwargs2dict(op))
+    push!(g.node, nd)
+end
+
+# Conv
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, conv), op::Umlaut.Call)
+    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
+    w = args[2]._op.val
+    # ONNXRuntime gives the following error for Float64:
+    # NOT_IMPLEMENTED : Could not find an implementation for the node x3:Conv(11)')
+    eltype(w) == Float64 && @warn "Not all ONNX runtimes support input & weights as Float64"
+    attrs = from_nnlib_conv(kwargs2dict(op), ndims(w) - 2)
+    nd = NodeProto("Conv", op, attrs)
+    push!(g.node, nd)
+end
+
+# Div
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(div)}, op::Umlaut.Call)
+    nd = NodeProto("Div", op)
+    push!(g.node, nd)
+end
+
+# Elu
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(elu)}, op::Umlaut.Call)
+    nd = NodeProto("Elu", op)
+    push!(g.node, nd)
+end
+
+# Equal
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(equal)}, op::Umlaut.Call)
+    nd = NodeProto("Equal", op)
+    push!(g.node, nd)
+end
+
+# Expand
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Expand}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, expand, args...)
+end
+
+# Flatten
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_flatten), op::Umlaut.Call)
+    nd = NodeProto("Flatten", op)
+    push!(g.node, nd)
+end
+
+# Gather
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_gather), op::Umlaut.Call)
+    data = iskwfunc(op.fn) ? op.args[3]._op.val : op.args[1]._op.val
+    kw_dict = kwargs2dict(op)
+    dim = get(kw_dict, :dim, ndims(data))
+    axis = ndims(data) - dim
+    nd = NodeProto("Gather", op, Dict(:axis => axis))
+    push!(g.node, nd)
+end
+
+# Gemm
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(*)}, op::Umlaut.Call)
     nd = NodeProto(
         input=[onnx_name(v) for v in reverse(op.args)],
@@ -136,126 +262,20 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_gemm), op::Umlaut.
     push!(g.node, nd)
 end
 
-
-function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, conv), op::Umlaut.Call)
-    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
-    w = args[2]._op.val
-    # ONNXRuntime gives the following error for Float64:
-    # NOT_IMPLEMENTED : Could not find an implementation for the node x3:Conv(11)')
-    eltype(w) == Float64 && @warn "Not all ONNX runtimes support input & weights as Float64"
-    attrs = from_nnlib_conv(kwargs2dict(op), ndims(w) - 2)
-    nd = NodeProto("Conv", op, attrs)
-    push!(g.node, nd)
-end
-
-
-function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, maxpool), op::Umlaut.Call)
-    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
-    x = args[1]._op.val
-    attrs = from_nnlib_conv(kwargs2dict(op), ndims(x) - 2)
-    nd = NodeProto("MaxPool", op, attrs)
-    push!(g.node, nd)
-end
-
-
+# GlobalAveragePool
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(global_average_pool)}, op::Umlaut.Call)
     nd = NodeProto("GlobalAveragePool", op)
     push!(g.node, nd)
 end
 
-
-function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_flatten), op::Umlaut.Call)
-    nd = NodeProto("Flatten", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(equal)}, op::Umlaut.Call)
-    nd = NodeProto("Equal", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(onnx_where)}, op::Umlaut.Call)
-    nd = NodeProto("Where", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(expand)}, op::Umlaut.Call)
-    nd = NodeProto("Expand", op)
-    push!(g.node, nd)
-end 
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(onnx_transpose)}, op::Umlaut.Call)
-    nd = NodeProto("Transpose", op)
-    push!(g.node, nd)
-end 
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(add)}, op::Umlaut.Call)
-    nd = NodeProto("Add", op)
-    push!(g.node, nd)
-end
-
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(mul)}, op::Umlaut.Call)
-    nd = NodeProto("Mul", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(pow)}, op::Umlaut.Call)
-    nd = NodeProto("Pow", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(div)}, op::Umlaut.Call)
-    nd = NodeProto("Div", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_min)}, op::Umlaut.Call)
-    nd = NodeProto("Min", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_max)}, op::Umlaut.Call)
-    nd = NodeProto("Max", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(neg)}, op::Umlaut.Call)
-    nd = NodeProto("Neg", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Umlaut.Call)
-    nd = NodeProto("Relu", op)
-    push!(g.node, nd)
-end
-
+# LeakyRelu
 function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, leakyrelu), op::Umlaut.Call)
     kw_dict = kwargs2dict(op)
     nd = NodeProto("LeakyRelu", op, Dict(:alpha=>kw_dict[:a]))
     push!(g.node, nd)
 end
 
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(elu)}, op::Umlaut.Call)
-    nd = NodeProto("Elu", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_tanh)}, op::Umlaut.Call)
-    nd = NodeProto("Tanh", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_sin)}, op::Umlaut.Call)
-    nd = NodeProto("Sin", op)
-    push!(g.node, nd)
-end
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_cos)}, op::Umlaut.Call)
-    nd = NodeProto("Cos", op)
-    push!(g.node, nd)
-end
-
+# MatMul
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(NNlib.batched_mul)}, op::Umlaut.Call)
     nd = NodeProto(
         input=[onnx_name(v) for v in reverse(op.args)],
@@ -267,75 +287,76 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(NNlib.batched_mul)},
     push!(g.node, nd)
 end
 
-
-function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, batch_norm), op::Umlaut.Call)
-    kw_dict = kwargs2dict(op)
-    attrs = from_nnlib_norm(kw_dict)
-    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
-    output = if Bool(get(attrs, :training_mode, 0))
-        vars = unpacked_vars(op)
-        @assert(all([v isa V for v in vars]),
-            "Not all output vars of batch_norm are unpacked to the tape")
-        [onnx_name(v) for v in vars]
-    else
-        [onnx_name(op)]
-    end
-    nd = NodeProto(
-        input=[onnx_name(v) for v in args],
-        output=output,
-        name=onnx_name(op),
-        attribute=AttributeProto[AttributeProto(k, v) for (k, v) in attrs],
-        op_type="BatchNormalization"
-    )
+# Max
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_max)}, op::Umlaut.Call)
+    nd = NodeProto("Max", op)
     push!(g.node, nd)
 end
 
+# Maxpool
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, maxpool), op::Umlaut.Call)
+    args = iskwfunc(op.fn) ? op.args[3:end] : op.args
+    x = args[1]._op.val
+    attrs = from_nnlib_conv(kwargs2dict(op), ndims(x) - 2)
+    nd = NodeProto("MaxPool", op, attrs)
+    push!(g.node, nd)
+end
 
+# Min
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_min)}, op::Umlaut.Call)
+    nd = NodeProto("Min", op)
+    push!(g.node, nd)
+end
+
+# Mul
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(mul)}, op::Umlaut.Call)
+    nd = NodeProto("Mul", op)
+    push!(g.node, nd)
+end
+
+# Neg
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(neg)}, op::Umlaut.Call)
+    nd = NodeProto("Neg", op)
+    push!(g.node, nd)
+end
+
+# Pow
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(pow)}, op::Umlaut.Call)
+    nd = NodeProto("Pow", op)
+    push!(g.node, nd)
+end
+
+# Relu
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(relu)}, op::Umlaut.Call)
+    nd = NodeProto("Relu", op)
+    push!(g.node, nd)
+end
+
+# Shape
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(size)}, op::Umlaut.Call)
     nd = NodeProto("Shape", op)
     push!(g.node, nd)
 end
 
-
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, <:Any}, op::Umlaut.Constant)
-    @assert(
-        op.val isa AbstractArray,
-        "ONNX.jl currently doesn't support saving constants of type $(typeof(op.val))"
-    )
-    attr_name = :value
-    attr_value = from_nnlib(op.val)
-    nd = NodeProto(
-        input=[],
-        output=[onnx_name(op)],
-        name=onnx_name(op),
-        attribute=AttributeProto.([attr_name], [attr_value]),
-        op_type="Constant"
-    )
+# Sigmoid
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(sigmoid)}, op::Umlaut.Call)
+    nd = NodeProto("Sigmoid", op)
     push!(g.node, nd)
 end
 
-
-function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_gather), op::Umlaut.Call)
-    data = iskwfunc(op.fn) ? op.args[3]._op.val : op.args[1]._op.val
-    kw_dict = kwargs2dict(op)
-    dim = get(kw_dict, :dim, ndims(data))
-    axis = ndims(data) - dim
-    nd = NodeProto("Gather", op, Dict(:axis => axis))
+# Sin
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_sin)}, op::Umlaut.Call)
+    nd = NodeProto("Sin", op)
     push!(g.node, nd)
 end
 
-
-function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_unsqueeze), op::Umlaut.Call)
-    nd = NodeProto("Unsqueeze", op)
-    push!(g.node, nd)
-end
-
-
+# Slice
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(onnx_slice)}, op::Umlaut.Call)
     nd = NodeProto("Slice", op)
     push!(g.node, nd)
 end
 
+# Split
 function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_split), op::Umlaut.Call)
     attrs = kwargs2dict(op)
     args = iskwfunc(op.fn) ? op.args[3:end] : op.args
@@ -353,21 +374,35 @@ function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_split), op::Umlaut
     push!(g.node, nd)
 end
 
-function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_concat), op::Umlaut.Call)
-    nd = NodeProto("Concat", op, kwargs2dict(op))
+# Sub
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(sub)}, op::Umlaut.Call)
+    nd = NodeProto("Sub", op)
     push!(g.node, nd)
 end
 
-function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(tuple)}, op::Umlaut.Call)
-    @assert(
-        op.id == op.tape.result.id,
-        "tuple() doesn't have a corresponding ONNX op and is only allowed as " *
-        "the result of the tape, in which case it represents multiple outputs " *
-        "of the graph"
-    )
-    # do nothing
+# Tanh
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_tanh)}, op::Umlaut.Call)
+    nd = NodeProto("Tanh", op)
+    push!(g.node, nd)
 end
 
+# Transpose
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(onnx_transpose)}, op::Umlaut.Call)
+    nd = NodeProto("Transpose", op)
+    push!(g.node, nd)
+end 
+
+# Unsqueeze
+function save_node!(g::GraphProto, ::@opconfig_kw(:ONNX, onnx_unsqueeze), op::Umlaut.Call)
+    nd = NodeProto("Unsqueeze", op)
+    push!(g.node, nd)
+end
+
+# Where
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(onnx_where)}, op::Umlaut.Call)
+    nd = NodeProto("Where", op)
+    push!(g.node, nd)
+end
 
 ##############################################################################
 #                                    API                                     #

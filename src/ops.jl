@@ -6,91 +6,14 @@ import StaticArrays: SVector
 
 using LinearAlgebra
 
-flipweights(w::AbstractArray{T,N}) where {T,N} = w[(size(w, i):-1:1 for i = 1:(N-2))..., :, :]
-
-conv(x, w; kw...) = NNlib.conv(x, flipweights(w); kw...)
-
-function conv(x, w, b; kw...)
-    d = ndims(x) - 2
-    bias_size = (ntuple(_ -> 1, d)..., :, 1)
-    b = reshape(b, bias_size)
-    return conv(x, w; kw...) .+ b
-end
-
-
-function onnx_gemm(A, B, C; tA = 0, tB = 0, α = 1, β = 1)
-    A = Bool(tA) ? A' : A
-    B = Bool(tB) ? B' : B
-    # note: order of arguments reversed due to row-major layout
-    return α * B * A .+ β * C
-end
-
-function onnx_gemm(A, B; tA = 0, tB = 0, α = 1)
-    A = Bool(tA) ? A' : A
-    B = Bool(tB) ? B' : B
-    # note: order of arguments reversed due to row-major layout
-    return α * B * A
-end
-
-function constant_of_shape(shape::AbstractVector; kw...)
-    if length(shape) < 2
-        dims = shape
-    else
-        dims = copy(shape)
-        dims[1], dims[2] = shape[2], shape[1]
-    end
-    # note: order of arguments reversed due to row-major layout
-    output = zeros(Float32, dims...)
-    fill!(output, kw...)
-    return output
-end
-
-function constant_of_shape(shape::AbstractVector)
-    if length(shape) < 2
-        dims = shape
-    else
-        dims = copy(shape)
-        dims[1], dims[2] = shape[2], shape[1]
-    end
-    # note: order of arguments reversed due to row-major layout
-    output = zeros(Float32, dims...)
-    return output
-end
-
-# Julia-friendly flatten
-function flatten(x; dim = ndims(x) - 1)
-    sz = size(x)
-    keep = dim < ndims(x) ? sz[dim+1:end] : 1
-    return reshape(x, :, keep...)
-end
-
-# ONNX-specific flatten
-function onnx_flatten(x; axis = 1)
-    dim = axis >= 0 ? ndims(x) - axis + 1 : axis + 1
-    return flatten(x; dim = dim)
-end
-
+# Add
 add(xs...) = .+(xs...)
-sub(xs...) = .-(xs...)
-mul(xs...) = .*(xs...)
-pow(xs...) = .^(xs...)
-div(xs...) = ./(xs...)
-equal(xs...) = .==(xs...)
-relu(x) = NNlib.relu.(x)
-leakyrelu(x;a = 0.01) = NNlib.leakyrelu.(x,a)
-elu(x) = NNlib.elu.(x)
-_sin(x) = Base.sin.(x)
-_cos(x) = Base.cos.(x)
-neg(x) = -1 .* x
-_tanh(x) = Base.tanh.(x)
-maxpool(x; kernel, pad = 0, stride = 1) = NNlib.maxpool(x, kernel; pad = pad, stride = stride)
-_min(xs...) = min.(xs...)
-_max(xs...) = max.(xs...)
 
+# BatchNormalization
 # common functional implementation for batch and instance normalization based on
 # https://github.com/FluxML/Flux.jl/blob/06970a5fbbb1cb485c5d2cba597a78fb453fc713/src/layers/normalise.jl#L166-L197
 function normalization(x::AbstractArray{T,N}, γ, β, μ, σ², reduce_dims, affine_shape;
-        ϵ=1f-5, mtm=0.1f0, training=false) where {T, N}
+    ϵ=1f-5, mtm=0.1f0, training=false) where {T, N}
     # init variables in the function scope instead of the if's scope
     μnext = μ
     σ²next = σ²
@@ -122,41 +45,130 @@ function normalization(x::AbstractArray{T,N}, γ, β, μ, σ², reduce_dims, aff
     end
 end
 
-
-function batch_norm(x::AbstractArray{T,N}, γ, β, μ, σ²;
-        ϵ=1f-5, mtm=0.1f0, training=false) where {T,N}
-    reduce_dims = [1:N-2; N]
-    affine_shape = ntuple(i -> i == N-1 ? size(x, N-1) : 1, N)
-    return normalization(x, γ, β, μ, σ², reduce_dims, affine_shape;
-        ϵ=ϵ, mtm=mtm, training=training)
-end
-
-
 function instance_norm(x::AbstractArray{T,N}, γ, β, μ, σ²;
-        ϵ=1f-5, mtm=0.1f0, training=false) where {T,N}
+    ϵ=1f-5, mtm=0.1f0, training=false) where {T,N}
     reduce_dims = 1:N-2
     affine_shape = ntuple(i -> i == N-1 ? size(x, N-1) : 1, N)
-    return normalization(x, γ, β, μ, σ², reduce_dims, affine_shape;
+        return normalization(x, γ, β, μ, σ², reduce_dims, affine_shape;
         ϵ=ϵ, mtm=mtm, training=training)
 end
 
-
-# implementation from
-# https://github.com/FluxML/Flux.jl/blob/f66be896d3d2698ce77ce8b7788b4317285bf0b2/src/layers/conv.jl#L605-L614
-function global_average_pool(x)
-    # Input size
-    x_size = size(x)
-    # Kernel size
-    k = x_size[1:end-2]
-    # Pooling dimensions
-    pdims = NNlib.PoolDims(x, k)
-    return NNlib.meanpool(x, pdims)
+function batch_norm(x::AbstractArray{T,N}, γ, β, μ, σ²;
+    ϵ=1f-5, mtm=0.1f0, training=false) where {T,N}
+    reduce_dims = [1:N-2; N]
+    affine_shape = ntuple(i -> i == N-1 ? size(x, N-1) : 1, N)
+        return normalization(x, γ, β, μ, σ², reduce_dims, affine_shape;
+        ϵ=ϵ, mtm=mtm, training=training)
 end
 
+# Cos
+_cos(x) = Base.cos.(x)
 
-size_vector(x) = SVector(size(x))
+# Concat: ONNX version, axis is zero-based
+function onnx_concat(arrays...; axis)
+    @assert length(arrays) >= 1
+    dims = axis >= 0 ? ndims(first(arrays)) - axis : -axis 
+    return cat(arrays...; dims)
+end
 
+function onnx_split(input::AbstractArray; axis)
+    dims = axis >= 0 ? ndims(input) - axis  : -axis 
+    return onnx_split(input, ones(Int, size(input, dims)); axis)
+end
 
+# Conv
+flipweights(w::AbstractArray{T,N}) where {T,N} = w[(size(w, i):-1:1 for i = 1:(N-2))..., :, :]
+
+conv(x, w; kw...) = NNlib.conv(x, flipweights(w); kw...)
+
+function conv(x, w, b; kw...)
+    d = ndims(x) - 2
+    bias_size = (ntuple(_ -> 1, d)..., :, 1)
+    b = reshape(b, bias_size)
+    return conv(x, w; kw...) .+ b
+end
+
+# ConstantOfShape
+function constant_of_shape(shape::AbstractVector)
+    if length(shape) < 2
+        dims = shape
+    else
+        dims = copy(shape)
+        dims[1], dims[2] = shape[2], shape[1]
+    end
+    # note: order of arguments reversed due to row-major layout
+    output = zeros(Float32, dims...)
+    return output
+end
+
+function constant_of_shape(shape::AbstractVector; kw...)
+    if length(shape) < 2
+        dims = shape
+    else
+        dims = copy(shape)
+        dims[1], dims[2] = shape[2], shape[1]
+    end
+    # note: order of arguments reversed due to row-major layout
+    output = zeros(Float32, dims...)
+    fill!(output, kw...)
+    return output
+end
+
+# Div
+div(xs...) = ./(xs...)
+
+# Elu
+elu(x) = NNlib.elu.(x)
+
+# Equal
+equal(xs...) = .==(xs...)
+
+# Expand
+function expand(input::AbstractArray, shape::AbstractArray)
+    original_shape = size(input)
+
+    shrink = Bool(0)
+    if length(input) > length(shape)
+        shrink = Bool(1)
+    end
+
+    if shrink 
+        padded = ones(Float32, length(input))
+        expanded = broadcast(*, input, padded)
+    else
+        expanded = input
+        
+        pad_input = (ones(Int, length(shape) - length(original_shape))..., input_shape...)
+
+        for (idim, edim) in zip(pad_input, shape)
+            if idim != 1 && idim != edim
+                throw(ArgumentError("Input tensor cannot broadcast to expected shape"))
+            end
+        end
+
+        for (odim, edim) in zip(pad_input, shape)
+            if edim == 1
+                expanded = reshape(repeat(expanded, edim), shape...)
+            end
+        end
+    end
+    return expanded
+end
+
+# Flatten: Julia Friendly
+function flatten(x; dim = ndims(x) - 1)
+    sz = size(x)
+    keep = dim < ndims(x) ? sz[dim+1:end] : 1
+    return reshape(x, :, keep...)
+end
+
+# Flatten: ONNX-specific
+function onnx_flatten(x; axis = 1)
+    dim = axis >= 0 ? ndims(x) - axis + 1 : axis + 1
+    return flatten(x; dim = dim)
+end
+
+# Gather
 """
     take(data, idxs; dim=ndims(data))
 
@@ -224,32 +236,72 @@ function onnx_gather(
     return take(data, idxs_adjusted; dim=dim)
 end
 
-
-# julia-friendly
-function NNlib.unsqueeze(x::AbstractArray, dims)
-    new_shape = collect(size(x))
-    for d in sort(collect(dims))
-        insert!(new_shape, d, 1)
-    end
-    return reshape(x, new_shape...)
+# Gemm
+function onnx_gemm(A, B, C; tA = 0, tB = 0, α = 1, β = 1)
+    A = Bool(tA) ? A' : A
+    B = Bool(tB) ? B' : B
+    # note: order of arguments reversed due to row-major layout
+    return α * B * A .+ β * C
 end
 
-
-# ONNX-friendly, e.g. axes is 0-based, row-major
-function onnx_unsqueeze(x::AbstractArray, axes::Vector)
-    # ndims(data) + length(axes) => size of the array after unsqueezing
-    # .- axes                    => to reverse dimensions
-    # .+ 1                       => to convert to 1-based indexing
-    # .- 1                       => correction by 1
-    dims = ndims(x) + length(axes) .- axes
-    return NNlib.unsqueeze(x, dims)
+function onnx_gemm(A, B; tA = 0, tB = 0, α = 1)
+    A = Bool(tA) ? A' : A
+    B = Bool(tB) ? B' : B
+    # note: order of arguments reversed due to row-major layout
+    return α * B * A
 end
 
+# GlobalAveragePool
+# implementation from
+# https://github.com/FluxML/Flux.jl/blob/f66be896d3d2698ce77ce8b7788b4317285bf0b2/src/layers/conv.jl#L605-L614
+function global_average_pool(x)
+    # Input size
+    x_size = size(x)
+    # Kernel size
+    k = x_size[1:end-2]
+    # Pooling dimensions
+    pdims = NNlib.PoolDims(x, k)
+    return NNlib.meanpool(x, pdims)
+end
 
+# LeakyRelu
+leakyrelu(x;a = 0.01) = NNlib.leakyrelu.(x,a)
+
+# Max
+_max(xs...) = max.(xs...)
+
+# MaxPool
+maxpool(x; kernel, pad = 0, stride = 1) = NNlib.maxpool(x, kernel; pad = pad, stride = stride)
+
+# Min
+_min(xs...) = min.(xs...)
+
+# Mul
+mul(xs...) = .*(xs...)
+
+# Neg
+neg(x) = -1 .* x
+
+# Pow
+pow(xs...) = .^(xs...)
+
+# Relu
+relu(x) = NNlib.relu.(x)
+
+# Shape
+size_vector(x) = SVector(size(x))
+
+# Sigmoid
+sigmoid(x) = NNLib.sigmoid
+
+# Sin
+_sin(x) = Base.sin.(x)
+
+# Slice
 function onnx_slice(
-        data::AbstractArray,
-        starts::VecOrMat{Int}, ends::VecOrMat{Int},
-        axes::Vector{Int}=Int[], steps::Vector{Int}=Int[])
+data::AbstractArray,
+starts::VecOrMat{Int}, ends::VecOrMat{Int},
+axes::Vector{Int}=Int[], steps::Vector{Int}=Int[])
     axes = isempty(axes) ? collect(0:ndims(data)-1) : axes
     steps = isempty(steps) ? [1 for i=1:ndims(data)] : steps
     for i in eachindex(ends)
@@ -269,19 +321,7 @@ function onnx_slice(
     return data[I...]
 end
 
-# ONNX version of concat, axis is zero-based
-function onnx_concat(arrays...; axis)
-    @assert length(arrays) >= 1
-    dims = axis >= 0 ? ndims(first(arrays)) - axis : -axis 
-    return cat(arrays...; dims)
-end
-
-function onnx_split(input::AbstractArray; axis)
-    dims = axis >= 0 ? ndims(input) - axis  : -axis 
-    return onnx_split(input, ones(Int, size(input, dims)); axis)
-end
-
-# ONNX version of split, axis is zero-based
+# Split: ONNX version, axis is zero-based
 function onnx_split(input::AbstractArray, split::Vector{Int}; axis)
     dims = axis >= 0 ? ndims(input) - axis : -axis
     @assert sum(split) == size(input, dims)
@@ -294,48 +334,13 @@ function onnx_split(input::AbstractArray, split::Vector{Int}; axis)
     )
 end
 
-function onnx_where(condition::AbstractArray, x::AbstractArray, y::AbstractArray)
-    if (size(condition) != size(x) || size(x) != size(y))
-        throw(ArgumentError("All input arrays must have the same shape"))
-    end
-    result = zeros(Number, size(condition))
-    for i in eachindex(condition)
-        result[i] = condition[i] ? x[i] : y[i]
-    end
-    return result
-end
+# Sub
+sub(xs...) = .-(xs...)
 
-function expand(input::AbstractArray, shape::AbstractArray)
-    original_shape = size(input)
+# Tanh
+_tanh(x) = Base.tanh.(x)
 
-    shrink = Bool(0)
-    if length(input) > length(shape)
-        shrink = Bool(1)
-    end
-
-    if shrink 
-        padded = ones(Float32, length(input))
-        expanded = broadcast(*, input, padded)
-    else
-        expanded = input
-        
-        pad_input = (ones(Int, length(shape) - length(original_shape))..., input_shape...)
-
-        for (idim, edim) in zip(pad_input, shape)
-            if idim != 1 && idim != edim
-                throw(ArgumentError("Input tensor cannot broadcast to expected shape"))
-            end
-        end
-
-        for (odim, edim) in zip(pad_input, shape)
-            if edim == 1
-                expanded = reshape(repeat(expanded, edim), shape...)
-            end
-        end
-    end
-    return expanded
-end
-
+# Transpose
 function onnx_transpose(input::AbstractArray; perm)
     # Julia index starts at 1
     mutate = perm .+ 1
@@ -345,4 +350,36 @@ function onnx_transpose(input::AbstractArray; perm)
     end
     output = permutedims(input, mutate)
     return output
+end
+
+# Unsqueeze: julia-friendly
+function NNlib.unsqueeze(x::AbstractArray, dims)
+    new_shape = collect(size(x))
+    for d in sort(collect(dims))
+        insert!(new_shape, d, 1)
+    end
+    return reshape(x, new_shape...)
+end
+
+
+# Unsqueeze: ONNX-friendly, e.g. axes is 0-based, row-major
+function onnx_unsqueeze(x::AbstractArray, axes::Vector)
+    # ndims(data) + length(axes) => size of the array after unsqueezing
+    # .- axes                    => to reverse dimensions
+    # .+ 1                       => to convert to 1-based indexing
+    # .- 1                       => correction by 1
+    dims = ndims(x) + length(axes) .- axes
+    return NNlib.unsqueeze(x, dims)
+end
+
+# Where
+function onnx_where(condition::AbstractArray, x::AbstractArray, y::AbstractArray)
+    if (size(condition) != size(x) || size(x) != size(y))
+        throw(ArgumentError("All input arrays must have the same shape"))
+    end
+    result = zeros(Number, size(condition))
+    for i in eachindex(condition)
+        result[i] = condition[i] ? x[i] : y[i]
+    end
+    return result
 end
