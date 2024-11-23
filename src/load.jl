@@ -243,18 +243,22 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Shape}, args::VarVec, attrs::
     return push_call!(tape, size_vector, args[1])
 end
 
+# Sigmoid
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sigmoid}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, Broadcast.broadcast, sigmoid, args...)
 end
 
+# Sin
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sin}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, _sin, args[1])
 end
 
+# Slice
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Slice}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, onnx_slice, args...)
 end
 
+# Split
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Split}, args::VarVec, attrs::AttrDict)
     axis = get(attrs, :axis, 0)
     split = if haskey(attrs, :split) # Version 1, 2, 11
@@ -273,19 +277,22 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Split}, args::VarVec, attrs::
     )
 end
 
+# Sub
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sub}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, sub, args...)
 end
 
+# Tanh
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Tanh}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, _tanh, args[1])
 end
 
+# Transpose
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Transpose}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, onnx_transpose, args...)
 end
 
-
+# Unsqueeze
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Unsqueeze}, args::VarVec, attrs::AttrDict)
     if length(args) == 2
         # ONNX >= v13
@@ -300,6 +307,7 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Unsqueeze}, args::VarVec, att
     end
 end
 
+# Where
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Where}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, onnx_where, args...)
 end
