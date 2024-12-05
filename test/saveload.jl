@@ -18,6 +18,7 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         args = (rand(3, 4), rand(3, 4))
         ort_test(ONNX.add, args...)
         ort_test(ONNX.mul, args...)
+        ort_test(ONNX._sin, args...)
     end
 
     @testset "Gemm" begin
