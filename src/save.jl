@@ -111,6 +111,10 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(getfield)}, op::Umla
     # Using getfield() for anything other then destructuring is thus a mistake.
 end
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_sin)}, op::Umlaut.Call)
+    nd = NodeProto("Sin", op)
+    push!(g.node, nd)
+end
 
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(*)}, op::Umlaut.Call)
     nd = NodeProto(
