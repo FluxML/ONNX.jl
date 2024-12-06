@@ -51,7 +51,7 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sin}, args::VarVec, attrs::At
     return push_call!(tape, _sin, args[1])
 end
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Cos}, args::VarVec, attrs::AttrDict)
+function load_node!(tape::Tape, @opconfig_kw{:ONNX, :Cos}, args::Union{VarVec, Int}, attrs::AttrDict)
     return push_call!(tape, _cos, args[1])
 end
 
