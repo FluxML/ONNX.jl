@@ -47,6 +47,9 @@ struct OpConfig{BE, Op} end
 const VarVec = Vector{Umlaut.Variable}
 const AttrDict = Dict{Symbol, Any}
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Sin}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _sin, args[1])
+end
 
 function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     args = [tape.c.name2var[name] for name in nd.input]
@@ -67,7 +70,6 @@ function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
         rethrow()
     end
 end
-
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Gemm}, args::VarVec, attrs::AttrDict)
     if (length(args) == 2 && get(attrs, :alpha, 1) == 1 &&
