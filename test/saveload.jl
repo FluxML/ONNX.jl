@@ -25,6 +25,11 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(ONNX._sin, A)
     end
 
+    @testset "Cos" begin
+        A = rand(3, 4)
+        ort_test(ONNX._cos, A)
+    end
+
     @testset "Gemm" begin
         A, B, C = (rand(3, 4), rand(3, 4), rand(3, 3))
         ort_test(ONNX.onnx_gemm, A, B')

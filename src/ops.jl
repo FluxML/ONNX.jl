@@ -48,6 +48,7 @@ end
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 _sin(x) = sin.(x)
+_cos(x) = cos.(x)
 mul(xs...) = .*(xs...)
 relu(x) = NNlib.relu.(x)
 leakyrelu(x;a = 0.01) = NNlib.leakyrelu.(x,a)
