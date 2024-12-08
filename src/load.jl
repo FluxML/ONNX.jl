@@ -55,6 +55,11 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Cos}, args::VarVec, attrs::At
     return push_call!(tape, _cos, args[1])
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Abs}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _abs, args[1])
+end
+
+
 function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     args = [tape.c.name2var[name] for name in nd.input]
     attrs = convert(Dict{Symbol, Any}, Dict(nd.attribute))
