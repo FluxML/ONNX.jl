@@ -37,7 +37,8 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
     end
 
     @testset "Acos" begin
-        A = rand(3, 4)
+        # ONNXRunTime has no implementation for Acos(x::Float64), using Float32 
+        A = rand(Float32, 3, 4)
         ort_test(ONNX._acos, A)
     end
 
