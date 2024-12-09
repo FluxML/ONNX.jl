@@ -64,7 +64,7 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :Acos}, args::VarVec, attrs::A
 end
 
 function load_node!(tape::Tape, ::OpConfig{:ONNX, :Acosh}, args::VarVec, attrs::AttrDict)
-    return push_call!(tape, _acos, args[1])
+    return push_call!(tape, _acosh, args[1])
 end
 
 function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
