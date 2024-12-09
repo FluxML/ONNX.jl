@@ -43,8 +43,9 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
     end
 
     @testset "Acosh" begin
+        # ONNXRunTime has no implementation for Acosh(x::Float64), using Float32 
+        A = rand(Float32, 3, 4)
         # Acosh defined for A >= 1
-        A = rand(3, 4)
         A = A .+ 1
         ort_test(ONNX._acosh, A)
     end
