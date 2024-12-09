@@ -43,7 +43,9 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
     end
 
     @testset "Acosh" begin
+        # Acosh defined for A >= 1
         A = rand(3, 4)
+        A = A .+ 1
         ort_test(ONNX._acosh, A)
     end
 
