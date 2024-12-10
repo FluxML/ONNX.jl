@@ -42,6 +42,14 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(ONNX._acos, A)
     end
 
+    @testset "Acosh" begin
+        # ONNXRunTime has no implementation for Acosh(x::Float64), using Float32 
+        A = rand(Float32, 3, 4)
+        # Acosh defined for A >= 1
+        A = A .+ 1
+        ort_test(ONNX._acosh, A)
+    end
+
     @testset "Gemm" begin
         A, B, C = (rand(3, 4), rand(3, 4), rand(3, 3))
         ort_test(ONNX.onnx_gemm, A, B')
