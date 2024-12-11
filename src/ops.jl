@@ -47,7 +47,7 @@ end
 
 function and(A, B)
     # Numpy type broadcasting
-    if size(A != B)
+    if (size(A) != size(B))
         A = A'
     end
     return A .&& B
