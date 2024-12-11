@@ -50,6 +50,16 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(ONNX._acosh, A)
     end
 
+    @testset "And" begin
+        A = Matrix{Bool}(undef, 3, 4)
+        B = Matrix{Bool}(undef, 3, 4)
+        ort_test(ONNX.and, A, B)
+        # Test implementation for Numpy-type broadcasting
+        C = Matrix{Bool}(undef, 4, 3)
+        ort_test(ONNX.and, A, C)
+
+    end
+
     @testset "Gemm" begin
         A, B, C = (rand(3, 4), rand(3, 4), rand(3, 3))
         ort_test(ONNX.onnx_gemm, A, B')

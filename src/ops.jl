@@ -45,6 +45,13 @@ function onnx_flatten(x; axis = 1)
     return flatten(x; dim = dim)
 end
 
+function and(A, B)
+    # Numpy type broadcasting
+    if size(A != B)
+        A = A'
+    return A .&& B
+end
+
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 _sin(x) = sin.(x)
