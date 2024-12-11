@@ -52,14 +52,14 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
 
     @testset "And" begin
         A = [0 1 0; 1 1 0; 0 1 1; 1 1 1]
-        A = Int8.(A)
+        A = Matrix{Bool}(A)
         B = [1 0 0; 1 0 0; 0 0 1; 1 1 0]
-        B = Int8.(B)
+        B = Matrix{Bool}(B)
         ort_test(ONNX.and, A, B)
 
         # Test implementation for Numpy-type broadcasting
         C = [1 0 0 1; 1 0 0 1; 0 0 1 0]
-        C = Int8.(C)
+        C = Matrix{Bool}(C)
         ort_test(ONNX.and, A, C)
 
     end
