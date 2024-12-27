@@ -14,6 +14,24 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(tape, args...)
     end
 
+    @testset "And" begin
+        args = [0 1 0; 1 1 0; 0 1 1; 1 1 1], [1 0 0; 1 0 0; 0 0 1; 1 1 0]
+        args = Tuple(convert(Matrix{Bool}, A) for A in args)
+        tape = Tape(ONNXCtx())
+        inp = [push!(tape, Input(arg)) for arg in args]
+        out1 = push_call!(tape, ONNX.and, inp...)
+        tape.result = out1
+        ort_test(tape, args...)
+
+        args = [1 0 0 1; 0 0 0 0; 1 1 1 0], [0 1 0; 1 1 0; 0 1 1; 1 1 1]
+        args = Tuple(convert(Matrix{Bool}, A) for A in args)
+        tape = Tape(ONNXCtx())
+        inp = [push!(tape, Input(arg)) for arg in args]
+        out1 = push_call!(tape, ONNX.and, inp...)
+        tape.result = out1
+        ort_test(tape, args...)
+    end
+
     @testset "Basic ops" begin
         args = (rand(3, 4), rand(3, 4))
         ort_test(ONNX.add, args...)
@@ -48,20 +66,6 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         # Acosh defined for A >= 1
         A = A .+ 1
         ort_test(ONNX._acosh, A)
-    end
-
-    @testset "And" begin
-        A = [0 1 0; 1 1 0; 0 1 1; 1 1 1]
-        A = Matrix{Bool}(A)
-        B = [1 0 0; 1 0 0; 0 0 1; 1 1 0]
-        B = Matrix{Bool}(B)
-        ort_test(ONNX.and, A, B)
-
-        # Test implementation for Numpy-type broadcasting
-        C = [1 0 0 1; 1 0 0 1; 0 0 1 0]
-        C = Matrix{Bool}(C)
-        ort_test(ONNX.and, A, C)
-
     end
 
     @testset "Gemm" begin

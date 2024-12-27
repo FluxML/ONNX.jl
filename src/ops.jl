@@ -45,12 +45,12 @@ function onnx_flatten(x; axis = 1)
     return flatten(x; dim = dim)
 end
 
-function and(A, B)
-    # Numpy type broadcasting
-    if (size(A) != size(B))
-        A = A'
+function and(x, y)
+    if (size(x)[2] == size(y)[1] && size(x)[1] == size(y)[2])
+        z = permutedims(x)
+        return y .&& z
     end
-    return A .&& B
+    return y .&& x
 end
 
 add(xs...) = .+(xs...)
