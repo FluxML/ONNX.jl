@@ -1,7 +1,6 @@
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
-*.Identifier
 test/models
 test/onnx/
 Manifest.toml
