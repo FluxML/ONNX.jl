@@ -15,21 +15,15 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
     end
 
     @testset "And" begin
+        # Testing matricies of similar shape
         args = [0 1 0; 1 1 0; 0 1 1; 1 1 1], [1 0 0; 1 0 0; 0 0 1; 1 1 0]
-        args = Tuple(convert(Matrix{Bool}, A) for A in args)
-        tape = Tape(ONNXCtx())
-        inp = [push!(tape, Input(arg)) for arg in args]
-        out1 = push_call!(tape, ONNX.and, inp...)
-        tape.result = out1
-        ort_test(tape, args...)
+        args = convert.(Matrix{Bool}, args)
+        ort_test(ONNX.and, args...)
 
-        args = [1 0 0 1; 0 0 0 0; 1 1 1 0], [0 1 0; 1 1 0; 0 1 1; 1 1 1]
-        args = Tuple(convert(Matrix{Bool}, A) for A in args)
-        tape = Tape(ONNXCtx())
-        inp = [push!(tape, Input(arg)) for arg in args]
-        out1 = push_call!(tape, ONNX.and, inp...)
-        tape.result = out1
-        ort_test(tape, args...)
+        # Testing Numpy-style broadcasting
+        args = [1 0 0; 0 0 1; 1 1 1], [0 1 0]
+        args = convert.(Matrix{Bool}, args)
+        ort_test(ONNX.and, args...)
     end
 
     @testset "Basic ops" begin

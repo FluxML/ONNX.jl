@@ -46,11 +46,7 @@ function onnx_flatten(x; axis = 1)
 end
 
 function and(x, y)
-    if (size(x)[2] == size(y)[1] && size(x)[1] == size(y)[2])
-        z = permutedims(x)
-        return y .&& z
-    end
-    return y .&& x
+    return x .&& y
 end
 
 add(xs...) = .+(xs...)
