@@ -46,7 +46,7 @@ function onnx_flatten(x; axis = 1)
 end
 
 function and(x, y)
-    return x .&& y
+    return x .& y
 end
 
 add(xs...) = .+(xs...)

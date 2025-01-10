@@ -16,13 +16,11 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
 
     @testset "And" begin
         # Testing matricies of similar shape
-        args = [0 1 0; 1 1 0; 0 1 1; 1 1 1], [1 0 0; 1 0 0; 0 0 1; 1 1 0]
-        args = convert.(Matrix{Bool}, args)
+        args = rand(Bool, 3, 4), rand(Bool, 3, 4)
         ort_test(ONNX.and, args...)
 
         # Testing Numpy-style broadcasting
-        args = [1 0 0; 0 0 1; 1 1 1], [0 1 0]
-        args = convert.(Matrix{Bool}, args)
+        args = rand(Bool, 3, 3), rand(Bool, 1, 3)
         ort_test(ONNX.and, args...)
     end
 
