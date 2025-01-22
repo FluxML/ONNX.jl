@@ -7,4 +7,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Umlaut = "92992a2b-8ce5-4a9c-bb9d-58be9a7dc841"
 
 [compat]
-Umlaut = "0.4"
+Umlaut = "0.7"

@@ -45,6 +45,10 @@ function onnx_flatten(x; axis = 1)
     return flatten(x; dim = dim)
 end
 
+function and(x, y)
+    return x .& y
+end
+
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 _sin(x) = sin.(x)

@@ -14,6 +14,16 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(tape, args...)
     end
 
+    @testset "And" begin
+        # Testing matricies of similar shape
+        args = rand(Bool, 3, 4), rand(Bool, 3, 4)
+        ort_test(ONNX.and, args...)
+
+        # Testing Numpy-style broadcasting
+        args = rand(Bool, 3, 3), rand(Bool, 1, 3)
+        ort_test(ONNX.and, args...)
+    end
+
     @testset "Basic ops" begin
         args = (rand(3, 4), rand(3, 4))
         ort_test(ONNX.add, args...)

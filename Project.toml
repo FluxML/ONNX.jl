@@ -1,6 +1,6 @@
 name = "ONNX"
 uuid = "d0dd6a25-fac6-55c0-abf7-829e0c774d20"
-version = "0.2.7"
+version = "0.3.0"
 
 [deps]
 EnumX = "4e289a0a-7415-4d19-859d-a7e5c4648b56"
@@ -18,5 +18,5 @@ EnumX = "1"
 NNlib = "0.8, 0.9"
 ProtoBuf = "1.0"
 StaticArrays = "1"
-Umlaut = "0.4, 0.5, 0.6, 0.7"
-julia = "1.6"
+Umlaut = "0.7"
+julia = "1.10"
