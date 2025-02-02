@@ -58,6 +58,10 @@ function _transpose(x; perm = nothing)
     end
 end
 
+function _pow(x, y)
+    return x .^ y
+end
+
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 _sin(x) = sin.(x)

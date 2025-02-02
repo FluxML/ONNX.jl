@@ -86,6 +86,12 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         @test size2 == (4, 5, 3)
     end
 
+    @testset "Pow" begin
+        A = rand(3, 4)
+        B = rand(1)
+        ort_test(ONNX._pow, A, B)
+    end
+
     @testset "Gemm" begin
         A, B, C = (rand(3, 4), rand(3, 4), rand(3, 3))
         ort_test(ONNX.onnx_gemm, A, B')
