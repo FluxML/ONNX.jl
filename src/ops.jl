@@ -49,15 +49,13 @@ function and(x, y)
     return x .& y
 end
 
-function _transpose(x; perms = (2, 1))
-    if perms == (2, 1)
-        return permutatedims(x, perms)
+function _transpose(x; perm = nothing)
+    if (perm === nothing)
+        return permutedims(x, (2,1))
     else
-        # note: order of argu,emts reversed due to row-major layout
-        perms[1], perms[2] = perms[2], perms[1]
-        return permutatedims(x, perms)
+        _perm = perm .+ 1
+        return permutedims(x, _perm)
     end
-
 end
 
 add(xs...) = .+(xs...)

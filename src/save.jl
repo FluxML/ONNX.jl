@@ -142,7 +142,7 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(and)}, op::Umlaut.Ca
 end
 
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_transpose)}, op::Umlaut.Call)
-    nd = NodeProto("Transpose", op)
+    nd = NodeProto("Transpose", op, kwargs2dict(op))
     push!(g.node, nd)
 end
 

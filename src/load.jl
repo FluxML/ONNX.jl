@@ -71,7 +71,7 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :And}, args::VarVec, attrs::At
     return push_call!(tape, and, args...)
 end
 
-function load_node!(tape::Tape, ::OpConfig{:ONNX, :Transpose}, args::VarVec, attrs::AttrDict) 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Transpose}, args::VarVec, attrs::AttrDict)
     return push_call!(tape, _transpose, args...; attrs...)
 end
 
