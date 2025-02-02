@@ -49,6 +49,15 @@ function and(x, y)
     return x .& y
 end
 
+function _transpose(x; perm = nothing)
+    if (perm === nothing)
+        return permutedims(x, (2,1))
+    else
+        _perm = perm .+ 1
+        return permutedims(x, _perm)
+    end
+end
+
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 _sin(x) = sin.(x)

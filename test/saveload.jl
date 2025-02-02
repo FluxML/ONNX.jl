@@ -60,6 +60,32 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(ONNX._acosh, A)
     end
 
+    @testset "Transpose" begin
+        # ort_test() checks for expected output of functions, errors on Transpose 
+        # because of array shape; manually testing!
+
+        # Testing 2 dimension transpose
+        args = (rand(1, 2),)
+        size1 = size(first(args))
+        tape = Tape(ONNXCtx())
+        inp = [push!(tape, Input(arg)) for arg in args]
+        res = push_call!(tape, ONNX._transpose, inp...)
+        tape.result = res
+        size2 = size(play!(tape, first(args)))
+        @test size2 == (2, 1)
+
+        # Testing 3+ dimension transpose
+        args = (rand(3, 4, 5),)
+        kwargs = (perm = (1, 2, 0),)
+        size1 = size(first(args))
+        tape = Tape(ONNXCtx())
+        inp = [push!(tape, Input(arg)) for arg in args]
+        res = push_call!(tape, ONNX._transpose, inp...; kwargs...)
+        tape.result = res
+        size2 = size(play!(tape, first(args)))
+        @test size2 == (4, 5, 3)
+    end
+
     @testset "Gemm" begin
         A, B, C = (rand(3, 4), rand(3, 4), rand(3, 3))
         ort_test(ONNX.onnx_gemm, A, B')
