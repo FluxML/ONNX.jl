@@ -62,6 +62,11 @@ function _pow(x, y)
     return x .^ y
 end
 
+function expand(x, y)
+    shape = ones(Int64, y)
+    # note: order of arguments reversed due to row-major layout
+    return shape .* x
+end
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 _sin(x) = sin.(x)
