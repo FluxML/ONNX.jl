@@ -92,6 +92,27 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(ONNX._pow, A, B)
     end
 
+    @testset "Expand" begin
+        # ort_test() checks for expected output of functions, errors on Expand 
+        # because of array shape; manually testing!
+
+        # Testing expansion of shape in Expand
+        args = (rand(1, 20), (5, 20))
+        tape = Tape(ONNXCtx())
+        inp = [push!(tape, Input(arg)) for arg in args]
+        res = push_call!(tape, ONNX.expand, inp...)
+        tape.result = res
+        @test size(play!(tape, args...)) == (5, 20)
+
+        # Testing shape smaller than input in Expand
+        args = (rand(5, 20), (1, 20))
+        tape = Tape(ONNXCtx())
+        inp = [push!(tape, Input(arg)) for arg in args]
+        res = push_call!(tape, ONNX.expand, inp...)
+        tape.result = res
+        @test size(play!(tape, args...)) == (5, 20)
+    end
+
     @testset "Gemm" begin
         A, B, C = (rand(3, 4), rand(3, 4), rand(3, 3))
         ort_test(ONNX.onnx_gemm, A, B')
