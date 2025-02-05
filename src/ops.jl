@@ -69,15 +69,7 @@ function expand(x, y)
 end
 
 function _where(condition, x, y)
-    output = ones(eltype(x), size(y))
-    for i in eachindex(condition)
-        if condition[i]
-            output[i] = x[i]
-        else
-            output[i] = y[i]
-        end
-    end
-    return output
+    return ifelse.(condition, x, y)
 end
 
 add(xs...) = .+(xs...)
