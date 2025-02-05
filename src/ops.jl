@@ -67,6 +67,11 @@ function expand(x, y)
     # note: order of arguments reversed due to row-major layout
     return shape .* x
 end
+
+function _where(condition, x, y)
+    return ifelse.(condition, x, y)
+end
+
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 _sin(x) = sin.(x)

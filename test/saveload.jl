@@ -113,6 +113,13 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         @test size(play!(tape, args...)) == (5, 20)
     end
 
+    @testset "Where" begin
+        condition = rand(Bool, (1,20))
+        A = rand(1,20)
+        B = rand(1,20)
+        ort_test(ONNX._where, condition, A, B)
+    end
+
     @testset "Gemm" begin
         A, B, C = (rand(3, 4), rand(3, 4), rand(3, 3))
         ort_test(ONNX.onnx_gemm, A, B')

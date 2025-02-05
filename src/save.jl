@@ -156,6 +156,11 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(expand)}, op::Umlaut
     push!(g.node, nd)
 end
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_where)}, op::Umlaut.Call)
+    nd = NodeProto("Where", op)
+    push!(g.node, nd)
+end
+
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(*)}, op::Umlaut.Call)
     nd = NodeProto(
         input=[onnx_name(v) for v in reverse(op.args)],
