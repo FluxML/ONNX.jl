@@ -67,6 +67,19 @@ function expand(x, y)
     # note: order of arguments reversed due to row-major layout
     return shape .* x
 end
+
+function _where(condition, x, y)
+    output = ones(eltype(x), size(y))
+    for i in eachindex(condition)
+        if condition[i]
+            output[i] = x[i]
+        else
+            output[i] = y[i]
+        end
+    end
+    return output
+end
+
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 _sin(x) = sin.(x)
