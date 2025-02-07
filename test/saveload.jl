@@ -120,6 +120,12 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(ONNX._where, condition, A, B)
     end
 
+    @testset "Equal" begin
+        A = rand(Bool, (1, 20))
+        B = rand(Bool, (1, 20))
+        ort_test(ONNX._equal, A, B)
+    end
+
     @testset "Gemm" begin
         A, B, C = (rand(3, 4), rand(3, 4), rand(3, 3))
         ort_test(ONNX.onnx_gemm, A, B')

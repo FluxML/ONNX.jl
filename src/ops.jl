@@ -72,6 +72,10 @@ function _where(condition, x, y)
     return ifelse.(condition, x, y)
 end
 
+function _equal(x, y)
+    return x .== y
+end
+
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 _sin(x) = sin.(x)
