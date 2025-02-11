@@ -78,6 +78,7 @@ end
 
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
+neg(x) = -1 .* x
 _sin(x) = sin.(x)
 _cos(x) = cos.(x)
 _abs(x) = abs.(x)
