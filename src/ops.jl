@@ -76,6 +76,10 @@ function _equal(x, y)
     return x .== y
 end
 
+function makeshape(x; value = zeros(Float32, 1))
+    return fill(value..., x...)
+end
+
 add(xs...) = .+(xs...)
 sub(xs...) = .-(xs...)
 neg(x) = .-(x)

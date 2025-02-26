@@ -131,6 +131,28 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(ONNX.neg, A)
     end
 
+    @testset "ConstantOfShape" begin
+        # ort_test() checks for expected output of functions, errors on ConstantOfShape 
+        # because of array shape; manually testing!
+
+        # Testing expansion of shape in ConstantOfShape
+        args = [2, 3]
+        attrs = randn(Float32, 1)
+        tape = Tape(ONNXCtx())
+        inp = push!(tape, Input(args))
+        res = push_call!(tape, ONNX.makeshape, inp; value = attrs)
+        tape.result = res
+        
+        # Make sure size is desired shape
+        @test size(play!(tape, args)) == (2, 3)
+        
+        # Make sure elements are of the desired datatype
+        @test eltype(attrs) == eltype(play!(tape, args))
+
+        # Make sure the output is filled with the correct value
+        @test attrs[1] == play!(tape, args)[1]
+    end
+
     @testset "Gemm" begin
         A, B, C = (rand(3, 4), rand(3, 4), rand(3, 3))
         ort_test(ONNX.onnx_gemm, A, B')
