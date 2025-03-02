@@ -99,6 +99,9 @@ function load_node!(tape::Tape, ::OpConfig{:ONNX, :ConstantOfShape}, args::VarVe
     return push_call!(tape, makeshape, args...; attrs...)
 end
 
+function load_node!(tape::Tape, ::OpConfig{:ONNX, :Asin}, args::VarVec, attrs::AttrDict)
+    return push_call!(tape, _asin, args[1])
+end
 
 function load_node!(tape::Tape, nd::NodeProto, backend::Symbol)
     args = [tape.c.name2var[name] for name in nd.input]

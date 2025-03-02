@@ -60,6 +60,14 @@ import ONNX: NodeProto, ValueInfoProto, AttributeProto, onnx_name
         ort_test(ONNX._acosh, A)
     end
 
+    @testset "Asin" begin
+        # ONNXRunTime has no implementation for Asin(x::Float64), using Float32
+        A = rand(Float32, 3, 4)
+        # Asin defined for |A| <= 1
+        A = A .% 1
+        ort_test(ONNX._asin, A)
+    end
+
     @testset "Transpose" begin
         # ort_test() checks for expected output of functions, errors on Transpose 
         # because of array shape; manually testing!
