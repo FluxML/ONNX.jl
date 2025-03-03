@@ -181,6 +181,11 @@ function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_asin)}, op::Umlaut.
     push!(g.node, nd)
 end
 
+function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(_asinh)}, op::Umlaut.Call)
+    nd = NodeProto("Asinh", op)
+    push!(g.node, nd)
+end
+
 function save_node!(g::GraphProto, ::OpConfig{:ONNX, typeof(*)}, op::Umlaut.Call)
     nd = NodeProto(
         input=[onnx_name(v) for v in reverse(op.args)],
